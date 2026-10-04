@@ -1,0 +1,27 @@
+{
+  "name": "printops",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "node tests/engine.test.js && node tests/calc_embed.test.js && node tests/pricing_embed.test.js && npm run test:logic",
+    "test:logic": "tsc lib/labels.ts lib/quotePdf.ts lib/spec.ts --outDir .tsout --module commonjs --target es2020 --skipLibCheck --esModuleInterop && COMPILED=$PWD/.tsout node tests/pdf_spec.test.js"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.45.0",
+    "jspdf": "^2.5.2",
+    "next": "^14.2.15",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "jsdom": "^30.1.1",
+    "typescript": "^5"
+  }
+}
