@@ -45,7 +45,7 @@ export default async function QuotePage({ params }: { params: { id: string } }) 
       {q.declined_at && <span className="muted">Declined {fmtDateTime(q.declined_at)}</span>}
     </div>
     <div className="qdoc">
-      <div className="hdr"><div>{business.logo && <img className="logo" src={business.logo} alt="" />}<div><b>{business.name}</b></div><div className="small">{business.address}{'\n'}{business.phone}{business.email ? ' · ' + business.email : ''}{business.vatNo ? '\nVAT No: ' + business.vatNo : ''}</div></div>
+      <div className="hdr"><div><img className="logo" src={business.logo || '/brand/logo.png'} alt="" /><div><b>{business.name}</b></div><div className="small">{business.address}{'\n'}{business.phone}{business.email ? ' · ' + business.email : ''}{business.vatNo ? '\nVAT No: ' + business.vatNo : ''}</div></div>
         <div style={{ textAlign: 'right' }}><h1>QUOTATION</h1><div><b>{q.number}</b></div><div className="small">Date: {fmtDate(q.quote_date)}{'\n'}Valid until: {fmtDate(q.valid_until)}{q.reference ? '\nReference: ' + q.reference : ''}</div></div></div>
       <div className="small"><b>Quote for</b></div><div><b>{c.name}</b></div>{c.company && <div>{c.company}</div>}<div className="small">{c.phone}{c.email ? '\n' + c.email : ''}</div>
       <table><thead><tr><th style={{ width: 30 }}>#</th><th>Description</th><th className="r">Qty</th><th className="r">Unit price</th><th className="r">Discount</th><th className="r">Total</th></tr></thead><tbody>

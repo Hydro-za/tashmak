@@ -24,4 +24,4 @@ export async function middleware(request: NextRequest) {
   }
   return response;
 }
-export const config = { matcher: ['/((?!_next/static|_next/image|favicon.ico|calculator.html).*)'] };
+export const config = { matcher: ['/((?!_next/static|_next/image|favicon.ico|brand/|icon.png|apple-icon.png|manifest.webmanifest|robots.txt).*)'] };

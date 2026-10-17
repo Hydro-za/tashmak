@@ -3,13 +3,22 @@ import { useState } from 'react';
 import { buildQuotePdf } from '@/lib/quotePdf';
 import { toast } from './ToastHost';
 
+/** Falls back to the bundled Tashmak logo when no logo has been uploaded in Settings. */
+async function fallbackLogo(): Promise<{ logo: string; logoW: number; logoH: number } | null> {
+  try {
+    const blob = await (await fetch('/brand/logo.png')).blob();
+    const data: string = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsDataURL(blob); });
+    const dims: { w: number; h: number } = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res({ w: i.width, h: i.height }); i.onerror = rej; i.src = data; });
+    return { logo: data, logoW: dims.w, logoH: dims.h };
+  } catch { return null; }
+}
 export default function QuotePdfButtons({ quote, business }: { quote: any; business: any }) {
   const [url, setUrl] = useState<string | null>(null); const [blob, setBlob] = useState<Blob | null>(null); const [busy, setBusy] = useState(false);
   const fileName = ('Quote-' + quote.number + '.pdf').replace(/[^A-Za-z0-9_.-]/g, '-');
   const canShare = typeof navigator !== 'undefined' && !!(navigator as any).canShare && !!(navigator as any).share;
   async function generate() {
     if (busy) return; setBusy(true);
-    try { const b = await buildQuotePdf(quote, business); if (url) URL.revokeObjectURL(url); setBlob(b); setUrl(URL.createObjectURL(b)); toast('PDF ready'); }
+    try { const biz = business?.logo ? business : { ...business, ...(await fallbackLogo()) }; const b = await buildQuotePdf(quote, biz); if (url) URL.revokeObjectURL(url); setBlob(b); setUrl(URL.createObjectURL(b)); toast('PDF ready'); }
     catch (e) { toast('Could not create the PDF. Please try again.', 'bad'); } finally { setBusy(false); }
   }
   async function share() {

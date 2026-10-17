@@ -11,7 +11,7 @@ export default async function MyJobs() {
   const { data } = await sb.from('jobs').select('*, job_items(product_name,qty_ordered), job_assignments(user_id,stage,active)').is('archived_at', null);
   const mine = (data || []).filter((j: any) => isMine(profile.role, j.status)).sort(sortJobs);
   return (<>
-    <AutoRefresh seconds={20} />
+    <AutoRefresh seconds={30} />
     <h1 style={{ marginBottom: 12 }}>My Jobs <span className="muted" style={{ fontWeight: 400, fontSize: 16 }}>({mine.length})</span></h1>
     {!mine.length ? <Empty text="Nothing assigned to you right now. New jobs will appear here." /> : mine.map((j: any) => (
       <Link key={j.id} href={'/my-jobs/' + j.id} className={'jobcard ' + j.priority}>

@@ -3,13 +3,16 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import Logo, { LogoMark } from './Logo';
+import ThemeToggle from './ThemeToggle';
+import NavIcon from './NavIcons';
 
-type Item = { href: string; label: string };
+type Item = { href: string; label: string; icon: string };
 const OWNER: Item[] = [
-  { href: '/dashboard', label: 'Dashboard' }, { href: '/jobs', label: 'Jobs' }, { href: '/quotes', label: 'Quotes' }, { href: '/customers', label: 'Customers' },
-  { href: '/products', label: 'Products & Pricing' }, { href: '/employees', label: 'Employees' }, { href: '/reports', label: 'Reports' }, { href: '/settings', label: 'Settings' }
+  { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' }, { href: '/jobs', label: 'Jobs', icon: 'jobs' }, { href: '/quotes', label: 'Quotes', icon: 'quotes' }, { href: '/customers', label: 'Customers', icon: 'customers' },
+  { href: '/products', label: 'Products & Pricing', icon: 'products' }, { href: '/employees', label: 'Employees', icon: 'employees' }, { href: '/reports', label: 'Reports', icon: 'reports' }, { href: '/settings', label: 'Settings', icon: 'settings' }
 ];
-const EMPLOYEE: Item[] = [{ href: '/my-jobs', label: 'My Jobs' }, { href: '/completed', label: 'Completed' }, { href: '/notifications', label: 'Notifications' }, { href: '/profile', label: 'Profile' }];
+const EMPLOYEE: Item[] = [{ href: '/my-jobs', label: 'My Jobs', icon: 'my-jobs' }, { href: '/completed', label: 'Completed', icon: 'completed' }, { href: '/notifications', label: 'Notifications', icon: 'notifications' }, { href: '/profile', label: 'Profile', icon: 'profile' }];
 
 function GlobalSearch() {
   const [q, setQ] = useState(''); const [res, setRes] = useState<any>(null); const timer = useRef<any>(null); const router = useRouter();
@@ -45,20 +48,21 @@ export default function Shell({ role, name, unread, children }: { role: string; 
   return (
     <div className="app">
       <aside className="side">
-        <div className="brand"><span>PrintOps</span></div>
-        <nav className="nav">{items.map(i => <Link key={i.href} href={i.href} className={on(i.href) ? 'on' : ''}><span>{i.label}</span></Link>)}</nav>
-        <div className="who">{name}<br /><b>{role}</b><br /><button className="btn sm" style={{ marginTop: 8 }} onClick={signOut}>Sign out</button></div>
+        <div className="brand"><Logo width={168} /></div>
+        <nav className="nav">{items.map(i => <Link key={i.href} href={i.href} className={on(i.href) ? 'on' : ''}><NavIcon name={i.icon} /><span>{i.label}</span></Link>)}</nav>
+        <div className="who">{name}<br /><b style={{ textTransform: 'capitalize' }}>{role}</b><div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center' }}><ThemeToggle /><button className="btn sm" onClick={signOut}>Sign out</button></div></div>
       </aside>
       <main className="main">
-        <div className="hdr">{role === 'owner' ? <GlobalSearch /> : <b style={{ flex: 1 }}>{name}</b>}
-          <Link href="/notifications" className="bell" aria-label="Notifications">🔔{unread > 0 && <b>{unread > 99 ? '99+' : unread}</b>}</Link></div>
+        <div className="hdr"><span className="mobilemark"><LogoMark size={32} /></span>{role === 'owner' ? <GlobalSearch /> : <b style={{ flex: 1 }}>{name}</b>}
+          <span className="mobiletheme"><ThemeToggle /></span>
+          <Link href="/notifications" className="bell" aria-label="Notifications"><NavIcon name="notifications" />{unread > 0 && <b>{unread > 99 ? '99+' : unread}</b>}</Link></div>
         {children}
       </main>
       <nav className="bottom">
-        {primary.map(i => <button key={i.href} className={on(i.href) ? 'on' : ''} onClick={() => router.push(i.href)}><span>{i.label.split(' ')[0]}</span></button>)}
-        {role === 'owner' ? <button className={more ? 'on' : ''} onClick={() => setMore(!more)}><span>More</span></button> : null}
+        {primary.map(i => <button key={i.href} className={on(i.href) ? 'on' : ''} onClick={() => router.push(i.href)}><NavIcon name={i.icon} /><span>{i.label.split(' ')[0]}</span></button>)}
+        {role === 'owner' ? <button className={more ? 'on' : ''} onClick={() => setMore(!more)}><NavIcon name="more" /><span>More</span></button> : null}
       </nav>
-      {more && <div className="sheet">{rest.map(i => <Link key={i.href} href={i.href}>{i.label}</Link>)}<a href="#" onClick={e => { e.preventDefault(); signOut(); }}>Sign out</a></div>}
+      {more && <div className="sheet">{rest.map(i => <Link key={i.href} href={i.href}><NavIcon name={i.icon} /> {i.label}</Link>)}<a href="#" onClick={e => { e.preventDefault(); signOut(); }}>Sign out</a></div>}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Products & Pricing</title>
-<style>:root{--bg:#f5f5f3;--card:#fff;--ink:#111;--muted:#6a6a67;--line:#e3e3df;--soft:#efefec;--accent:#111;--accent-ink:#fff;--ok:#1a7f4b;--ok-bg:#e6f4ec;--warn:#9a6700;--warn-bg:#fff4d6;--bad:#b42318;--bad-bg:#fde8e6;--info:#1f5fbf;--info-bg:#e8f0fc;--shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.04)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111112;--card:#1a1a1c;--ink:#f2f2f0;--muted:#9c9c98;--line:#2b2b2e;--soft:#232326;--accent:#f2f2f0;--accent-ink:#111;--ok:#5bd28f;--ok-bg:#12281c;--warn:#f0c04d;--warn-bg:#2d2410;--bad:#ff8a80;--bad-bg:#2f1715;--info:#7aa8ff;--info-bg:#15223a;--shadow:none}}
-:root[data-theme="dark"]{--bg:#111112;--card:#1a1a1c;--ink:#f2f2f0;--muted:#9c9c98;--line:#2b2b2e;--soft:#232326;--accent:#f2f2f0;--accent-ink:#111;--ok:#5bd28f;--ok-bg:#12281c;--warn:#f0c04d;--warn-bg:#2d2410;--bad:#ff8a80;--bad-bg:#2f1715;--info:#7aa8ff;--info-bg:#15223a;--shadow:none}
+<style>:root{--bg:#f3f6f7;--card:#fff;--ink:#12181b;--muted:#63707a;--line:#e1e7ea;--soft:#edf2f4;--accent:#04767b;--accent-ink:#fff;--accent-strong:#035459;--accent-soft:#e0f2f2;--ok:#17803f;--ok-bg:#e4f4ea;--warn:#9a6500;--warn-bg:#fff3d4;--bad:#b3261e;--bad-bg:#fde8e6;--info:#1d5fbf;--info-bg:#e7f0fc;--shadow:0 1px 2px rgba(16,24,40,.05),0 6px 18px rgba(16,24,40,.05);--r:14px;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1214;--card:#151b1e;--ink:#edf2f3;--muted:#8fa0a7;--line:#242f34;--soft:#1c2529;--accent:#2fb5ba;--accent-ink:#04191a;--accent-strong:#63d3d7;--accent-soft:#11373a;--ok:#5bd28f;--ok-bg:#112a1c;--warn:#f0c04d;--warn-bg:#2d2410;--bad:#ff8a80;--bad-bg:#2f1715;--info:#7aa8ff;--info-bg:#15223a;--shadow:0 1px 2px rgba(0,0,0,.4);--r:14px;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d1214;--card:#151b1e;--ink:#edf2f3;--muted:#8fa0a7;--line:#242f34;--soft:#1c2529;--accent:#2fb5ba;--accent-ink:#04191a;--accent-strong:#63d3d7;--accent-soft:#11373a;--ok:#5bd28f;--ok-bg:#112a1c;--warn:#f0c04d;--warn-bg:#2d2410;--bad:#ff8a80;--bad-bg:#2f1715;--info:#7aa8ff;--info-bg:#15223a;--shadow:0 1px 2px rgba(0,0,0,.4);--r:14px;color-scheme:dark}
+:root[data-theme="light"]{color-scheme:light}
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
@@ -113,13 +114,57 @@ details.calc summary{cursor:pointer;font-weight:600;font-size:13px}
  :root{padding:0}
 }
 
+/* ===== Tashmak brand refinements (v2): teal accent, softer surfaces, light/dark aware ===== */
+body{-webkit-tap-highlight-color:transparent;transition:background-color .2s,color .2s}
+.card,.stat,.item,.jobcard,.qcard{border-radius:var(--r)}
+.card{box-shadow:var(--shadow);transition:box-shadow .15s}
+.stat{transition:transform .12s,box-shadow .12s,border-color .12s}a.stat:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}
+h1{font-size:24px;font-weight:750;letter-spacing:-.02em}h2{font-size:16px;font-weight:700}
+.side{padding:18px 12px;gap:3px}
+.brand{padding:2px 6px 16px}.brand img{height:auto;max-width:100%;width:168px;display:block}
+.nav a,.nav button{padding:10px 12px;border-radius:10px;font-weight:550;transition:background-color .12s,color .12s}
+.nav svg,.bottom svg{width:19px;height:19px;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.nav .on{background:var(--accent-soft);color:var(--accent);font-weight:650}
+.who{font-size:12.5px}
+.btn{border-radius:10px;transition:background-color .12s,border-color .12s,box-shadow .12s,transform .06s}.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 1px 2px rgba(4,118,123,.35)}.btn.primary:hover{opacity:1;background:var(--accent-strong);border-color:var(--accent-strong)}
+.btn.danger{border-color:color-mix(in srgb,var(--bad) 55%,transparent)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+input[type=checkbox]{accent-color:var(--accent)}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=tel],input[type=search],input:not([type]),select,textarea{border-radius:10px;background:var(--card)}
+.tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+.chips .on,.pill.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.steps button.on{border-color:var(--accent);color:var(--accent)}
+.tbl th{text-transform:uppercase;letter-spacing:.04em;font-size:11px}
+.tbl tr.click:hover td,.tbl tbody tr:hover td{background:var(--soft)}
+.badge{padding:3px 10px;font-weight:650}.b-converted{background:var(--accent);color:var(--accent-ink)}
+.alert{border-radius:12px}
+.item>.ih{background:var(--soft)}.item.closed>.ih{background:transparent}
+.metric{border-radius:12px}
+.stickybar{background:var(--accent);color:var(--accent-ink)}
+.toast{background:var(--ink);color:var(--bg);border-radius:12px}
+.bigbtn{background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:#fff;box-shadow:0 6px 18px rgba(4,118,123,.35);border-radius:16px}
+.bigbtn.ok{background:linear-gradient(135deg,#1a9a52,#127a3e)}.bigbtn.warn{background:var(--warn)}
+.jobcard{transition:transform .12s,box-shadow .12s}.jobcard:hover{transform:translateY(-1px)}
+.qdoc th{background:#04767b}.qdoc .tot .g{border-top-color:#04767b}.qdoc h1{color:#04767b}
+.logo-d{display:none}
+:root[data-theme="dark"] .logo-l{display:none}:root[data-theme="dark"] .logo-d{display:block}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .logo-l{display:none}:root:not([data-theme="light"]) .logo-d{display:block}}
+.themebtn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;flex:none}
+.themebtn:hover{background:var(--soft)}.themebtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.skel{border-radius:12px;background:linear-gradient(90deg,var(--soft) 25%,var(--line) 37%,var(--soft) 63%);background-size:800px 100%;animation:shimmer 1.3s infinite linear}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+::-webkit-scrollbar{height:10px;width:10px}::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}::-webkit-scrollbar-track{background:transparent}
+@media (max-width:820px){.bottom{background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(10px)}.bottom button.on{color:var(--accent)}.bottom button{font-size:10.5px}}
+
 body.embedded .side,body.embedded .bottom,body.embedded #banners,body.embedded .top .actions>button[data-act="ed-cancel"]{display:none!important}
 body.embedded .main{padding:10px 4px 90px;max-width:none}body.embedded .app{min-height:0}
 body.embedded .field:has(> [data-q^="customer."]){display:none}
 body.embedded .stickybar{bottom:0}
 #embedbar{display:flex;gap:6px;padding:8px 4px;overflow-x:auto;background:var(--bg);position:sticky;top:0;z-index:20}
 #embedbar button{border:1px solid var(--line);border-radius:99px;padding:6px 14px;background:var(--card);cursor:pointer;font-weight:600;white-space:nowrap}
-body.embedded .top{display:none}body.embedded .tabs{position:sticky;top:0;z-index:10;background:var(--bg)}</style></head><body><div id="app"></div>
+body.embedded .top{display:none}body.embedded .tabs{position:sticky;top:0;z-index:10;background:var(--bg)}</style><script>try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}addEventListener('storage',function(e){if(e.key==='theme'){var v=e.newValue;if(v==='dark'||v==='light')document.documentElement.setAttribute('data-theme',v);else document.documentElement.removeAttribute('data-theme')}})</script></head><body><div id="app"></div>
 <script>/* PrintQuote pricing engine — pure, deterministic, no DOM, no hard-coded prices.
    Everything it needs comes from the `cfg` object (settings + catalogs). */
 (function (root, factory) {

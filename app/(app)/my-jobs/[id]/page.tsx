@@ -24,7 +24,7 @@ export default async function MyJob({ params }: { params: { id: string } }) {
   const itemOpts = items.map((i: any) => ({ id: i.id, name: i.product_name }));
   const btn = (label: string, action: string, cls = 'bigbtn') => <ActionButton className={cls} label={label} pendingLabel="Please wait…" action={jobAction} args={[job.id, action]} successText={label.toLowerCase().includes('complete') ? 'Saved — well done' : 'Started'} />;
   return (<>
-    <AutoRefresh seconds={20} />
+    <AutoRefresh seconds={30} />
     <Link href="/my-jobs" className="btn ghost sm">← My Jobs</Link>
     <div className="card" style={{ marginTop: 8, borderLeft: '8px solid ' + (job.priority === 'urgent' ? 'var(--bad)' : job.priority === 'high' ? 'var(--warn)' : 'var(--line)') }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><h1>{job.number}</h1><span><PrioBadge p={job.priority} /> <StatusBadge status={s} /></span></div>

@@ -29,7 +29,7 @@ export default async function JobPage({ params }: { params: { id: string } }) {
   const prodStarted = !!job.production_started_at;
   const A = (label: string, action: string, cls = 'btn', extra: any = {}) => <ActionButton key={action + label} className={cls} label={label} action={jobAction} args={[job.id, action]} {...extra} />;
   return (<>
-    <AutoRefresh seconds={25} />
+    <AutoRefresh seconds={45} />
     <Top title={'Job ' + job.number} sub={<><StatusBadge status={s} /> <PrioBadge p={job.priority} /> {!final && <Overdue due={job.due_date} status={s} />} · <Link href={'/customers/' + job.customer_id}>{job.customer_name}</Link>{quote ? <> · <Link href={'/quotes/' + quote.id}>Quote {quote.number}</Link></> : null}</>}>
       <Link href="/jobs" className="btn">← Jobs</Link>{quote && <Link href={'/quotes/' + quote.id + '/duplicate'} className="btn">Create repeat job</Link>}
     </Top>
