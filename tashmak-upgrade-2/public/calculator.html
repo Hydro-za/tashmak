@@ -1,0 +1,1494 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Quote calculator</title>
+<style>:root{--bg:#f3f6f7;--card:#fff;--ink:#12181b;--muted:#63707a;--line:#e1e7ea;--soft:#edf2f4;--accent:#04767b;--accent-ink:#fff;--accent-strong:#035459;--accent-soft:#e0f2f2;--ok:#17803f;--ok-bg:#e4f4ea;--warn:#9a6500;--warn-bg:#fff3d4;--bad:#b3261e;--bad-bg:#fde8e6;--info:#1d5fbf;--info-bg:#e7f0fc;--shadow:0 1px 2px rgba(16,24,40,.05),0 6px 18px rgba(16,24,40,.05);--r:14px;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1214;--card:#151b1e;--ink:#edf2f3;--muted:#8fa0a7;--line:#242f34;--soft:#1c2529;--accent:#2fb5ba;--accent-ink:#04191a;--accent-strong:#63d3d7;--accent-soft:#11373a;--ok:#5bd28f;--ok-bg:#112a1c;--warn:#f0c04d;--warn-bg:#2d2410;--bad:#ff8a80;--bad-bg:#2f1715;--info:#7aa8ff;--info-bg:#15223a;--shadow:0 1px 2px rgba(0,0,0,.4);--r:14px;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d1214;--card:#151b1e;--ink:#edf2f3;--muted:#8fa0a7;--line:#242f34;--soft:#1c2529;--accent:#2fb5ba;--accent-ink:#04191a;--accent-strong:#63d3d7;--accent-soft:#11373a;--ok:#5bd28f;--ok-bg:#112a1c;--warn:#f0c04d;--warn-bg:#2d2410;--bad:#ff8a80;--bad-bg:#2f1715;--info:#7aa8ff;--info-bg:#15223a;--shadow:0 1px 2px rgba(0,0,0,.4);--r:14px;color-scheme:dark}
+:root[data-theme="light"]{color-scheme:light}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;letter-spacing:-.01em}h1{font-size:22px}h2{font-size:16px}h3{font-size:14px}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:inherit}
+.app{display:flex;min-height:100vh}
+.side{width:212px;flex:none;background:var(--card);border-right:1px solid var(--line);padding:16px 10px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:2px}
+.brand{font-weight:700;font-size:15px;padding:4px 10px 14px;display:flex;align-items:center;gap:8px}
+.nav a,.nav button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--muted);text-decoration:none;font-weight:500}
+.nav a:hover,.nav button:hover{background:var(--soft);color:var(--ink)}
+.nav .on{background:var(--accent);color:var(--accent-ink)}
+.nav svg{width:18px;height:18px;flex:none}
+.who{margin-top:auto;padding:10px;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}
+.main{flex:1;min-width:0;padding:22px 26px 90px;max-width:1280px;margin:0 auto;width:100%}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.top .actions{display:flex;gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+.card>h2,.card>.hd{margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.grid{display:grid;gap:12px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.stat .k{font-size:12px;color:var(--muted)}.stat .v{font-size:22px;font-weight:700;margin-top:2px;letter-spacing:-.02em}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label,.lbl{font-size:12px;color:var(--muted);font-weight:500}
+.field .help{font-size:11.5px;color:var(--muted)}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=tel],input[type=search],input:not([type]),select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);min-height:38px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--ink);outline-offset:-1px}
+input.bad,select.bad,textarea.bad{border-color:var(--bad);background:var(--bad-bg)}
+input[type=checkbox]{width:17px;height:17px;accent-color:var(--ink)}
+textarea{resize:vertical;min-height:70px}
+.chk{display:flex;gap:8px;align-items:center;font-size:13.5px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:600;min-height:38px;white-space:nowrap}
+.btn:hover{background:var(--soft)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}.btn.primary:hover{opacity:.88}
+.btn.danger{color:var(--bad);border-color:var(--bad)}.btn.danger.solid{background:var(--bad);color:#fff}
+.btn.sm{padding:5px 10px;min-height:30px;font-size:12.5px}.btn.ghost{border-color:transparent;background:transparent}.btn.ghost:hover{background:var(--soft)}
+.btn.icon{padding:0;width:34px;min-height:34px}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:600;background:var(--soft);color:var(--muted);white-space:nowrap}
+.b-draft{background:var(--soft)}.b-sent{background:var(--info-bg);color:var(--info)}.b-accepted{background:var(--ok-bg);color:var(--ok)}.b-rejected{background:var(--bad-bg);color:var(--bad)}.b-expired{background:var(--warn-bg);color:var(--warn)}.b-converted{background:var(--accent);color:var(--accent-ink)}.b-demo{background:var(--warn-bg);color:var(--warn)}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-size:11.5px;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}.tbl tr.click{cursor:pointer}.tbl tr.click:hover td{background:var(--soft)}
+.tbl .r,.r{text-align:right;font-variant-numeric:tabular-nums}.tbl .muted,.muted{color:var(--muted)}
+.tabs{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px;margin-bottom:14px;border-bottom:1px solid var(--line);-webkit-overflow-scrolling:touch}
+.tabs button{background:none;border:0;padding:9px 12px;cursor:pointer;color:var(--muted);font-weight:600;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
+.alert{padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:10px}
+.alert.warn{background:var(--warn-bg);color:var(--warn)}.alert.bad{background:var(--bad-bg);color:var(--bad)}.alert.info{background:var(--info-bg);color:var(--info)}.alert.ok{background:var(--ok-bg);color:var(--ok)}
+.split{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+.sticky{position:sticky;top:14px}
+.item{border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:12px;overflow:hidden}
+.item>.ih{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;background:var(--soft)}
+.item>.ih .t{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.item>.ih .p{font-weight:700;font-variant-numeric:tabular-nums}
+.item>.ib{padding:14px;display:block}.item.closed>.ib{display:none}
+.qty{display:flex;gap:6px}.qty input{text-align:center;min-width:64px}.qty .btn{min-width:42px;padding:0}
+.rowline{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-variant-numeric:tabular-nums}
+.rowline.tot{font-weight:700;font-size:17px;border-top:1px solid var(--line);margin-top:6px;padding-top:10px}
+.rowline.sub{color:var(--muted);font-size:13px}
+details.calc{border:1px dashed var(--line);border-radius:8px;padding:8px 10px;margin-top:10px}
+details.calc summary{cursor:pointer;font-weight:600;font-size:13px}
+.pillrow{display:flex;gap:6px;flex-wrap:wrap}
+.pill{border:1px solid var(--line);border-radius:99px;padding:4px 10px;font-size:12.5px;background:var(--card);cursor:pointer}
+.pill.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.fin{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.fin:last-child{border:0}.fin input[type=number]{width:80px}
+.metric{background:var(--soft);border-radius:8px;padding:10px}.metric .k{font-size:11.5px;color:var(--muted)}.metric .v{font-weight:700;font-size:16px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:center;justify-content:center;padding:14px}
+.modal{background:var(--card);border-radius:14px;width:100%;max-width:560px;max-height:calc(100vh - 28px);display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.modal.wide{max-width:920px}.modal>.mh{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.modal>.mb{padding:16px 18px;overflow:auto;flex:1}.modal>.mf{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:80;font-weight:600;max-width:92vw;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.toast.bad{background:var(--bad);color:#fff}
+.steps{display:flex;gap:4px;margin-bottom:14px;overflow-x:auto}.steps button{flex:1;min-width:70px;border:0;border-top:3px solid var(--line);background:none;padding:6px 2px;font-size:11.5px;color:var(--muted);cursor:pointer;font-weight:600}.steps button.on{border-color:var(--ink);color:var(--ink)}.steps button.done{border-color:var(--ok)}
+.listrow{display:grid;gap:8px;grid-template-columns:2fr 1fr 1fr auto;align-items:end;padding:8px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px}
+.diff{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);align-items:center}
+.old{color:var(--bad);text-decoration:line-through}.new{color:var(--ok);font-weight:700}
+.bottom{display:none}
+.stickybar{display:none}
+/* quote document */
+.qdoc{background:#fff;color:#111;border:1px solid var(--line);border-radius:12px;padding:34px;max-width:860px;margin:0 auto;box-shadow:var(--shadow)}
+.qdoc h1{font-size:26px;margin-bottom:2px}.qdoc .hdr{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:22px;flex-wrap:wrap}
+.qdoc img.logo{max-height:64px;max-width:220px;object-fit:contain;margin-bottom:6px}
+.qdoc table{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}.qdoc th{background:#111;color:#fff;text-align:left;padding:8px 10px;font-size:12px}.qdoc td{padding:9px 10px;border-bottom:1px solid #e3e3df;vertical-align:top}
+.qdoc .r{text-align:right}.qdoc .tot{margin-left:auto;width:min(340px,100%)}.qdoc .tot div{display:flex;justify-content:space-between;padding:4px 0}.qdoc .tot .g{font-weight:700;font-size:17px;border-top:2px solid #111;margin-top:6px;padding-top:8px}
+.qdoc .small{font-size:12px;color:#555;white-space:pre-wrap}.qdoc .cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.setup{max-width:560px;margin:8vh auto;text-align:center}
+@media (max-width:1000px){.split{grid-template-columns:1fr}.sticky{position:static}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:820px){
+ .side{display:none}.main{padding:14px 12px 150px}
+ .bottom{display:flex;position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);z-index:40;padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px))}
+ .bottom button{flex:1;background:none;border:0;padding:6px 2px;font-size:10.5px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:600;cursor:pointer}.bottom button.on{color:var(--ink)}.bottom svg{width:21px;height:21px}
+ .g2,.g3,.g4{grid-template-columns:1fr}.listrow{grid-template-columns:1fr 1fr}
+ .btn{min-height:44px}.btn.sm{min-height:36px}input,select,textarea{min-height:44px;font-size:16px}
+ .stickybar{display:flex;position:fixed;left:0;right:0;bottom:calc(56px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);z-index:39;padding:10px 14px;justify-content:space-between;align-items:center;gap:10px;font-weight:700}
+ .stickybar small{display:block;font-weight:500;opacity:.75}
+ .qdoc{padding:18px}.qdoc .cols{grid-template-columns:1fr}
+ .modal{max-height:calc(100vh - 20px)}.overlay{padding:8px;align-items:flex-end}.modal{border-radius:14px 14px 0 0}
+ .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+ .item>.ib{padding:12px}.stats .v{font-size:18px}
+}
+@media print{
+ body{background:#fff}.side,.bottom,.stickybar,.top,.noprint,.toast,.overlay{display:none!important}
+ .main{padding:0;max-width:none}.qdoc{border:0;box-shadow:none;padding:0;max-width:none}
+ :root{padding:0}
+}
+
+/* ===== Tashmak brand refinements (v2): teal accent, softer surfaces, light/dark aware ===== */
+body{-webkit-tap-highlight-color:transparent;transition:background-color .2s,color .2s}
+.card,.stat,.item,.jobcard,.qcard{border-radius:var(--r)}
+.card{box-shadow:var(--shadow);transition:box-shadow .15s}
+.stat{transition:transform .12s,box-shadow .12s,border-color .12s}a.stat:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}
+h1{font-size:24px;font-weight:750;letter-spacing:-.02em}h2{font-size:16px;font-weight:700}
+.side{padding:18px 12px;gap:3px}
+.brand{padding:2px 6px 16px}
+.nav a,.nav button{padding:10px 12px;border-radius:10px;font-weight:550;transition:background-color .12s,color .12s}
+.nav svg,.bottom svg{width:19px;height:19px;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.nav .on{background:var(--accent-soft);color:var(--accent);font-weight:650}
+.who{font-size:12.5px}
+.btn{border-radius:10px;transition:background-color .12s,border-color .12s,box-shadow .12s,transform .06s}.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 1px 2px rgba(4,118,123,.35)}.btn.primary:hover{opacity:1;background:var(--accent-strong);border-color:var(--accent-strong)}
+.btn.danger{border-color:color-mix(in srgb,var(--bad) 55%,transparent)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+input[type=checkbox]{accent-color:var(--accent)}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=tel],input[type=search],input:not([type]),select,textarea{border-radius:10px;background:var(--card)}
+.tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+.chips .on,.pill.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.steps button.on{border-color:var(--accent);color:var(--accent)}
+.tbl th{text-transform:uppercase;letter-spacing:.04em;font-size:11px}
+.tbl tr.click:hover td,.tbl tbody tr:hover td{background:var(--soft)}
+.badge{padding:3px 10px;font-weight:650}.b-converted{background:var(--accent);color:var(--accent-ink)}
+.alert{border-radius:12px}
+.item>.ih{background:var(--soft)}.item.closed>.ih{background:transparent}
+.metric{border-radius:12px}
+.stickybar{background:var(--accent);color:var(--accent-ink)}
+.toast{background:var(--ink);color:var(--bg);border-radius:12px}
+.bigbtn{background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:#fff;box-shadow:0 6px 18px rgba(4,118,123,.35);border-radius:16px}
+.bigbtn.ok{background:linear-gradient(135deg,#1a9a52,#127a3e)}.bigbtn.warn{background:var(--warn)}
+.jobcard{transition:transform .12s,box-shadow .12s}.jobcard:hover{transform:translateY(-1px)}
+.qdoc th{background:#04767b}.qdoc .tot .g{border-top-color:#04767b}.qdoc h1{color:#04767b}
+.brandlogo{display:block;background:url(/brand/logo.png) no-repeat left center/contain;max-width:100%}
+:root[data-theme="dark"] .brandlogo{background-image:url(/brand/logo-dark.png)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brandlogo{background-image:url(/brand/logo-dark.png)}}
+.themebtn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;flex:none}
+.themebtn:hover{background:var(--soft)}.themebtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.skel{border-radius:12px;background:linear-gradient(90deg,var(--soft) 25%,var(--line) 37%,var(--soft) 63%);background-size:800px 100%;animation:shimmer 1.3s infinite linear}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+::-webkit-scrollbar{height:10px;width:10px}::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}::-webkit-scrollbar-track{background:transparent}
+@media (max-width:820px){.bottom{background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(10px)}.bottom button.on{color:var(--accent)}.bottom button{font-size:10.5px}}
+
+body.embedded .side,body.embedded .bottom,body.embedded #banners,body.embedded .top .actions>button[data-act="ed-cancel"]{display:none!important}
+body.embedded .main{padding:10px 4px 90px;max-width:none}body.embedded .app{min-height:0}
+body.embedded .field:has(> [data-q^="customer."]){display:none}
+body.embedded .stickybar{bottom:0}
+#embedbar{display:flex;gap:6px;padding:8px 4px;overflow-x:auto;background:var(--bg);position:sticky;top:0;z-index:20}
+#embedbar button{border:1px solid var(--line);border-radius:99px;padding:6px 14px;background:var(--card);cursor:pointer;font-weight:600;white-space:nowrap}
+</style><script>try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}addEventListener('storage',function(e){if(e.key==='theme'){var v=e.newValue;if(v==='dark'||v==='light')document.documentElement.setAttribute('data-theme',v);else document.documentElement.removeAttribute('data-theme')}})</script></head><body><div id="app"></div>
+<script>/* PrintQuote pricing engine — pure, deterministic, no DOM, no hard-coded prices.
+   Everything it needs comes from the `cfg` object (settings + catalogs). */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.PQ = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+'use strict';
+
+const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+const num = (v, d = 0) => { const n = typeof v === 'number' ? v : parseFloat(v); return Number.isFinite(n) ? n : d; };
+const has = v => v !== undefined && v !== null && v !== '' && Number.isFinite(typeof v === 'number' ? v : parseFloat(v));
+const UNIT_MM = { mm: 1, cm: 10, m: 1000 };
+
+const METHODS = {
+  per_item:    { label: 'Per item',            basis: 'item' },
+  per_sqm:     { label: 'Per square metre',    basis: 'sqm' },
+  per_metre:   { label: 'Per metre',           basis: 'metre' },
+  per_sheet:   { label: 'Per sheet',           basis: 'sheet' },
+  per_page:    { label: 'Per page',            basis: 'page' },
+  per_print:   { label: 'Per print',           basis: 'print' },
+  per_garment: { label: 'Per garment',         basis: 'item' },
+  fixed:       { label: 'Fixed price',         basis: 'fixed' },
+  tiered:      { label: 'Tiered by quantity',  basis: null }
+};
+const BASES = {
+  item: 'per item', print: 'per print', printSqm: 'per m² of print area', sqm: 'per m²',
+  sheet: 'per sheet', sheetSide: 'per sheet side', page: 'per page', metre: 'per linear metre', fixed: 'once-off'
+};
+const FIN_METHODS = {
+  fixed: 'Fixed price', per_item: 'Per item', per_metre: 'Per metre', per_sqm: 'Per m²',
+  per_page: 'Per page', percent: 'Percentage of direct cost', labour: 'Labour-based'
+};
+
+function roundTo(value, rounding) {
+  const step = num(rounding && rounding.step, 0);
+  if (!(step > 0)) return r2(value);
+  const mode = (rounding && rounding.mode) || 'nearest';
+  const q = value / step;
+  const f = mode === 'up' ? Math.ceil(q - 1e-9) : mode === 'down' ? Math.floor(q + 1e-9) : Math.round(q);
+  return r2(f * step);
+}
+
+function upsOnSheet(sw, sh, pw, ph, gutter) {
+  if (!(sw > 0 && sh > 0 && pw > 0 && ph > 0)) return 1;
+  const g = gutter || 0;
+  const fit = (aw, ah, bw, bh) => Math.floor((aw + g) / (bw + g)) * Math.floor((ah + g) / (bh + g));
+  return Math.max(fit(sw, sh, pw, ph), fit(sw, sh, ph, pw), 0);
+}
+function sheetCalc(mat, wmm, hmm, qty, leaves, gutter) {
+  if (!(mat && mat.sheetW > 0 && mat.sheetH > 0) || !(wmm > 0 && hmm > 0))
+    return { sheets: Math.ceil(qty * leaves), ups: 1, tiles: 1 };
+  const ups = upsOnSheet(mat.sheetW, mat.sheetH, wmm, hmm, gutter);
+  if (ups > 0) return { sheets: Math.ceil(qty * leaves / ups), ups, tiles: 1 };
+  const tiles = Math.ceil(wmm / mat.sheetW) * Math.ceil(hmm / mat.sheetH);
+  return { sheets: qty * leaves * tiles, ups: 0, tiles };
+}
+
+function resolveMarkup(line, prod, cat, S) {
+  const P = S.pricing || {};
+  if (has(line.markupOverride)) return { pct: num(line.markupOverride), source: 'quote override' };
+  if (has(prod.markupPct)) return { pct: num(prod.markupPct), source: 'product' };
+  if (cat && has(cat.markupPct)) return { pct: num(cat.markupPct), source: 'category' };
+  return { pct: num(P.defaultMarkup, 0), source: 'global default' };
+}
+
+function calcLine(line, cfg) {
+  const S = cfg.settings || {}, C = S.calc || {}, P = S.pricing || {};
+  const res = { ok: false, errors: [], warnings: [], lines: [], groups: {}, info: {}, productionCost: 0, finalSubtotal: 0, calculatedPrice: 0, sellingPrice: 0 };
+  const err = m => res.errors.push(m), warn = m => res.warnings.push(m);
+  const prod = (cfg.products || {})[line.productId];
+  if (!prod) { err('Select a product'); return res; }
+  if (prod.active === false) warn('This product is currently disabled');
+  const cat = (cfg.categories || {})[prod.category];
+  const method = METHODS[prod.method] ? prod.method : 'per_item';
+
+  // ---- validation of raw inputs
+  const qty = num(line.qty);
+  if (!(qty > 0)) err('Quantity must be greater than zero');
+  const intOnly = !['per_sqm', 'per_metre'].includes(method);
+  if (qty > 0 && intOnly && !Number.isInteger(qty)) err('Quantity must be a whole number');
+  const unit = line.unit || prod.unit || 'mm';
+  const k = UNIT_MM[unit] || 1;
+  const wIn = has(line.w) ? num(line.w) * k : num(prod.defaultW) * (UNIT_MM[prod.unit || 'mm'] || 1);
+  const hIn = has(line.h) ? num(line.h) * k : num(prod.defaultH) * (UNIT_MM[prod.unit || 'mm'] || 1);
+  if (wIn < 0 || hIn < 0) err('Width and height cannot be negative');
+  const wmm = Math.max(0, wIn), hmm = Math.max(0, hIn);
+  const sides = Math.min(2, Math.max(1, Math.round(num(line.sides, num(prod.defaultSides, 1)))));
+  const pages = Math.max(1, Math.floor(num(line.pages, num(prod.defaultPages, 1))));
+  if (has(line.customCost) && num(line.customCost) < 0) err('Custom cost cannot be negative');
+  if (has(line.extraMinutes) && num(line.extraMinutes) < 0) err('Extra labour minutes cannot be negative');
+  if (has(line.markupOverride)) {
+    const mu = num(line.markupOverride);
+    if (mu < 0 || mu > num(P.maxMarkup, 1000)) err('Markup must be between 0% and ' + num(P.maxMarkup, 1000) + '%');
+    if (C.markupMode === 'margin' && mu >= 100) err('Margin must be below 100%');
+  }
+
+  // ---- resolve components (line may override the primary material)
+  const comps = (prod.components || []).map(c => ({ ...c }));
+  let primIdx = comps.findIndex(c => c.primary && c.materialId);
+  if (primIdx < 0) primIdx = comps.findIndex(c => c.materialId);
+  if (primIdx >= 0 && line.materialId) comps[primIdx].materialId = line.materialId;
+  const mats = cfg.materials || {};
+  const primMat = primIdx >= 0 ? mats[comps[primIdx].materialId] : null;
+
+  // ---- geometry / quantities
+  const needsDims = ['large', 'paper'].includes(prod.profile) || ['per_sqm', 'per_metre'].includes(method) ||
+    comps.some(c => { const m = c.materialId && mats[c.materialId]; return m && ['sqm', 'metre', 'sheet'].includes(m.costBasis) && !prod.usePrintList; });
+  if (needsDims && !(wmm > 0 && hmm > 0)) err('Width and height are required for this product');
+  const itemAreaM2 = wmm * hmm / 1e6;
+  const totalAreaM2 = itemAreaM2 * qty;
+  const lengthM = Math.max(wmm, hmm) / 1000;
+  const perimeterM = 2 * (wmm + hmm) / 1000;
+  const leaves = pages <= 1 ? 1 : Math.ceil(pages / sides);
+  const impressions = pages <= 1 ? sides : pages;
+
+  let printsPerItem = 1, printAreaPerItem = itemAreaM2;
+  if (prod.usePrintList) {
+    const list = (Array.isArray(line.prints) && line.prints.length ? line.prints : prod.defaultPrints) || [];
+    printsPerItem = 0; printAreaPerItem = 0;
+    list.forEach((p, i) => {
+      const pw = num(p.w), ph = num(p.h), pc = num(p.count, 1);
+      if (pw <= 0 || ph <= 0) err('Print ' + (i + 1) + ': width and height must be greater than zero');
+      if (pc < 1 || !Number.isInteger(pc)) err('Print ' + (i + 1) + ': count must be a whole number of 1 or more');
+      printsPerItem += pc; printAreaPerItem += pw * ph / 10000 * pc;
+    });
+    if (!list.length) err('Add at least one print position');
+  }
+  const gutter = has(prod.gutterMm) ? num(prod.gutterMm) : num(C.gutterMm, 3);
+  const primSheet = sheetCalc(primMat && primMat.costBasis === 'sheet' ? primMat : null, wmm, hmm, qty, leaves, gutter);
+  if (primMat && primMat.costBasis === 'sheet' && primSheet.ups === 0)
+    warn('Finished size is larger than the sheet; sheets are tiled');
+
+  const areaForMat = prod.usePrintList ? printAreaPerItem * qty : totalAreaM2;
+  const B = {
+    item: qty, print: qty * printsPerItem, printSqm: printAreaPerItem * qty, sqm: totalAreaM2,
+    sheet: primSheet.sheets, sheetSide: primSheet.sheets * sides, page: qty * pages, metre: qty * lengthM, fixed: 1
+  };
+  const tierQtyBasis = prod.tierBasis || 'item';
+  res.info = {
+    qty, unit, widthMm: wmm, heightMm: hmm, itemAreaM2: itemAreaM2, totalAreaM2, perimeterM, lengthM,
+    sides, pages, leaves, impressions, printsPerItem, printAreaPerItemM2: printAreaPerItem,
+    printAreaPerItemCm2: printAreaPerItem * 10000, totalPrints: B.print, totalPrintAreaM2: B.printSqm,
+    sheets: primSheet.sheets, upsPerSheet: primSheet.ups, filmMetres: 0
+  };
+
+  const add = (group, label, detail, amount) => {
+    amount = r2(amount);
+    if (amount === 0 && group !== 'base') return;
+    res.lines.push({ group, label, detail, amount });
+  };
+  const money = v => 'R' + r2(v).toFixed(2);
+  const fmtN = v => (Math.round(v * 1000) / 1000).toString();
+
+  // ---- 1. base price (method / tiers)
+  let baseSell = null;
+  const units = method === 'tiered' ? B[tierQtyBasis] : B[METHODS[method].basis];
+  let basePrice = num(prod.basePrice), tierNote = '';
+  if (method === 'tiered' || (prod.tiers && prod.tiers.length && method !== 'fixed')) {
+    const tiers = (prod.tiers || []).slice().sort((a, b) => num(a.from) - num(b.from));
+    if (!tiers.length) { if (method === 'tiered') err('This tiered product has no tiers configured'); }
+    else {
+      const tq = B[tierQtyBasis];
+      let t = tiers[0]; tiers.forEach(x => { if (tq >= num(x.from)) t = x; });
+      basePrice = num(t.price);
+      const next = tiers.find(x => num(x.from) > num(t.from));
+      tierNote = ' (tier ' + num(t.from) + (next ? '–' + (num(next.from) - 1) : '+') + ')';
+      res.info.tier = { from: num(t.from), price: num(t.price) };
+    }
+  }
+  if (basePrice > 0 || (prod.baseIsSell && method !== 'per_item')) {
+    const label = METHODS[method].label + ' base price' + tierNote;
+    if (prod.baseIsSell) {
+      // base price is a SELLING price that covers materials, print, machines & labour;
+      // finishing and custom costs are marked up and added on top.
+      baseSell = r2(basePrice * units);
+      add('base', label, fmtN(units) + ' × ' + money(basePrice) + ' sell price — covers materials, printing, machines & labour (no markup)', 0);
+    } else {
+      add('base', label, fmtN(units) + ' × ' + money(basePrice), basePrice * units);
+    }
+  }
+  if (num(prod.setupFee) > 0) add('other', 'Setup fee', 'once-off', num(prod.setupFee));
+
+  // ---- 2. components (materials & other costs)
+  comps.forEach(c => {
+    const grp = c.group || 'material';
+    if (c.materialId) {
+      const m = mats[c.materialId];
+      if (!m) { err('Material no longer exists (' + (c.label || c.materialId) + ')'); return; }
+      if (m.active === false) warn('Material "' + m.name + '" is disabled');
+      let usage = 0, u = '';
+      if (m.costBasis === 'sheet') { usage = c === comps[primIdx] ? primSheet.sheets : sheetCalc(m, wmm, hmm, qty, leaves, gutter).sheets; u = 'sheets'; }
+      else if (m.costBasis === 'sqm') { usage = areaForMat; u = 'm²'; }
+      else if (m.costBasis === 'metre') {
+        const rw = num(m.rollWidth) / 1000;
+        if (!(rw > 0)) { err('Roll width missing for material "' + m.name + '"'); return; }
+        usage = areaForMat / rw; u = 'm';
+        if (!prod.usePrintList && Math.min(wmm, hmm) / 1000 > rw + 1e-9) warn('Smaller side is wider than the ' + m.rollWidth + 'mm roll of "' + m.name + '"');
+        if (prod.usePrintList) res.info.filmMetres += usage;
+      } else { usage = num(c.qtyPer, 1) * B[c.perBasis || 'item']; u = m.costBasis === 'kg' ? 'kg' : 'units'; }
+      const amt = usage * num(m.cost);
+      add(grp, c.label || m.name, fmtN(usage) + ' ' + u + ' × ' + money(m.cost) + ' (' + m.name + ')', amt);
+      if (num(m.wastagePct) > 0) add('wastage', m.name + ' material wastage', num(m.wastagePct) + '% of ' + money(amt), amt * num(m.wastagePct) / 100);
+      if (has(m.stock) && num(m.stock) > 0 && usage > num(m.stock)) warn('Low stock: "' + m.name + '" needs ' + fmtN(usage) + ' ' + u + ', ' + m.stock + ' available');
+    } else {
+      const q = B[c.basis || 'item'];
+      add(grp, c.label || 'Cost', fmtN(q) + ' ' + (BASES[c.basis || 'item'] || '') + ' × ' + money(c.rate), num(c.rate) * q);
+    }
+  });
+
+  // ---- 3. print cost
+  const pr = prod.print;
+  const printBasisKey = (pr && pr.basis) || 'print';
+  if (pr && num(pr.rate) > 0) {
+    let rate = num(pr.rate);
+    const bw = line.colour === 'bw';
+    if (bw && has(pr.bwFactor)) rate *= num(pr.bwFactor);
+    const q = printBasisKey === 'sqm' ? areaForMat : printBasisKey === 'printSqm' ? B.printSqm : B[printBasisKey];
+    add('print', pr.label || 'Printing', fmtN(q) + ' ' + (BASES[printBasisKey] || '') + ' × ' + money(rate) + (bw ? ' (B&W)' : ''), rate * q);
+  }
+  const printQty = printBasisKey === 'sqm' ? areaForMat : printBasisKey === 'printSqm' ? B.printSqm : B[printBasisKey];
+
+  // ---- 4. machines
+  if (C.includeMachine !== false) (prod.machines || []).forEach(pm => {
+    const m = (cfg.machines || {})[pm.machineId];
+    if (!m) { if (pm.machineId) err('Machine no longer exists'); return; }
+    if (m.active === false) warn('Machine "' + m.name + '" is disabled');
+    const hrs = (num(pm.minutesPerUnit) * B[pm.unitBasis || 'item'] + num(pm.fixedMinutes)) / 60;
+    const parts = [];
+    let amt = 0;
+    const s = num(m.setupCost); if (s > 0) { amt += s; parts.push('setup ' + money(s)); }
+    const pp = num(m.costPerPrint) * printQty; if (pp > 0) { amt += pp; parts.push(fmtN(printQty) + ' prints × ' + money(m.costPerPrint)); }
+    const ps = num(m.costPerSqm) * areaForMat; if (ps > 0) { amt += ps; parts.push(fmtN(areaForMat) + ' m² × ' + money(m.costPerSqm)); }
+    const hr = num(m.costPerHour) + num(m.maintenancePerHour) + num(m.depreciationPerHour);
+    if (hrs > 0 && hr > 0) { amt += hrs * hr; parts.push(fmtN(hrs) + ' h × ' + money(hr)); }
+    add('machine', m.name, parts.join(' + '), amt);
+  });
+
+  // ---- 5. labour
+  const labCost = (lab, hours) => {
+    let c = hours * num(lab.hourly);
+    if (num(lab.minCharge) > 0 && hours > 0) c = Math.max(c, num(lab.minCharge));
+    return c * (1 + num(lab.markupPct) / 100);
+  };
+  if (C.includeLabour !== false) {
+    (prod.labour || []).forEach(pl => {
+      const lab = (cfg.labour || {})[pl.labourId];
+      if (!lab) { if (pl.labourId) err('Labour type no longer exists'); return; }
+      const hrs = (num(pl.minutesPerUnit) * B[pl.unitBasis || 'item'] + num(pl.setupMinutes)) / 60;
+      if (hrs > 0) add('labour', lab.name, fmtN(hrs) + ' h × ' + money(lab.hourly), labCost(lab, hrs));
+    });
+    if (num(line.extraMinutes) > 0) {
+      const lab = (cfg.labour || {})[line.labourId] || (cfg.labour || {})[((prod.labour || [])[0] || {}).labourId];
+      if (lab) add('labour', 'Extra labour: ' + lab.name, fmtN(num(line.extraMinutes) / 60) + ' h × ' + money(lab.hourly), labCost(lab, num(line.extraMinutes) / 60));
+      else err('Choose a labour type for the extra labour minutes');
+    }
+  }
+
+  // ---- 6. finishing
+  const directSoFar = () => res.lines.filter(l => ['material', 'print', 'machine', 'labour', 'base'].includes(l.group)).reduce((a, l) => a + l.amount, 0);
+  if (C.includeFinishing !== false) (line.finishing || []).forEach(sel => {
+    const f = (cfg.finishing || {})[sel.id];
+    if (!f) { err('A selected finishing option no longer exists'); return; }
+    if (f.active === false) warn('Finishing "' + f.name + '" is disabled');
+    const qp = f.askQty ? num(sel.qty, num(f.defaultQty, 1)) : 1;
+    if (qp < 0) { err(f.name + ': quantity cannot be negative'); return; }
+    let amt = 0, detail = '';
+    switch (f.method) {
+      case 'fixed': amt = num(f.price); detail = 'fixed'; break;
+      case 'per_item': amt = num(f.price) * qty * qp; detail = fmtN(qty * qp) + ' × ' + money(f.price); break;
+      case 'per_page': amt = num(f.price) * qty * pages * qp; detail = fmtN(qty * pages * qp) + ' pages × ' + money(f.price); break;
+      case 'per_sqm': amt = num(f.price) * areaForMat; detail = fmtN(areaForMat) + ' m² × ' + money(f.price); break;
+      case 'per_metre': {
+        const per = f.metreBasis === 'width' ? wmm / 1000 : f.metreBasis === 'height' ? hmm / 1000 : perimeterM;
+        amt = num(f.price) * per * qty * qp; detail = fmtN(per * qty * qp) + ' m × ' + money(f.price); break;
+      }
+      case 'percent': { const b = directSoFar(); amt = b * num(f.price) / 100; detail = num(f.price) + '% of ' + money(b); break; }
+      case 'labour': {
+        const lab = (cfg.labour || {})[f.labourId];
+        if (!lab) { err(f.name + ': labour type missing'); return; }
+        const hrs = num(f.minutes) * qty * qp / 60;
+        amt = labCost(lab, hrs); detail = fmtN(hrs) + ' h × ' + money(lab.hourly); break;
+      }
+      default: err(f.name + ': unknown pricing method'); return;
+    }
+    if (num(f.setup) > 0) { amt += num(f.setup); detail += ' + setup ' + money(f.setup); }
+    if (num(f.minCharge) > 0 && amt < num(f.minCharge)) { amt = num(f.minCharge); detail = 'minimum charge'; }
+    add('finishing', f.name, detail, amt);
+  });
+
+  // ---- 7. other costs & custom cost
+  (prod.otherCosts || []).forEach(o => {
+    const q = B[o.basis || 'fixed'];
+    add('other', o.label || 'Other cost', fmtN(q) + ' × ' + money(o.amount), num(o.amount) * q);
+  });
+  if (has(line.customCost) && num(line.customCost) > 0) add('custom', line.customLabel || 'Custom cost', 'entered on quote', num(line.customCost));
+
+  // ---- 8. wastage
+  const wpct = has(line.wastagePct) ? num(line.wastagePct) : has(prod.wastagePct) ? num(prod.wastagePct) : num(P.defaultWastagePct, 0);
+  if (wpct < 0 || wpct > 100) err('Wastage must be between 0% and 100%');
+  if (C.includeWastage !== false && wpct > 0) {
+    const g = (grp) => res.lines.filter(l => l.group === grp).reduce((a, l) => a + l.amount, 0);
+    const applies = C.wastageAppliesTo || 'materials_print';
+    const b = applies === 'materials' ? g('material') : applies === 'direct' ? g('material') + g('print') + g('machine') + g('labour') + g('base') : g('material') + g('print');
+    add('wastage', 'Wastage allowance', wpct + '% of ' + money(b) + ' (' + applies.replace('_', ' + ') + ')', b * wpct / 100);
+  }
+
+  // ---- honour the on/off switches for whole groups
+  const off = { packaging: C.includePackaging === false, other: C.includeOther === false, custom: false };
+  res.lines = res.lines.filter(l => !off[l.group]);
+
+  // ---- totals
+  const groups = {};
+  res.lines.forEach(l => { groups[l.group] = r2((groups[l.group] || 0) + l.amount); });
+  res.groups = groups;
+  const cost = r2(res.lines.reduce((a, l) => a + l.amount, 0));
+  res.productionCost = cost;
+
+  // ---- markup → selling price
+  const mk = resolveMarkup(line, prod, cat, S);
+  res.markupPct = mk.pct; res.markupSource = mk.source; res.markupMode = C.markupMode === 'margin' ? 'margin' : 'markup';
+  const applyMk = c => res.markupMode === 'margin' ? (mk.pct >= 100 ? c : c / (1 - mk.pct / 100)) : c * (1 + mk.pct / 100);
+  let sell;
+  if (baseSell !== null) {
+    const extras = (groups.finishing || 0) + (groups.custom || 0);
+    sell = baseSell + applyMk(extras);
+  } else sell = applyMk(cost);
+  sell = r2(sell);
+  res.sellingBeforeMin = sell;
+
+  // ---- minimum price (product → category → global)
+  const minP = has(prod.minPrice) && num(prod.minPrice) > 0 ? num(prod.minPrice) : (cat && has(cat.minPrice) && num(cat.minPrice) > 0 ? num(cat.minPrice) : num(P.minCharge, 0));
+  res.minPrice = minP; res.minApplied = false;
+  if (sell < minP) { sell = minP; res.minApplied = true; }
+  sell = roundTo(sell, P.rounding);
+  res.calculatedPrice = sell;
+
+  // ---- manual override
+  let finalSell = sell;
+  res.overrideApplied = false;
+  if (line.override && has(line.override.price)) {
+    if (num(line.override.price) < 0) err('Override price cannot be negative');
+    else { finalSell = r2(num(line.override.price)); res.overrideApplied = true; }
+  }
+  res.sellingPrice = finalSell;
+
+  // ---- line discount
+  let disc = 0;
+  const d = line.discount;
+  if (d && has(d.value) && num(d.value) !== 0) {
+    if (num(d.value) < 0) err('Discount cannot be negative');
+    else if (d.type === 'pct') { if (num(d.value) > 100) err('Discount cannot exceed 100%'); else disc = finalSell * num(d.value) / 100; }
+    else { if (num(d.value) > finalSell + 1e-9) err('Discount cannot exceed the line price'); else disc = num(d.value); }
+  }
+  res.discountAmount = r2(disc);
+  res.finalSubtotal = r2(finalSell - disc);
+  res.unitPrice = qty > 0 ? r2(finalSell / qty) : 0;
+  res.unitCost = qty > 0 ? r2(cost / qty) : 0;
+  res.grossProfit = r2(res.finalSubtotal - cost);
+  res.marginPct = res.finalSubtotal > 0 ? r2(res.grossProfit / res.finalSubtotal * 100) : 0;
+  res.ok = res.errors.length === 0;
+  return res;
+}
+
+// ---- quote totals ---------------------------------------------------------
+function calcQuote(items, quoteDiscount, vatCfg, opts) {
+  opts = opts || {};
+  const vc = vatCfg || {};
+  const calcs = items.map(i => i.calc || {});
+  const gross = r2(calcs.reduce((a, c) => a + num(c.sellingPrice), 0));
+  const lineDisc = r2(calcs.reduce((a, c) => a + num(c.discountAmount), 0));
+  const net0 = r2(gross - lineDisc);
+  let qd = 0; const errors = [];
+  const d = quoteDiscount;
+  if (d && has(d.value) && num(d.value) !== 0) {
+    if (num(d.value) < 0) errors.push('Discount cannot be negative');
+    else if (d.type === 'pct') { if (num(d.value) > 100) errors.push('Discount cannot exceed 100%'); else qd = net0 * num(d.value) / 100; }
+    else { if (num(d.value) > net0 + 1e-9) errors.push('Discount cannot exceed the quote subtotal'); else qd = num(d.value); }
+  }
+  qd = r2(qd);
+  let afterDisc = r2(net0 - qd);
+  let minAdj = 0;
+  if (num(opts.minOrder) > 0 && afterDisc > 0 && afterDisc < num(opts.minOrder)) { minAdj = r2(num(opts.minOrder) - afterDisc); afterDisc = r2(afterDisc + minAdj); }
+  const enabled = vc.enabled !== false, rate = num(vc.rate, 0);
+  if (enabled && (rate < 0 || rate > 100)) errors.push('VAT rate is invalid');
+  const inclusive = vc.mode === 'inclusive';
+  const reduces = vc.discountReducesVat !== false;
+  const preDisc = r2(net0 + minAdj);
+  const vatBaseAmt = reduces ? afterDisc : preDisc;
+  let vat = 0, total, subtotalEx;
+  if (!enabled) { total = afterDisc; subtotalEx = afterDisc; }
+  else if (inclusive) { vat = r2(vatBaseAmt - vatBaseAmt / (1 + rate / 100)); total = afterDisc; subtotalEx = r2(total - vat); }
+  else { vat = r2(vatBaseAmt * rate / 100); total = r2(afterDisc + vat); subtotalEx = afterDisc; }
+  const cost = r2(calcs.reduce((a, c) => a + num(c.productionCost), 0));
+  const revenue = enabled && inclusive ? r2(total - vat) : afterDisc;
+  const grossProfit = r2(revenue - cost);
+  const totalDiscount = r2(lineDisc + qd);
+  const discountBase = r2(gross + minAdj);
+  return {
+    gross, lineDiscounts: lineDisc, quoteDiscount: qd, minOrderAdjustment: minAdj, afterDiscount: afterDisc,
+    subtotal: subtotalEx, vat, total, vatEnabled: enabled, vatRate: rate, vatMode: inclusive ? 'inclusive' : 'exclusive',
+    productionCost: cost, revenue, grossProfit, marginPct: revenue > 0 ? r2(grossProfit / revenue * 100) : 0,
+    totalDiscount, discountPct: discountBase > 0 ? r2(totalDiscount / discountBase * 100) : 0, errors
+  };
+}
+
+// ---- permissions & discount policy ---------------------------------------
+const PERMS = [
+  ['createQuotes', 'Create quotes'], ['editQuotes', 'Edit quotes'], ['viewAllQuotes', 'View all staff quotes'],
+  ['deleteQuotes', 'Delete quotes'], ['changeStatus', 'Change quote status'], ['viewCosts', 'See production costs'],
+  ['viewProfit', 'See gross profit'], ['viewMargin', 'See gross margin %'], ['overrideMarkup', 'Override markup on a quote'],
+  ['overridePrice', 'Manually override prices'], ['applyDiscount', 'Apply discounts'], ['approveDiscount', 'Approve discounts'],
+  ['viewReports', 'View dashboard reports'], ['editProducts', 'Add / edit / delete products'],
+  ['editPricing', 'Change materials, labour, machines, finishing, markups & settings'], ['manageUsers', 'Manage staff & permissions'],
+  ['viewAudit', 'View audit log'], ['importExport', 'Import / export']
+];
+function hasPerm(S, role, perm) {
+  if (role === 'owner') return true;
+  if (perm === 'manageUsers') return false;
+  return !!(((S.permissions || {})[role] || {})[perm]);
+}
+function discountPolicy(S, role, pct) {
+  if (role === 'owner' || !(pct > 0)) return { allowed: true, needsApproval: false, max: Infinity };
+  const D = S.discount || {};
+  if (role === 'staff' && D.allowStaff === false) return { allowed: false, needsApproval: false, max: 0, reason: 'Staff discounts are switched off' };
+  const max = num(role === 'manager' ? D.managerMaxPct : D.staffMaxPct, 0);
+  if (pct <= max + 1e-9) return { allowed: true, needsApproval: false, max };
+  if (D.requireApproval !== false) return { allowed: true, needsApproval: true, max };
+  return { allowed: false, needsApproval: false, max, reason: 'Discount exceeds your limit of ' + max + '%' };
+}
+
+// ---- quote numbering ------------------------------------------------------
+function formatQuoteNumber(S, year, seq) {
+  const Q = (S && S.quotes) || {};
+  const sep = Q.separator === undefined ? '-' : Q.separator;
+  const yf = Q.yearFormat || 'YYYY';
+  const yr = yf === 'none' ? '' : yf === 'YY' ? String(year).slice(-2) : String(year);
+  const digits = String(seq).padStart(Math.max(1, num(Q.length, 4)), '0');
+  return [Q.prefix === undefined ? 'QT' : Q.prefix, yr, digits].filter(x => x !== '').join(sep);
+}
+function nextSeq(counter, S, year) {
+  const Q = (S && S.quotes) || {};
+  const start = Math.max(1, Math.floor(num(Q.startNumber, 1)));
+  if (!counter || !Number.isFinite(counter.seq)) return start;
+  if (Q.resetYearly !== false && counter.year !== year) return start;
+  return Math.max(counter.seq + 1, start);
+}
+
+// ---- generic helpers ------------------------------------------------------
+function diffObjects(a, b, skip) {
+  const out = []; skip = skip || [];
+  const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+  keys.forEach(k => {
+    if (skip.includes(k)) return;
+    const x = (a || {})[k], y = (b || {})[k];
+    if (JSON.stringify(x) !== JSON.stringify(y)) out.push({ key: k, old: x, new: y });
+  });
+  return out;
+}
+function deepFreeze(o) { if (o && typeof o === 'object' && !Object.isFrozen(o)) { Object.freeze(o); Object.values(o).forEach(deepFreeze); } return o; }
+
+return { r2, num, has, roundTo, upsOnSheet, sheetCalc, calcLine, calcQuote, hasPerm, discountPolicy, PERMS,
+  formatQuoteNumber, nextSeq, diffObjects, deepFreeze, METHODS, BASES, FIN_METHODS, UNIT_MM };
+});
+</script>
+<script>/* ===== PrintQuote app — core: state, data layer, permissions, helpers ===== */
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nf = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const money = v => { const n = PQ.num(v); return (n < 0 ? '-' : '') + 'R' + nf.format(Math.abs(n)); };
+const pctf = v => (Math.round(PQ.num(v) * 100) / 100) + '%';
+const clean = o => JSON.parse(JSON.stringify(o, (k, v) => (typeof v === 'number' && !isFinite(v)) ? null : v));
+const uid = p => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const todayISO = () => iso(new Date());
+const addDays = (s, n) => { const d = new Date(s + 'T12:00:00'); d.setDate(d.getDate() + n); return iso(d); };
+const fmtDate = s => s ? new Date(s.length > 10 ? s : s + 'T12:00:00').toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+const fmtTime = ms => new Date(ms).toLocaleString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const KINDS = ['materials', 'machines', 'labour', 'finishing', 'categories', 'products', 'team'];
+const STATUSES = [['draft', 'Draft'], ['sent', 'Sent'], ['accepted', 'Accepted'], ['rejected', 'Rejected'], ['expired', 'Expired'], ['converted', 'Converted to Job']];
+const statusLabel = s => (STATUSES.find(x => x[0] === s) || [0, s])[1];
+
+const State = {
+  mode: 'loading', me: { id: null, name: '', isOwner: false, canEdit: false, canData: null },
+  cfg: { settings: null, products: {}, materials: {}, machines: {}, labour: {}, finishing: {}, categories: {}, team: {} },
+  quotes: {}, audit: [], jobs: {}, customers: {}, names: {}, loaded: {}, err: null,
+  view: 'dashboard', params: {}, previewRole: null, modal: null, dirty: false, qFilter: { text: '', status: '' }, settingsTab: 'business', auditFilter: ''
+};
+const engineCfg = () => ({ settings: State.cfg.settings || {}, products: State.cfg.products, materials: State.cfg.materials, machines: State.cfg.machines, labour: State.cfg.labour, finishing: State.cfg.finishing, categories: State.cfg.categories });
+
+/* ---------- permissions ---------- */
+function role() {
+  if (State.previewRole) return State.previewRole;
+  if (State.mode === 'memory' || State.me.isOwner) return 'owner';
+  const t = State.cfg.team[State.me.id];
+  const r = t && t.role ? t.role : ((State.cfg.settings || {}).defaultRole || 'staff');
+  return ['owner', 'manager', 'staff'].includes(r) ? r : 'staff';
+}
+const can = p => PQ.hasPerm(State.cfg.settings || {}, role(), p);
+const isOwnerRole = () => role() === 'owner';
+
+/* ---------- data layer (database first; memory fallback) ---------- */
+const DB = {
+  db: null,
+  col(kind) { return this.db.doc('cfg/' + kind).collection('items'); },
+  async set(kind, id, data) { data = clean({ ...data, id }); State.cfg[kind][id] = data; if (this.db) await this.col(kind).doc(id).set(data); return data; },
+  async del(kind, id) { delete State.cfg[kind][id]; if (this.db) await this.col(kind).doc(id).delete(); },
+  async setSettings(s) { State.cfg.settings = clean(s); if (this.db) await this.db.doc('cfg/settings').set(State.cfg.settings); },
+  async setQuote(q) { q = clean(q); State.quotes[q.id] = q; if (this.db) await this.db.collection('quotes').doc(q.id).set(q); return q; },
+  async delQuote(id) { delete State.quotes[id]; if (this.db) await this.db.collection('quotes').doc(id).delete(); },
+  async setCustomer(c) { State.customers[c.id] = c; if (this.db) await this.db.collection('customers').doc(c.id).set(clean(c)); },
+  async setJob(j) { State.jobs[j.id] = j; if (this.db) await this.db.collection('jobs').doc(j.id).set(clean(j)); },
+  async audit(action, entity, oldV, newV) {
+    const entry = { ts: Date.now(), uid: State.me.id || 'local', role: role(), action, entity: entity || '', old: oldV === undefined ? '' : String(oldV), new: newV === undefined ? '' : String(newV) };
+    const id = uid('a'); State.audit.unshift({ ...entry, id });
+    if (this.db) { try { await this.db.collection('audit').doc(id).set(entry); } catch (er) { console.warn('audit write failed', er); } }
+  }
+};
+
+function explainError(er) {
+  const c = er && er.code;
+  if (c === 'invalid_argument') return 'Not saved: your account can\'t change this. Pricing, products and settings need Editor access on the shared artifact.';
+  if (c === 'quota_exceeded') return 'Storage limit reached — delete old records or export and archive first.';
+  if (c === 'resource_exhausted') return 'Too many requests — wait a moment and try again.';
+  return 'Could not save: ' + ((er && er.message) || 'unknown error');
+}
+async function safe(fn, okMsg) {
+  try { const r = await fn(); if (okMsg) toast(okMsg); return r; }
+  catch (er) { console.error(er); toast(explainError(er), 'bad'); return undefined; }
+}
+
+async function nextQuoteNumber() {
+  const S = State.cfg.settings, yr = new Date().getFullYear();
+  const qid = n => n.replace(/[^A-Za-z0-9_.-]/g, '-');
+  if (!DB.db) {
+    let seq = PQ.nextSeq(State.localCounter, S, yr);
+    while (State.quotes[qid(PQ.formatQuoteNumber(S, yr, seq))]) seq++;
+    State.localCounter = { year: yr, seq };
+    return PQ.formatQuoteNumber(S, yr, seq);
+  }
+  const ref = DB.db.doc('counters/quote'), holder = (State.me.id || 'anon') + '-' + Math.random().toString(36).slice(2);
+  for (let t = 0; t < 16; t++) {
+    const r = await ref.acquire({ holder, ttlMs: 1500 });
+    if (!r.acquired) { await sleep(250 + Math.random() * 500); continue; }
+    const snap = await ref.get();
+    let seq = PQ.nextSeq(snap.exists ? snap.data() : null, S, yr);
+    for (let g = 0; g < 200; g++) {
+      const n = PQ.formatQuoteNumber(S, yr, seq);
+      const ex = await DB.db.doc('quotes/' + qid(n)).get();
+      if (!ex.exists && !State.quotes[qid(n)]) break; seq++;
+    }
+    await ref.set({ year: yr, seq });
+    return PQ.formatQuoteNumber(S, yr, seq);
+  }
+  throw new Error('Could not reserve a quote number — please try again');
+}
+const quoteDocId = n => n.replace(/[^A-Za-z0-9_.-]/g, '-');
+
+/* ---------- names (ids only are stored) ---------- */
+async function resolveNames(ids) {
+  ids = [...new Set(ids.filter(x => x && x !== 'local' && !State.names[x]))]; if (!ids.length || !State.userCap) return;
+  try { const ps = await State.userCap.profiles(ids); ids.forEach(i => { State.names[i] = (ps[i] && ps[i].name) || ''; }); renderSoon(); } catch (er) { /* ignore */ }
+}
+const nameOf = id => id === State.me.id ? (State.me.name || 'You') : (State.names[id] || (id === 'local' ? 'Local user' : 'Someone'));
+
+/* ---------- toast / modal ---------- */
+let toastT;
+function toast(msg, kind) {
+  let t = $('#toast'); if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+  t.className = 'toast ' + (kind || ''); t.textContent = msg; clearTimeout(toastT); toastT = setTimeout(() => t.remove(), kind === 'bad' ? 6500 : 2600);
+}
+function openModal(o) {
+  if (!o.stack) closeModal(true);
+  const ov = document.createElement('div'); ov.className = 'overlay'; ov.id = o.stack ? 'ov2' : 'ov'; if (o.stack) ov.style.zIndex = 70;
+  ov.innerHTML = `<div class="modal ${o.wide ? 'wide' : ''}" role="dialog" aria-modal="true"><div class="mh"><h2>${e(o.title)}</h2><button class="btn ghost icon" data-act="modal-close" aria-label="Close">✕</button></div><div class="mb" id="mb">${o.body}</div><div class="mf" id="mf">${o.footer || ''}</div></div>`;
+  document.body.appendChild(ov); if (o.stack) State.stackModal = o; else State.modal = o; if (o.onMount) o.onMount(ov);
+  return ov;
+}
+function closeStack() { const s = $('#ov2'); if (s) s.remove(); State.stackModal = null; }
+function closeModal(silent) { closeStack(); const ov = $('#ov'); if (ov) ov.remove(); const m = State.modal; State.modal = null; if (!silent && m && m.onClose) m.onClose(); if (!silent) renderSoon(); }
+function confirmDialog(o) {
+  return new Promise(res => {
+    let done = false; const fin = v => { if (done) return; done = true; closeStack(); res(v); };
+    openModal({ stack: true, title: o.title, body: o.body, footer: `<button class="btn" data-act="cf-no">${e(o.cancelLabel || 'Cancel')}</button><button class="btn ${o.danger ? 'danger solid' : 'primary'}" data-act="cf-yes">${e(o.okLabel || 'Confirm')}</button>`, onClose: () => fin(false) });
+    State.cf = fin;
+  });
+}
+function promptDialog(o) {
+  return new Promise(res => {
+    let done = false; const fin = v => { if (done) return; done = true; closeStack(); res(v); };
+    openModal({ stack: true, title: o.title, body: `<div class="field"><label>${e(o.label)}</label><input id="pd-in" value="${e(o.value || '')}" ${o.type ? 'type="' + o.type + '"' : ''}></div>`, footer: `<button class="btn" data-act="pd-no">Cancel</button><button class="btn primary" data-act="pd-yes">${e(o.okLabel || 'OK')}</button>`, onClose: () => fin(null), onMount: () => setTimeout(() => { const i = $('#pd-in'); i && i.focus(); }, 30) });
+    State.pd = fin;
+  });
+}
+
+/* ---------- icons ---------- */
+const ICON = {
+  dash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>',
+  quotes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h8"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>',
+  calc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
+};
+
+/* ===== shell, routing, dashboard, quote list ===== */
+const ACT = {};
+let raf = 0;
+function renderSoon() { cancelAnimationFrame(raf); raf = requestAnimationFrame(render); }
+const isLocked = () => !!State.modal || State.view === 'editor' || State.view === 'calc';
+
+function visibleQuotes() {
+  const all = Object.values(State.quotes);
+  return (can('viewAllQuotes') ? all : all.filter(q => q.createdBy === State.me.id)).sort((a, b) => b.createdAt - a.createdAt);
+}
+function effStatus(q) { return (['draft', 'sent'].includes(q.status) && q.expiry && q.expiry < todayISO()) ? 'expired' : q.status; }
+const badge = s => `<span class="badge b-${s}">${e(statusLabel(s))}</span>`;
+
+function go(view, params, force) {
+  const leave = () => { State.view = view; State.params = params || {}; State.dirty = false; State.ed = null; render(true); window.scrollTo(0, 0); };
+  if (!force && State.dirty && (State.view === 'editor')) {
+    confirmDialog({ title: 'Discard unsaved changes?', body: '<p>This quote has changes that have not been saved.</p>', okLabel: 'Discard changes', danger: true }).then(ok => { if (ok) leave(); });
+  } else leave();
+}
+
+function navItems() {
+  const items = [['dashboard', 'Dashboard', ICON.dash], ['quotes', 'Quotes', ICON.quotes]];
+  if (can('createQuotes')) items.push(['new', 'New quote', ICON.plus]);
+  items.push(['calc', 'Calculators', ICON.calc], ['settings', 'Settings', ICON.gear]);
+  return items;
+}
+function activeNav() { const v = State.view; return v === 'editor' ? (State.params.id ? 'quotes' : 'new') : v === 'quote' ? 'quotes' : v; }
+
+function render(force) {
+  const root = $('#app'); if (!root) return;
+  if (State.mode === 'loading' || !State.loaded.settings) { root.innerHTML = `<div class="setup"><h1>Loading…</h1><p class="muted">${State.err ? e(State.err) : 'Connecting to the database'}</p></div>`; return; }
+  if (!State.cfg.settings) { root.innerHTML = setupView(); return; }
+  if (!force && isLocked() && $('#shell')) { refreshChrome(); return; }
+  const S = State.cfg.settings, biz = S.business || {};
+  const nav = navItems(), on = activeNav();
+  const navBtn = (n, cls) => `<button class="${on === n[0] ? 'on' : ''}" data-act="nav" data-v="${n[0]}">${n[2]}<span>${e(n[1])}</span></button>`;
+  let body = '';
+  try {
+    body = State.view === 'dashboard' ? viewDashboard() : State.view === 'quotes' ? viewQuotes() : State.view === 'quote' ? viewQuote() :
+      State.view === 'editor' ? viewEditor() : State.view === 'calc' ? viewCalc() : State.view === 'settings' ? viewSettings() : '';
+  } catch (er) { console.error(er); body = `<div class="alert bad">Something went wrong showing this page: ${e(er.message)}</div>`; }
+  root.innerHTML = `<div class="app" id="shell"><aside class="side"><div class="brand">${biz.logo ? `<img src="${e(biz.logo)}" alt="">` : ''}<span>${e(biz.name || 'PrintQuote')}</span></div><nav class="nav">${nav.map(n => navBtn(n)).join('')}</nav>
+    <div class="who">${e(State.me.name || (State.mode === 'memory' ? 'Local session' : 'Signed in'))}<br><b>${e(role())}</b>${State.previewRole ? ' <span class="badge b-demo">preview</span>' : ''}</div></aside>
+    <main class="main" id="main">${banners()}${body}</main></div>
+    <nav class="bottom">${nav.map(n => navBtn(n)).join('')}</nav>`;
+  afterRender();
+}
+function refreshChrome() { const b = $('#banners'); if (b) b.innerHTML = bannersInner(); }
+function bannersInner() {
+  let h = '';
+  if (State.mode === 'memory') h += `<div class="alert warn"><b>Not connected to a database.</b> You are in a local session — quotes and settings will be lost when this page closes. Open the published artifact to use the shared database.</div>`;
+  if (State.previewRole) h += `<div class="alert info">Previewing the app as <b>${e(State.previewRole)}</b>. <button class="btn sm" data-act="preview-off">Exit preview</button></div>`;
+  if (State.mode === 'db' && State.me.canData === false) h += `<div class="alert warn">You have read-only access to this app, so changes can't be saved. Ask the owner to share it with you as a Contributor.</div>`;
+  const S = State.cfg.settings;
+  if (S && S.demo && can('editPricing')) h += `<div class="alert warn"><b>Demo pricing is loaded.</b> All prices, materials and products shown are placeholder examples — not real market prices. Replace them in <a href="#" data-act="nav" data-v="settings">Settings</a> before quoting real customers. <button class="btn sm" data-act="demo-ack">I've replaced them — hide this</button></div>`;
+  return h;
+}
+const banners = () => `<div id="banners">${bannersInner()}</div>`;
+function afterRender() { if (State.view === 'quotes' || State.view === 'dashboard') resolveNames(Object.values(State.quotes).map(q => q.createdBy)); if (State.view === 'settings') afterSettingsRender && afterSettingsRender(); if (State.view === 'editor' || State.view === 'calc') afterEditorRender && afterEditorRender(); }
+
+function setupView() {
+  const owner = State.me.isOwner || State.mode === 'memory';
+  return `<div class="setup card"><h1>Printing Quote System</h1><p class="muted">This workspace has no pricing configured yet.</p>
+  ${owner ? `<p>Load a set of <b>demo defaults</b> (placeholder materials, machines, labour, finishing and products) so the calculator works immediately. Every demo record is labelled and can be replaced from Settings — none of it is real market pricing.</p><button class="btn primary" data-act="seed">Load demo defaults</button><div id="seedmsg" class="muted" style="margin-top:10px"></div>` : `<p>Ask the owner to open this app once and load the initial settings.</p>`}</div>`;
+}
+
+/* ---------- dashboard ---------- */
+function viewDashboard() {
+  const qs = visibleQuotes(), today = todayISO(), month = today.slice(0, 7);
+  const cr = q => iso(new Date(q.createdAt));
+  const tq = qs.filter(q => cr(q) === today), mq = qs.filter(q => cr(q).startsWith(month));
+  const sum = (a, f) => a.reduce((x, q) => x + PQ.num(f(q)), 0);
+  const val = q => (q.totals || {}).total;
+  const eff = qs.map(q => [q, effStatus(q)]);
+  const acc = eff.filter(x => x[1] === 'accepted' || x[1] === 'converted').map(x => x[0]);
+  const pend = eff.filter(x => ['draft', 'sent'].includes(x[1])).map(x => x[0]);
+  const rej = eff.filter(x => x[1] === 'rejected').map(x => x[0]);
+  const showVal = can('viewReports') || true;
+  const stat = (k, v, sub) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div>${sub ? `<div class="muted" style="font-size:12px">${sub}</div>` : ''}</div>`;
+  const cards = [
+    stat('Quotes created today', tq.length), stat('Quotes this month', mq.length), stat('Quote value this month', money(sum(mq, val)), 'incl. VAT where applicable'),
+    stat('Average quote value', money(qs.length ? sum(qs, val) / qs.length : 0)),
+    stat('Accepted', acc.length, money(sum(acc, val))), stat('Pending (draft + sent)', pend.length, money(sum(pend, val))), stat('Rejected', rej.length, money(sum(rej, val)))
+  ];
+  if (can('viewProfit')) cards.push(stat('Est. gross profit (this month)', money(sum(mq, q => (q.totals || {}).grossProfit)), 'ex VAT, from saved costs'));
+  else cards.push(stat('Total quotes', qs.length));
+  const recent = qs.slice(0, 8);
+  return `<div class="top"><h1>Dashboard</h1><div class="actions">${can('createQuotes') ? `<button class="btn primary" data-act="nav" data-v="new">+ New quote</button>` : ''}</div></div>
+  ${can('viewAllQuotes') ? '' : '<div class="alert info">You are seeing your own quotes only.</div>'}
+  <div class="stats">${cards.join('')}</div>
+  <div class="card"><div class="hd"><h2>Recent quotes</h2><button class="btn sm" data-act="nav" data-v="quotes">View all</button></div>${quoteTable(recent)}</div>`;
+}
+function quoteTable(list) {
+  if (!list.length) return '<p class="muted">No quotes yet.</p>';
+  return `<div class="tblwrap"><table class="tbl"><thead><tr><th>Quote</th><th>Customer</th><th>Date</th><th>Status</th><th class="r">Total</th><th>Staff</th></tr></thead><tbody>${list.map(q => `<tr class="click" data-act="open-quote" data-id="${e(q.id)}"><td><b>${e(q.number)}</b></td><td>${e(q.customer.name)}${q.customer.company ? `<div class="muted">${e(q.customer.company)}</div>` : ''}</td><td>${fmtDate(q.date)}</td><td>${badge(effStatus(q))}</td><td class="r">${money((q.totals || {}).total)}</td><td class="muted">${e(q.staffName || nameOf(q.createdBy))}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+/* ---------- quote list & search ---------- */
+function quoteSearchText(q) {
+  return [q.number, q.ref, q.customer.name, q.customer.company, q.customer.email, q.customer.phone, q.staffName, nameOf(q.createdBy), statusLabel(effStatus(q)), q.date, q.expiry, fmtDate(q.date), ...(q.items || []).map(i => (i.productName || '') + ' ' + (i.desc || ''))].join(' ').toLowerCase();
+}
+function viewQuotes() {
+  const f = State.qFilter;
+  return `<div class="top"><h1>Quotes</h1><div class="actions">${can('createQuotes') ? `<button class="btn primary" data-act="nav" data-v="new">+ New quote</button>` : ''}</div></div>
+  <div class="card"><div class="grid g3" style="margin-bottom:12px"><div class="field" style="grid-column:span 2"><label>Search quote no., customer, product, staff, date, status</label><input type="search" id="qsearch" value="${e(f.text)}" placeholder="e.g. QT-2026, Acme, banner, accepted, 2026-09"></div>
+  <div class="field"><label>Status</label><select id="qstatus"><option value="">All statuses</option>${STATUSES.map(s => `<option value="${s[0]}" ${f.status === s[0] ? 'selected' : ''}>${s[1]}</option>`).join('')}</select></div></div>
+  <div id="qlist">${quoteListHTML()}</div></div>`;
+}
+function quoteListHTML() {
+  const f = State.qFilter, t = f.text.trim().toLowerCase();
+  const list = visibleQuotes().filter(q => (!f.status || effStatus(q) === f.status) && (!t || t.split(/\s+/).every(w => quoteSearchText(q).includes(w))));
+  if (!list.length) return '<p class="muted">No quotes match.</p>';
+  return `<div class="tblwrap"><table class="tbl"><thead><tr><th>Quote</th><th>Customer</th><th>Date</th><th>Expires</th><th>Status</th><th class="r">Total</th><th></th></tr></thead><tbody>${list.map(q => `<tr class="click" data-act="open-quote" data-id="${e(q.id)}"><td><b>${e(q.number)}</b>${q.ref ? `<div class="muted">${e(q.ref)}</div>` : ''}</td><td>${e(q.customer.name)}${q.customer.company ? `<div class="muted">${e(q.customer.company)}</div>` : ''}</td><td>${fmtDate(q.date)}</td><td>${fmtDate(q.expiry)}</td><td>${badge(effStatus(q))}</td><td class="r">${money((q.totals || {}).total)}</td><td class="r noprint">${can('editQuotes') ? `<button class="btn sm" data-act="edit-quote" data-id="${e(q.id)}">Edit</button> ` : ''}${can('createQuotes') ? `<button class="btn sm" data-act="dup-quote" data-id="${e(q.id)}">Duplicate</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+/* ---------- global events ---------- */
+document.addEventListener('click', ev => {
+  const el = ev.target.closest('[data-act]'); if (!el) return;
+  const fn = ACT[el.dataset.act]; if (fn) { if (el.tagName === 'A') ev.preventDefault(); ev.stopPropagation(); fn(el, ev); }
+});
+document.addEventListener('input', ev => {
+  const t = ev.target;
+  if (t.id === 'qsearch') { State.qFilter.text = t.value; const l = $('#qlist'); if (l) l.innerHTML = quoteListHTML(); }
+  else if (t.dataset && (t.dataset.i || t.dataset.q || t.dataset.calc)) onEditorInput && onEditorInput(t, ev);
+  else if (t.dataset && t.dataset.w !== undefined) onWizardInput && onWizardInput(t, ev);
+});
+document.addEventListener('change', ev => {
+  const t = ev.target;
+  if (t.id === 'qstatus') { State.qFilter.status = t.value; const l = $('#qlist'); if (l) l.innerHTML = quoteListHTML(); }
+  else if (t.dataset && (t.dataset.i || t.dataset.q || t.dataset.calc)) onEditorInput && onEditorInput(t, ev);
+  else if (t.dataset && t.dataset.w !== undefined) onWizardInput && onWizardInput(t, ev, true);
+  else if (t.dataset && t.dataset.cfg !== undefined) onSettingsChange && onSettingsChange(t, ev);
+});
+
+Object.assign(ACT, {
+  nav: el => { const v = el.dataset.v; closeModal(true); if (v === 'new') go('editor', {}); else if (v === 'calc') go('calc', { profile: (State.params && State.params.profile) || 'dtf' }); else go(v, {}); },
+  'modal-close': el => { if ($('#ov2') && State.stackModal && el.closest('#ov2')) { State.stackModal.onClose && State.stackModal.onClose(); closeStack(); } else closeModal(); },
+  'cf-yes': () => State.cf && State.cf(true), 'cf-no': () => State.cf && State.cf(false),
+  'pd-yes': () => State.pd && State.pd($('#pd-in').value), 'pd-no': () => State.pd && State.pd(null),
+  'open-quote': el => go('quote', { id: el.dataset.id }),
+  'edit-quote': el => go('editor', { id: el.dataset.id }),
+  'dup-quote': el => duplicateQuote(el.dataset.id),
+  'preview-off': () => { State.previewRole = null; render(true); },
+  'demo-ack': async () => { const S = clean(State.cfg.settings); delete S.demo; await safe(() => DB.setSettings(S)); await DB.audit('Marked demo pricing as reviewed', 'Settings'); render(); },
+  seed: async el => { el.disabled = true; await seedDemo(msg => { const m = $('#seedmsg'); if (m) m.textContent = msg; }); render(); }
+});
+
+/* ---------- demo seeding ---------- */
+async function seedDemo(progress) {
+  const seed = PQSeed.makeSeed();
+  const groups = { categories: seed.categories, materials: seed.materials, machines: seed.machines, labour: seed.labour, finishing: seed.finishing, products: seed.products };
+  const total = Object.values(groups).reduce((a, g) => a + g.length, 0); let n = 0;
+  try {
+    for (const [kind, arr] of Object.entries(groups)) for (const it of arr) { await DB.set(kind, it.id, it); progress && progress('Loading demo data… ' + (++n) + ' / ' + total); }
+    await DB.setSettings(seed.settings);
+    await DB.audit('Loaded demo defaults', 'Settings');
+  } catch (er) { toast(explainError(er), 'bad'); }
+}
+
+async function duplicateQuote(id) {
+  const q = State.quotes[id]; if (!q) return;
+  const copy = JSON.parse(JSON.stringify(q));
+  go('editor', { dupOf: id }, true);
+}
+
+/* ===== line-item editor, quote editor, calculators ===== */
+const PAPER_SIZES = [['A6', 105, 148], ['A5', 148, 210], ['A4', 210, 297], ['A3', 297, 420], ['DL', 99, 210], ['Business card', 90, 55], ['A2', 420, 594], ['A1', 594, 841]];
+const PRINT_SIZES = [['A6', 10.5, 14.8], ['A5', 14.8, 21], ['A4', 21, 29.7], ['A3', 29.7, 42], ['Chest 10×10', 10, 10], ['Pocket 8×8', 8, 8]];
+const POSITIONS = ['Front', 'Back', 'Left chest', 'Right chest', 'Left sleeve', 'Right sleeve', 'Neck', 'Other'];
+const GROUPS = [['base', 'Base price'], ['material', 'Materials'], ['print', 'Ink / printing'], ['machine', 'Machine cost'], ['labour', 'Labour'], ['finishing', 'Finishing'], ['packaging', 'Packaging'], ['wastage', 'Wastage'], ['other', 'Other costs'], ['custom', 'Custom cost']];
+const clone = o => JSON.parse(JSON.stringify(o));
+const activeProducts = () => Object.values(State.cfg.products).filter(p => p.active !== false).sort((a, b) => a.name.localeCompare(b.name));
+const primaryMaterialId = p => { const c = (p.components || []).find(c => c.primary && c.materialId) || (p.components || []).find(c => c.materialId); return c ? c.materialId : ''; };
+const finDefaultQty = id => { const f = State.cfg.finishing[id]; return f && f.askQty ? f.defaultQty || 1 : 1; };
+const needsDimsUI = p => ['large', 'paper'].includes(p.profile) || ['per_sqm', 'per_metre'].includes(p.method) || PQ.num(p.defaultW) > 0;
+
+function recalc(it) {
+  const cfg = engineCfg(), p = cfg.products[it.productId];
+  it.calc = PQ.calcLine(it, cfg); it.pricedAt = Date.now();
+  if (p) {
+    it.productName = p.name; const c = cfg.categories[p.category]; it.categoryName = c ? c.name : '';
+    const parts = [];
+    if (needsDimsUI(p) && PQ.num(it.w) > 0 && PQ.num(it.h) > 0) parts.push(`${it.w} × ${it.h} ${it.unit || 'mm'}`);
+    const m = it.materialId && cfg.materials[it.materialId]; if (m) parts.push(m.name);
+    if (p.profile === 'paper') { parts.push(PQ.num(it.sides) === 2 ? 'double-sided' : 'single-sided'); parts.push(it.colour === 'bw' ? 'B&W' : 'full colour'); if (PQ.num(it.pages) > 1) parts.push(it.pages + ' pages'); }
+    if (p.profile === 'dtf') { if (it.garmentColour) parts.push(it.garmentColour); (it.prints || []).forEach(x => parts.push(`${x.label || 'Print'} ${x.w}×${x.h}cm${PQ.num(x.count) > 1 ? ' ×' + x.count : ''}`)); }
+    const fin = (it.finishing || []).map(s => (cfg.finishing[s.id] || {}).name).filter(Boolean); if (fin.length) parts.push('Finishing: ' + fin.join(', '));
+    it.specText = parts.join(' · ');
+  }
+}
+function newItem(prodId) {
+  const p = State.cfg.products[prodId]; if (!p) return null;
+  const it = { key: uid('i'), productId: prodId, desc: '', qty: p.defaultQty || 1, unit: p.unit || 'mm', w: p.defaultW || '', h: p.defaultH || '', sides: p.defaultSides || 1, pages: p.defaultPages || 1, colour: 'colour',
+    materialId: primaryMaterialId(p), prints: clone(p.defaultPrints || []), garmentColour: '', finishing: (p.defaultFinishing || []).map(id => ({ id, qty: finDefaultQty(id) })),
+    extraMinutes: '', labourId: '', customLabel: '', customCost: '', markupOverride: '', discount: { type: 'pct', value: '' }, notes: '', override: null };
+  recalc(it); return it;
+}
+const fld = (label, inner, help, cls) => `<div class="field ${cls || ''}"><label>${label}</label>${inner}${help ? `<div class="help">${help}</div>` : ''}</div>`;
+const opt = (v, l, sel) => `<option value="${e(v)}" ${sel ? 'selected' : ''}>${e(l)}</option>`;
+
+function itemFieldsHTML(it) {
+  const cfg = engineCfg(), p = cfg.products[it.productId], k = e(it.key); if (!p) return '<p class="muted">Product missing.</p>';
+  const A = f => `data-i="${k}" data-f="${f}"`;
+  const prim = (p.components || []).find(c => c.primary && c.materialId) || (p.components || []).find(c => c.materialId);
+  const pm = prim && cfg.materials[prim.materialId];
+  const matChoices = pm ? Object.values(cfg.materials).filter(m => m.costBasis === pm.costBasis && (m.active !== false || m.id === it.materialId)).sort((a, b) => a.name.localeCompare(b.name)) : [];
+  let h = '';
+  h += `<div class="grid g2">${fld('Description', `<input ${A('desc')} value="${e(it.desc)}" placeholder="Job name / artwork ref (shown on quote)">`)}
+    ${fld('Quantity', `<div class="qty"><button class="btn" type="button" data-act="qty-dec" data-key="${k}">−</button><input type="number" inputmode="numeric" min="0" step="any" ${A('qty')} value="${e(it.qty)}"><button class="btn" type="button" data-act="qty-inc" data-key="${k}">+</button></div>`)}</div>`;
+  h += '<div class="grid g3" style="margin-top:12px">';
+  if (needsDimsUI(p)) {
+    if (p.profile === 'paper') h += fld('Finished size', `<select ${A('sizePreset')}><option value="">Custom</option>${PAPER_SIZES.map(s => opt(s[0], `${s[0]} (${s[1]}×${s[2]})`, it.unit === 'mm' && PQ.num(it.w) === s[1] && PQ.num(it.h) === s[2])).join('')}</select>`);
+    h += fld('Width', `<input type="number" inputmode="decimal" min="0" step="any" ${A('w')} value="${e(it.w)}">`) + fld('Height', `<input type="number" inputmode="decimal" min="0" step="any" ${A('h')} value="${e(it.h)}">`) +
+      fld('Unit', `<select ${A('unit')}>${['mm', 'cm', 'm'].map(u => opt(u, u, it.unit === u)).join('')}</select>`);
+  }
+  if (matChoices.length) h += fld(p.profile === 'dtf' ? 'Garment' : 'Material', `<select ${A('materialId')}>${matChoices.map(m => opt(m.id, m.name, m.id === it.materialId)).join('')}</select>`);
+  if (p.profile === 'dtf') h += fld('Garment colour', `<input ${A('garmentColour')} value="${e(it.garmentColour || '')}" placeholder="e.g. White, Black, Navy">`);
+  if (p.profile === 'paper') h += fld('Print sides', `<select ${A('sides')}>${opt(1, 'Single-sided', PQ.num(it.sides) === 1)}${opt(2, 'Double-sided', PQ.num(it.sides) === 2)}</select>`) + fld('Colour', `<select ${A('colour')}>${opt('colour', 'Full colour', it.colour !== 'bw')}${opt('bw', 'Black & white', it.colour === 'bw')}</select>`) + fld('Pages (per copy)', `<input type="number" min="1" step="1" ${A('pages')} value="${e(it.pages)}">`, 'Booklets: total pages');
+  h += '</div>';
+  if (p.usePrintList) {
+    h += `<div class="lbl" style="margin:14px 0 6px">Print positions & sizes (cm)</div>`;
+    (it.prints || []).forEach((pr, i) => {
+      const P = f => `data-i="${k}" data-pr="${i}" data-f="${f}"`;
+      h += `<div class="listrow" style="grid-template-columns:1.3fr 1fr 1fr .8fr auto"><div class="field"><label>Position</label><input list="poslist" ${P('prLabel')} value="${e(pr.label || '')}"></div>
+        <div class="field"><label>Width cm</label><input type="number" min="0" step="any" ${P('prW')} value="${e(pr.w)}"></div><div class="field"><label>Height cm</label><input type="number" min="0" step="any" ${P('prH')} value="${e(pr.h)}"></div>
+        <div class="field"><label>Count</label><input type="number" min="1" step="1" ${P('prCount')} value="${e(pr.count)}"></div>
+        <div style="display:flex;gap:4px"><select ${P('prPreset')} style="width:92px"><option value="">Size…</option>${PRINT_SIZES.map(s => `<option value="${s[0]}">${s[0]}</option>`).join('')}</select><button class="btn icon danger" type="button" data-act="pr-del" data-key="${k}" data-idx="${i}" aria-label="Remove print">✕</button></div></div>`;
+    });
+    h += `<datalist id="poslist">${POSITIONS.map(x => `<option value="${x}">`).join('')}</datalist><button class="btn sm" type="button" data-act="pr-add" data-key="${k}">+ Add print position</button>`;
+  }
+  const allowed = (p.allowedFinishing || []).map(id => cfg.finishing[id]).filter(f => f && (f.active !== false || (it.finishing || []).some(s => s.id === f.id)));
+  if (allowed.length) {
+    h += `<div class="lbl" style="margin:14px 0 4px">Finishing & extras</div><div>${allowed.map(f => {
+      const sel = (it.finishing || []).find(s => s.id === f.id);
+      return `<div class="fin"><input type="checkbox" ${sel ? 'checked' : ''} data-i="${k}" data-f="finOn" data-fin="${e(f.id)}" id="fin-${k}-${e(f.id)}"><label for="fin-${k}-${e(f.id)}">${e(f.name)}</label>${f.askQty ? `<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:12px">${e(f.qtyLabel || 'Qty')}</span><input type="number" min="0" step="1" data-i="${k}" data-f="finQty" data-fin="${e(f.id)}" value="${e(sel ? sel.qty : f.defaultQty || 1)}" ${sel ? '' : 'disabled'}></span>` : '<span></span>'}</div>`;
+    }).join('')}</div>`;
+  }
+  h += '<div class="grid g3" style="margin-top:14px">';
+  h += fld('Custom cost (R, total)', `<input type="number" min="0" step="any" inputmode="decimal" ${A('customCost')} value="${e(it.customCost)}">`, 'Supplier / outsourced cost added to production cost') + fld('Custom cost label', `<input ${A('customLabel')} value="${e(it.customLabel)}" placeholder="e.g. Supplier mugs">`);
+  if (can('overrideMarkup')) h += fld('Markup override %', `<input type="number" min="0" step="any" ${A('markupOverride')} value="${e(it.markupOverride)}" placeholder="default">`, 'Leave blank to use the default');
+  if (can('overrideMarkup')) h += fld('Extra labour (minutes)', `<input type="number" min="0" step="any" ${A('extraMinutes')} value="${e(it.extraMinutes)}">`) + fld('Labour type', `<select ${A('labourId')}><option value="">Product default</option>${Object.values(cfg.labour).map(l => opt(l.id, l.name, it.labourId === l.id)).join('')}</select>`);
+  if (can('applyDiscount')) h += fld('Line discount', `<div style="display:flex;gap:6px"><select ${A('discType')} style="width:84px"><option value="pct" ${it.discount.type !== 'fixed' ? 'selected' : ''}>%</option><option value="fixed" ${it.discount.type === 'fixed' ? 'selected' : ''}>R</option></select><input type="number" min="0" step="any" ${A('discVal')} value="${e(it.discount.value)}"></div>`);
+  h += '</div>';
+  if (can('overridePrice')) {
+    const ov = it.override;
+    h += `<div style="margin-top:12px"><label class="chk"><input type="checkbox" ${A('ovOn')} ${ov ? 'checked' : ''}> Manual price override</label><div class="grid g2" id="ov-${k}" style="margin-top:8px;${ov ? '' : 'display:none'}">${fld('Override price for the whole line (R)', `<input type="number" min="0" step="any" ${A('ovPrice')} value="${e(ov ? ov.price : '')}">`) + fld('Reason (optional)', `<input ${A('ovReason')} value="${e(ov ? ov.reason || '' : '')}">`)}</div></div>`;
+  }
+  h += `<div style="margin-top:12px">${fld('Notes', `<input ${A('notes')} value="${e(it.notes)}" placeholder="Internal / customer notes for this line">`)}</div>`;
+  return h;
+}
+
+function calcDetailsHTML(it) {
+  const c = it.calc, qty = PQ.num(it.qty) || 1, showC = can('viewCosts');
+  let h = `<div class="rowline"><span>Unit price</span><b>${money(c.unitPrice)}</b></div><div class="rowline"><span>Quantity</span><span>${e(it.qty)}</span></div>`;
+  if (c.discountAmount > 0) h += `<div class="rowline sub"><span>Line discount</span><span>-${money(c.discountAmount)}</span></div>`;
+  h += `<div class="rowline tot"><span>Line total</span><span>${money(c.finalSubtotal)}</span></div>`;
+  if (c.minApplied) h += `<div class="muted" style="font-size:12px">Minimum charge of ${money(c.minPrice)} applied.</div>`;
+  if (c.overrideApplied) h += `<div class="alert warn" style="margin-top:8px">Manual price override (calculated price was ${money(c.calculatedPrice)}).</div>`;
+  if (!showC) return h;
+  const rows = GROUPS.map(([g, label]) => {
+    const ls = c.lines.filter(l => l.group === g); if (!ls.length) return '';
+    return `<tr><td colspan="4" style="background:var(--soft);font-weight:600">${label}</td></tr>` + ls.map(l => `<tr><td>${e(l.label)}</td><td class="muted">${e(l.detail)}</td><td class="r">${money(l.amount / qty)}</td><td class="r">${money(l.amount)}</td></tr>`).join('');
+  }).join('');
+  h += `<details class="calc"><summary>Calculation details</summary><div class="tblwrap"><table class="tbl" style="margin-top:8px"><thead><tr><th>Cost item</th><th>How</th><th class="r">Per unit</th><th class="r">Total</th></tr></thead><tbody>${rows}
+    <tr><td colspan="2"><b>Production cost</b></td><td class="r"><b>${money(c.productionCost / qty)}</b></td><td class="r"><b>${money(c.productionCost)}</b></td></tr>
+    <tr><td colspan="2">${c.markupMode === 'margin' ? 'Margin' : 'Markup'} ${pctf(c.markupPct)} <span class="muted">(${e(c.markupSource)})</span></td><td class="r">${money((c.sellingBeforeMin - c.productionCost) / qty)}</td><td class="r">${money(c.sellingBeforeMin - c.productionCost)}</td></tr>
+    <tr><td colspan="2"><b>Selling price</b> ${c.minApplied ? '<span class="muted">(after minimum charge)</span>' : ''}${c.calculatedPrice !== c.sellingBeforeMin && !c.minApplied ? '<span class="muted">(after rounding)</span>' : ''}</td><td class="r"><b>${money(c.calculatedPrice / qty)}</b></td><td class="r"><b>${money(c.calculatedPrice)}</b></td></tr>
+    ${c.overrideApplied ? `<tr><td colspan="3">Manual override price</td><td class="r">${money(c.sellingPrice)}</td></tr>` : ''}
+    ${c.discountAmount > 0 ? `<tr><td colspan="3">Discount</td><td class="r">-${money(c.discountAmount)}</td></tr>` : ''}
+    <tr><td colspan="3"><b>Line total (× ${e(it.qty)})</b></td><td class="r"><b>${money(c.finalSubtotal)}</b></td></tr>
+    ${can('viewProfit') ? `<tr><td colspan="3">Gross profit</td><td class="r">${money(c.grossProfit)}</td></tr>` : ''}${can('viewMargin') ? `<tr><td colspan="3">Gross margin</td><td class="r">${pctf(c.marginPct)}</td></tr>` : ''}</tbody></table></div></details>`;
+  return h;
+}
+function itemResultHTML(it) {
+  const c = it.calc; let h = '';
+  if (!c.ok) h += c.errors.map(x => `<div class="alert bad">${e(x)}</div>`).join('');
+  h += (c.warnings || []).map(x => `<div class="alert warn">${e(x)}</div>`).join('');
+  if (c.ok || c.finalSubtotal > 0) h += calcDetailsHTML(it);
+  return h;
+}
+function itemHTML(it, idx, opts) {
+  const c = it.calc || {}, closed = it.closed ? 'closed' : '';
+  return `<div class="item ${closed}" id="it-${e(it.key)}"><div class="ih" data-act="item-toggle" data-key="${e(it.key)}"><span class="badge">${idx + 1}</span><span class="t">${e(it.productName || 'Item')}${it.desc ? ' — ' + e(it.desc) : ''} <span class="muted">× ${e(it.qty)}</span></span><span class="p">${money(c.finalSubtotal)}</span></div>
+  <div class="ib"><div class="grid g2" style="margin-bottom:12px">${fld('Product', `<select data-i="${e(it.key)}" data-f="productId">${productOptions(it.productId)}</select>`)}<div style="display:flex;gap:6px;align-items:flex-end;justify-content:flex-end">${opts && opts.single ? '' : `<button class="btn sm" data-act="item-dup" data-key="${e(it.key)}">Duplicate line</button><button class="btn sm danger" data-act="item-del" data-key="${e(it.key)}">Remove</button>`}</div></div>
+  <div class="it-fields">${itemFieldsHTML(it)}</div><div class="it-res" style="margin-top:14px">${itemResultHTML(it)}</div></div></div>`;
+}
+function productOptions(sel) {
+  const cats = Object.values(State.cfg.categories).sort((a, b) => a.name.localeCompare(b.name)), prods = activeProducts();
+  const cur = State.cfg.products[sel]; const list = cur && cur.active === false ? [...prods, cur] : prods;
+  let h = '';
+  cats.forEach(c => { const ps = list.filter(p => p.category === c.id); if (ps.length) h += `<optgroup label="${e(c.name)}">${ps.map(p => opt(p.id, p.name, p.id === sel)).join('')}</optgroup>`; });
+  const orphan = list.filter(p => !cats.some(c => c.id === p.category)); if (orphan.length) h += orphan.map(p => opt(p.id, p.name, p.id === sel)).join('');
+  return h;
+}
+
+/* ---------- editor session ---------- */
+function newQuoteDraft() {
+  const S = State.cfg.settings, Q = S.quotes || {}, today = todayISO();
+  return { id: null, number: null, status: 'draft', createdAt: 0, createdBy: State.me.id || 'local', customer: { name: '', company: '', phone: '', email: '' }, ref: '', date: today, expiry: addDays(today, PQ.num(Q.expiryDays, 14)),
+    staffName: State.me.name || '', notes: Q.defaultNotes || '', terms: Q.terms || '', paymentTerms: Q.paymentTerms || '', items: [], discount: { type: 'pct', value: '' }, discountApproval: null, history: [],
+    snap: { vat: { enabled: S.vat.enabled, rate: S.vat.rate, mode: S.vat.mode, discountReducesVat: (S.discount || {}).discountReducesVat !== false }, minOrder: PQ.num((S.pricing || {}).minOrder) } };
+}
+function viewEditor() {
+  if (!State.ed) {
+    const P = State.params; let Q;
+    if (P.id && State.quotes[P.id]) { Q = clone(State.quotes[P.id]); }
+    else if (P.dupOf && State.quotes[P.dupOf]) {
+      const src = clone(State.quotes[P.dupOf]); Q = newQuoteDraft(); Q.customer = src.customer; Q.ref = ''; Q.notes = src.notes; Q.terms = src.terms || Q.terms; Q.paymentTerms = src.paymentTerms || Q.paymentTerms; Q.discount = src.discount || Q.discount;
+      Q.items = src.items.map(i => { i.key = uid('i'); i.override = null; return i; }); Q.items.forEach(recalc); Q.copiedFrom = src.number;
+    } else { Q = newQuoteDraft(); if (State.pendingItem) { Q.items = [State.pendingItem]; State.pendingItem = null; } }
+    Q.items.forEach(i => { if (!i.key) i.key = uid('i'); if (!i.calc) recalc(i); });
+    State.ed = { kind: 'quote', Q, isNew: !Q.id };
+    if (Q.copiedFrom) State.dirty = true;
+  }
+  const { Q } = State.ed, S = State.cfg.settings;
+  if (!can(Q.id ? 'editQuotes' : 'createQuotes')) return `<div class="alert bad">You don't have permission to ${Q.id ? 'edit' : 'create'} quotes.</div>`;
+  const cust = Object.values(State.customers);
+  return `<div class="top"><div><h1>${Q.id ? 'Edit ' + e(Q.number) : 'New quote'}</h1>${Q.copiedFrom ? `<div class="muted">Copied from ${e(Q.copiedFrom)} — prices recalculated with current pricing</div>` : ''}</div>
+    <div class="actions"><button class="btn" data-act="ed-cancel">Cancel</button><button class="btn primary" data-act="ed-save">Save quote</button></div></div>
+  <div class="split"><div>
+   <div class="card"><h2>Customer & quote details</h2><div class="grid g2">
+    ${fld('Customer name *', `<input data-q="customer.name" list="custlist" value="${e(Q.customer.name)}" autocomplete="off">`)}${fld('Company', `<input data-q="customer.company" value="${e(Q.customer.company)}">`)}
+    ${fld('Phone', `<input type="tel" data-q="customer.phone" value="${e(Q.customer.phone)}">`)}${fld('Email', `<input type="email" data-q="customer.email" value="${e(Q.customer.email)}">`)}
+    ${fld('Quote number', `<input value="${e(Q.number || 'Assigned automatically when saved')}" disabled>`)}${fld('Your reference / PO', `<input data-q="ref" value="${e(Q.ref)}">`)}
+    ${fld('Quote date', `<input type="date" data-q="date" value="${e(Q.date)}">`)}${fld('Expiry date', `<input type="date" data-q="expiry" value="${e(Q.expiry)}">`)}
+    ${fld('Prepared by', `<input data-q="staffName" value="${e(Q.staffName)}">`)}${fld('Customer notes (shown on quote)', `<input data-q="notes" value="${e(Q.notes)}">`)}</div>
+    <datalist id="custlist">${cust.map(c => `<option value="${e(c.name)}">`).join('')}</datalist></div>
+   <div id="items">${Q.items.map((it, i) => itemHTML(it, i)).join('')}</div>
+   <div class="card noprint" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end"><div class="field" style="flex:1;min-width:200px"><label>Add line item</label><select id="addprod"><option value="">Choose a product…</option>${productOptions('')}</select></div><button class="btn primary" data-act="item-add">+ Add item</button></div>
+   <div class="card"><h2>Quote-level settings</h2><div class="grid g2">
+    ${can('applyDiscount') ? fld('Whole-quote discount', `<div style="display:flex;gap:6px"><select data-q="discount.type" style="width:84px"><option value="pct" ${Q.discount.type !== 'fixed' ? 'selected' : ''}>%</option><option value="fixed" ${Q.discount.type === 'fixed' ? 'selected' : ''}>R</option></select><input type="number" min="0" step="any" data-q="discount.value" value="${e(Q.discount.value)}"></div>`) : ''}
+    ${fld('Payment terms', `<textarea data-q="paymentTerms">${e(Q.paymentTerms)}</textarea>`)}${fld('Terms & conditions', `<textarea data-q="terms">${e(Q.terms)}</textarea>`, '', 'span2')}</div></div>
+  </div>
+  <div class="sticky"><div class="card" id="totals">${totalsHTML(Q)}</div></div></div>
+  <div class="stickybar" id="sbar">${sbarHTML(Q)}</div>`;
+}
+function totalsFor(Q) { return PQ.calcQuote(Q.items, Q.discount, Q.snap.vat, { minOrder: Q.snap.minOrder }); }
+function discountState(Q, t) {
+  const pol = PQ.discountPolicy(State.cfg.settings, role(), t.discountPct);
+  const approved = Q.discountApproval && PQ.num(Q.discountApproval.pct) + 0.005 >= t.discountPct;
+  return { pol, needsApproval: pol.needsApproval && !approved, blocked: !pol.allowed };
+}
+function totalsHTML(Q) {
+  const t = totalsFor(Q), inc = t.vatMode === 'inclusive', ds = discountState(Q, t);
+  const bad = Q.items.filter(i => !i.calc.ok).length;
+  let h = `<h2>Quote total</h2>`;
+  if (!Q.items.length) h += '<p class="muted">Add a line item to begin.</p>';
+  h += `<div class="rowline"><span>${inc && t.vatEnabled ? 'Items (incl. VAT)' : 'Items'}</span><span>${money(t.gross)}</span></div>`;
+  if (t.lineDiscounts > 0) h += `<div class="rowline sub"><span>Line discounts</span><span>-${money(t.lineDiscounts)}</span></div>`;
+  if (t.quoteDiscount > 0) h += `<div class="rowline sub"><span>Quote discount</span><span>-${money(t.quoteDiscount)}</span></div>`;
+  if (t.minOrderAdjustment > 0) h += `<div class="rowline sub"><span>Minimum order adjustment</span><span>${money(t.minOrderAdjustment)}</span></div>`;
+  h += `<div class="rowline"><span>Subtotal${t.vatEnabled ? ' (excl. VAT)' : ''}</span><span>${money(t.subtotal)}</span></div>`;
+  if (t.vatEnabled) h += `<div class="rowline"><span>VAT ${pctf(t.vatRate)}</span><span>${money(t.vat)}</span></div>`;
+  h += `<div class="rowline tot"><span>Total</span><span id="grand">${money(t.total)}</span></div><div class="muted" style="font-size:12px">${t.vatEnabled ? (inc ? 'Prices include VAT.' : 'Prices exclude VAT; VAT added above.') : 'VAT not charged.'}</div>`;
+  if (t.discountPct > 0) h += `<div class="muted" style="font-size:12px;margin-top:4px">Total discount: ${pctf(t.discountPct)}</div>`;
+  if (ds.blocked) h += `<div class="alert bad" style="margin-top:8px">${e(ds.pol.reason || 'Discount not allowed')}</div>`;
+  else if (ds.needsApproval) h += `<div class="alert warn" style="margin-top:8px">Discount of ${pctf(t.discountPct)} exceeds your ${pctf(ds.pol.max)} limit. It can be saved, but needs manager approval before the quote is sent or accepted.</div>`;
+  t.errors.forEach(x => h += `<div class="alert bad" style="margin-top:8px">${e(x)}</div>`);
+  if (bad) h += `<div class="alert bad" style="margin-top:8px">${bad} line item${bad > 1 ? 's have' : ' has'} errors — see the item below.</div>`;
+  if (can('viewCosts') || can('viewProfit') || can('viewMargin')) {
+    h += `<div style="border-top:1px dashed var(--line);margin-top:10px;padding-top:8px"><div class="lbl">Internal — not shown to customer</div>`;
+    if (can('viewCosts')) h += `<div class="rowline sub"><span>Production cost</span><span>${money(t.productionCost)}</span></div>`;
+    if (can('viewProfit')) h += `<div class="rowline sub"><span>Gross profit</span><span>${money(t.grossProfit)}</span></div>`;
+    if (can('viewMargin')) h += `<div class="rowline sub"><span>Gross margin</span><span>${pctf(t.marginPct)}</span></div>`;
+    h += '</div>';
+  }
+  h += `<div class="noprint" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn primary" data-act="ed-save" style="flex:1">Save quote</button>${Q.items.length ? '<button class="btn" data-act="ed-reprice">Reprice all</button>' : ''}</div>`;
+  return h;
+}
+const sbarHTML = Q => { const t = totalsFor(Q); return `<div><small>${t.vatEnabled ? (t.vatMode === 'inclusive' ? 'Total incl. VAT' : 'Total incl. VAT') : 'Total'}</small><span id="sbtotal">${money(t.total)}</span></div><button class="btn" style="min-height:40px" data-act="ed-jump">Details</button><button class="btn primary" style="min-height:40px" data-act="ed-save">Save</button>`; };
+
+function refreshItem(it) {
+  const box = $('#it-' + it.key); if (!box) return;
+  const c = it.calc, ih = $('.ih', box);
+  ih.querySelector('.p').textContent = money(c.finalSubtotal);
+  ih.querySelector('.t').innerHTML = `${e(it.productName || 'Item')}${it.desc ? ' — ' + e(it.desc) : ''} <span class="muted">× ${e(it.qty)}</span>`;
+  const openDet = $('details.calc', box) && $('details.calc', box).open;
+  $('.it-res', box).innerHTML = itemResultHTML(it);
+  if (openDet) { const d = $('details.calc', box); if (d) d.open = true; }
+  if (State.ed.kind === 'calc') refreshCalcPanel();
+}
+function refreshTotals() {
+  const ed = State.ed; if (!ed || ed.kind !== 'quote') return;
+  const t = $('#totals'); if (t) t.innerHTML = totalsHTML(ed.Q); const s = $('#sbar'); if (s) s.innerHTML = sbarHTML(ed.Q);
+}
+function rerenderItem(it) { const box = $('#it-' + it.key); if (!box) return; const idx = State.ed.Q ? State.ed.Q.items.indexOf(it) : 0; const tmp = document.createElement('div'); tmp.innerHTML = itemHTML(it, idx < 0 ? 0 : idx, State.ed.kind === 'calc' ? { single: true } : null); box.replaceWith(tmp.firstElementChild); }
+function markDirty() { State.dirty = true; }
+function setDeep(o, path, v) { const ks = path.split('.'); let x = o; ks.slice(0, -1).forEach(k => x = x[k]); x[ks[ks.length - 1]] = v; }
+function itemsOf() { const ed = State.ed; return ed.kind === 'calc' ? [ed.item] : ed.Q.items; }
+
+function changeProduct(it, pid) {
+  const n = newItem(pid); if (!n) return;
+  n.key = it.key; n.desc = it.desc; n.notes = it.notes; n.qty = it.qty || n.qty; n.discount = it.discount; n.customCost = it.customCost; n.customLabel = it.customLabel; n.closed = it.closed;
+  Object.keys(it).forEach(k => delete it[k]); Object.assign(it, n); recalc(it); rerenderItem(it); if (State.ed.kind === 'calc') refreshCalcPanel();
+}
+function onEditorInput(t) {
+  const ed = State.ed; if (!ed) return;
+  if (t.dataset.q) {
+    let v = t.value; setDeep(ed.Q, t.dataset.q, v);
+    if (t.dataset.q === 'customer.name') { const c = Object.values(State.customers).find(x => x.name === v); if (c) { ['company', 'phone', 'email'].forEach(k => { if (!ed.Q.customer[k]) { ed.Q.customer[k] = c[k] || ''; const inp = $(`[data-q="customer.${k}"]`); if (inp) inp.value = c[k] || ''; } }); } }
+    markDirty(); if (t.dataset.q.startsWith('discount')) refreshTotals(); return;
+  }
+  if (t.dataset.calc) { onCalcInput(t); return; }
+  const it = itemsOf().find(x => x.key === t.dataset.i); if (!it) return;
+  const f = t.dataset.f, v = t.type === 'checkbox' ? t.checked : t.value;
+  if (f === 'productId') { changeProduct(it, v); }
+  else {
+    switch (f) {
+      case 'unit': { const o = PQ.UNIT_MM[it.unit] || 1, n = PQ.UNIT_MM[v] || 1; ['w', 'h'].forEach(k => { if (PQ.has(it[k])) it[k] = Math.round(PQ.num(it[k]) * o / n * 1e4) / 1e4; }); it.unit = v; rerenderFields(it); break; }
+      case 'sizePreset': { const s = PAPER_SIZES.find(x => x[0] === v); if (s) { it.unit = 'mm'; it.w = s[1]; it.h = s[2]; rerenderFields(it); } break; }
+      case 'discType': it.discount.type = v; break; case 'discVal': it.discount.value = v; break;
+      case 'ovOn': { it.override = v ? { price: it.calc.calculatedPrice, reason: '' } : null; const b = $('#ov-' + it.key); if (b) { b.style.display = v ? '' : 'none'; const pi = $('[data-f="ovPrice"]', b); if (pi && v) pi.value = it.calc.calculatedPrice; } break; }
+      case 'ovPrice': if (it.override) it.override.price = v; break; case 'ovReason': if (it.override) it.override.reason = v; break;
+      case 'finOn': { const id = t.dataset.fin; it.finishing = (it.finishing || []).filter(s => s.id !== id); if (v) it.finishing.push({ id, qty: finDefaultQty(id) }); const qi = $(`[data-i="${it.key}"][data-f="finQty"][data-fin="${id}"]`); if (qi) { qi.disabled = !v; if (v) qi.value = finDefaultQty(id); } break; }
+      case 'finQty': { const s = (it.finishing || []).find(x => x.id === t.dataset.fin); if (s) s.qty = v; break; }
+      case 'prLabel': case 'prW': case 'prH': case 'prCount': { const pr = it.prints[+t.dataset.pr]; pr[{ prLabel: 'label', prW: 'w', prH: 'h', prCount: 'count' }[f]] = f === 'prLabel' ? v : v; break; }
+      case 'prPreset': { const s = PRINT_SIZES.find(x => x[0] === v); if (s) { const pr = it.prints[+t.dataset.pr]; pr.w = s[1]; pr.h = s[2]; rerenderFields(it); } break; }
+      default: it[f] = v;
+    }
+    recalc(it); refreshItem(it);
+  }
+  markDirty(); refreshTotals();
+}
+function rerenderFields(it) { const box = $('#it-' + it.key); if (box) $('.it-fields', box).innerHTML = itemFieldsHTML(it); }
+
+Object.assign(ACT, {
+  'item-toggle': el => { if (event && event.target.closest('button')) return; const it = itemsOf().find(x => x.key === el.dataset.key); if (!it) return; it.closed = !it.closed; $('#it-' + it.key).classList.toggle('closed', it.closed); },
+  'item-add': () => { const s = $('#addprod'); if (!s.value) { toast('Choose a product first', 'bad'); return; } const it = newItem(s.value); State.ed.Q.items.push(it); const tmp = document.createElement('div'); tmp.innerHTML = itemHTML(it, State.ed.Q.items.length - 1); $('#items').appendChild(tmp.firstElementChild); s.value = ''; markDirty(); refreshTotals(); $('#it-' + it.key).scrollIntoView({ behavior: 'smooth', block: 'start' }); },
+  'item-del': async el => { if (!await confirmDialog({ title: 'Remove line item?', body: '<p>This line item will be removed from the quote.</p>', okLabel: 'Remove', danger: true })) return; const Q = State.ed.Q; Q.items = Q.items.filter(x => x.key !== el.dataset.key); $('#it-' + el.dataset.key).remove(); $$('#items .item .ih .badge').forEach((b, i) => b.textContent = i + 1); markDirty(); refreshTotals(); },
+  'item-dup': el => { const Q = State.ed.Q, src = Q.items.find(x => x.key === el.dataset.key); const c = clone(src); c.key = uid('i'); c.override = null; Q.items.splice(Q.items.indexOf(src) + 1, 0, c); recalc(c); $('#items').innerHTML = Q.items.map((it, i) => itemHTML(it, i)).join(''); markDirty(); refreshTotals(); },
+  'qty-inc': el => stepQty(el, 1), 'qty-dec': el => stepQty(el, -1),
+  'pr-add': el => { const it = itemsOf().find(x => x.key === el.dataset.key); it.prints.push({ label: 'Back', w: 21, h: 29.7, count: 1 }); recalc(it); rerenderFields(it); refreshItem(it); markDirty(); refreshTotals(); },
+  'pr-del': el => { const it = itemsOf().find(x => x.key === el.dataset.key); it.prints.splice(+el.dataset.idx, 1); recalc(it); rerenderFields(it); refreshItem(it); markDirty(); refreshTotals(); },
+  'ed-jump': () => { const t = $('#totals'); if (t) t.scrollIntoView({ behavior: 'smooth' }); },
+  'ed-cancel': () => go(State.ed.Q.id ? 'quote' : 'quotes', State.ed.Q.id ? { id: State.ed.Q.id } : {}),
+  'ed-save': () => saveQuote(),
+  'ed-reprice': async () => {
+    if (!await confirmDialog({ title: 'Reprice all lines with current pricing?', body: '<p>Every line will be recalculated using today\'s materials, labour, machine and markup settings, and the quote will adopt today\'s VAT and minimum-order settings. Manual overrides are kept.</p>', okLabel: 'Reprice' })) return;
+    const Q = State.ed.Q, S = State.cfg.settings; Q.snap = newQuoteDraft().snap; Q.items.forEach(recalc); $('#items').innerHTML = Q.items.map((it, i) => itemHTML(it, i)).join(''); markDirty(); refreshTotals(); toast('Quote repriced');
+  }
+});
+function stepQty(el, d) { const it = itemsOf().find(x => x.key === el.dataset.key); const inp = $(`[data-i="${it.key}"][data-f="qty"]`); const step = it.qty >= 1000 ? 100 : it.qty >= 100 ? 10 : 1; const v = Math.max(0, Math.round((PQ.num(it.qty) + d * step) * 1000) / 1000); it.qty = v; inp.value = v; recalc(it); refreshItem(it); markDirty(); refreshTotals(); }
+
+async function saveQuote() {
+  const ed = State.ed, Q = ed.Q, S = State.cfg.settings, errs = [];
+  if (!Q.customer.name.trim()) errs.push('Customer name is required');
+  if (Q.customer.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(Q.customer.email.trim())) errs.push('Email address looks invalid');
+  if (!Q.date) errs.push('Quote date is required'); if (Q.expiry && Q.date && Q.expiry < Q.date) errs.push('Expiry date is before the quote date');
+  if (!Q.items.length) errs.push('Add at least one line item');
+  Q.items.forEach((it, i) => { recalc(it); if (!it.calc.ok) errs.push(`Line ${i + 1}: ${it.calc.errors[0]}`); if (it.override && !(PQ.num(it.override.price) >= 0 && PQ.has(it.override.price))) errs.push(`Line ${i + 1}: enter an override price`); });
+  const t = totalsFor(Q); t.errors.forEach(x => errs.push(x));
+  const ds = discountState(Q, t); if (ds.blocked) errs.push(ds.pol.reason || 'Discount not allowed');
+  if (errs.length) { openModal({ title: 'Please fix before saving', body: `<ul>${errs.map(x => `<li>${e(x)}</li>`).join('')}</ul>`, footer: '<button class="btn primary" data-act="modal-close">OK</button>' }); return; }
+  const btns = $$('[data-act="ed-save"]'); btns.forEach(b => b.disabled = true);
+  try {
+    const now = Date.now(), me = State.me.id || 'local'; let created = false;
+    const prev = Q.id ? State.quotes[Q.id] : null;
+    // stamp manual overrides
+    for (const [i, it] of Q.items.entries()) if (it.override) {
+      const pv = prev && prev.items.find(x => x.key === it.key), same = pv && pv.override && PQ.num(pv.override.price) === PQ.num(it.override.price);
+      if (!same) { it.override = { price: PQ.num(it.override.price), reason: it.override.reason || '', original: it.calc.calculatedPrice, by: me, at: now };
+        await DB.audit('Manual price override', `${Q.number || 'new quote'} line ${i + 1} ${it.productName}`, money(it.calc.calculatedPrice), money(it.override.price)); }
+    }
+    if (!Q.id) { Q.number = await nextQuoteNumber(); Q.id = quoteDocId(Q.number); Q.createdAt = now; Q.createdBy = me; Q.createdRole = role(); created = true; }
+    Q.totals = t; Q.updatedAt = now; Q.updatedBy = me; Q.status = Q.status || 'draft';
+    Q.history = [...(Q.history || []), { ts: now, uid: me, action: created ? 'Quote created' : 'Quote edited', detail: `Total ${money(t.total)}` }].slice(-100);
+    Q.items.forEach(i => { delete i.closed; });
+    await DB.setQuote(Q);
+    await DB.audit(created ? 'Created quote' : 'Edited quote', Q.number, prev ? money((prev.totals || {}).total) : '', money(t.total));
+    if (ds.needsApproval) await DB.audit('Discount awaiting approval', Q.number, '', pctf(t.discountPct));
+    const c = Q.customer; if (c.name.trim()) { const id = 'c_' + slug((c.email || c.name + c.company)).slice(0, 60); await DB.setCustomer({ id, name: c.name.trim(), company: c.company, phone: c.phone, email: c.email }); }
+    State.dirty = false; toast('Saved ' + Q.number); go('quote', { id: Q.id }, true);
+  } catch (er) { console.error(er); toast(explainError(er), 'bad'); btns.forEach(b => b.disabled = false); }
+}
+
+/* ---------- calculators (same engine, focused layouts) ---------- */
+const CALC_TABS = [['dtf', 'DTF'], ['paper', 'Paper'], ['large', 'Large format']];
+function viewCalc() {
+  const profile = State.params.profile || 'dtf';
+  const prods = activeProducts().filter(p => p.profile === profile);
+  if (!State.ed || State.ed.kind !== 'calc' || State.ed.profile !== profile) {
+    const first = prods[0]; State.ed = { kind: 'calc', profile, item: first ? newItem(first.id) : null };
+  }
+  const it = State.ed.item;
+  return `<div class="top"><h1>Calculators</h1></div><div class="tabs">${CALC_TABS.map(t => `<button class="${t[0] === profile ? 'on' : ''}" data-act="calc-tab" data-p="${t[0]}">${t[1]}</button>`).join('')}</div>
+  ${!it ? `<div class="card"><p class="muted">No active ${profile} products. Add one in Settings → Products.</p></div>` : `<div class="split"><div class="card" id="items" style="padding:0;border:0;box-shadow:none;background:none">${itemHTML(it, 0, { single: true })}</div><div class="sticky"><div class="card" id="calcpanel">${calcPanelHTML(it, profile)}</div></div></div>`}`;
+}
+function calcPanelHTML(it, profile) {
+  const c = it.calc, i = c.info || {}, qty = PQ.num(it.qty) || 1; const showC = can('viewCosts');
+  const M = (k, v) => `<div class="metric"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  const n = (v, d = 2) => (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString();
+  const g = k => money((c.groups || {})[k] || 0);
+  let m = '';
+  if (profile === 'dtf') m = M('Area per garment', n(i.printAreaPerItemCm2) + ' cm²') + M('Total print area', n(i.totalPrintAreaM2, 3) + ' m²') + M('Total prints', i.totalPrints || 0) + M('Est. film usage', n(i.filmMetres || 0, 2) + ' m');
+  else if (profile === 'paper') m = M('Sheets needed', i.sheets || 0) + M('Copies per sheet', i.upsPerSheet || 0) + M('Pages per copy', i.pages || 1) + M('Leaves per copy', i.leaves || 1);
+  else m = M('Area each', n(i.itemAreaM2, 3) + ' m²') + M('Total area', n(i.totalAreaM2, 3) + ' m²') + M('Perimeter each', n(i.perimeterM) + ' m') + M('Quantity', i.qty || 0);
+  let h = `<h2>${profile === 'dtf' ? 'DTF result' : profile === 'paper' ? 'Paper result' : 'Large-format result'}</h2><div class="grid g2" style="margin-bottom:12px">${m}</div>`;
+  if (!c.ok) h += c.errors.map(x => `<div class="alert bad">${e(x)}</div>`).join('');
+  if (showC) {
+    h += GROUPS.filter(([k]) => (c.groups || {})[k]).map(([k, l]) => `<div class="rowline sub"><span>${l}</span><span>${g(k)}</span></div>`).join('');
+    h += `<div class="rowline"><span><b>Production cost</b></span><b>${money(c.productionCost)}</b></div><div class="rowline sub"><span>${c.markupMode === 'margin' ? 'Margin' : 'Markup'} ${pctf(c.markupPct)}</span><span>${money(c.sellingBeforeMin - c.productionCost)}</span></div>`;
+    if (can('viewProfit')) h += `<div class="rowline sub"><span>Profit</span><span>${money(c.grossProfit)}${can('viewMargin') ? ` (${pctf(c.marginPct)})` : ''}</span></div>`;
+  }
+  h += `<div class="rowline tot"><span>Selling price</span><span>${money(c.finalSubtotal)}</span></div><div class="rowline sub"><span>Price per ${profile === 'dtf' ? 'garment' : 'unit'}</span><span>${money(c.finalSubtotal / qty)}</span></div><div class="muted" style="font-size:12px">Excludes VAT unless your prices are set to include it.</div>`;
+  h += can('createQuotes') ? `<button class="btn primary" style="width:100%;margin-top:12px" data-act="calc-add" ${c.ok ? '' : 'disabled'}>Add to new quote</button>` : '';
+  return h;
+}
+function refreshCalcPanel() { const p = $('#calcpanel'); if (p) p.innerHTML = calcPanelHTML(State.ed.item, State.ed.profile); }
+function onCalcInput() {}
+Object.assign(ACT, {
+  'calc-tab': el => { State.ed = null; State.params = { profile: el.dataset.p }; render(true); },
+  'calc-add': () => { const it = clone(State.ed.item); it.key = uid('i'); State.pendingItem = it; State.dirty = false; go('editor', {}, true); }
+});
+function afterEditorRender() {}
+
+/* ===== quote view / print / PDF / status / job ===== */
+function quoteVatLabel(q) { const t = q.totals || {}; return t.vatEnabled ? (t.vatMode === 'inclusive' ? 'All prices include VAT' : 'All prices exclude VAT; VAT is added in the totals') : 'VAT not charged'; }
+function quoteDocHTML(q) {
+  const S = State.cfg.settings, b = S.business || {}, t = q.totals || {}, inc = t.vatMode === 'inclusive';
+  const rows = (q.items || []).map((it, i) => { const c = it.calc || {}; return `<tr><td>${i + 1}</td><td><b>${e(it.productName)}</b>${it.desc ? `<div>${e(it.desc)}</div>` : ''}<div class="small">${e(it.specText || '')}${it.notes ? '\n' + e(it.notes) : ''}</div></td><td class="r">${e(it.qty)}</td><td class="r">${money(c.unitPrice)}</td><td class="r">${c.discountAmount > 0 ? '-' + money(c.discountAmount) : '—'}</td><td class="r">${money(c.finalSubtotal)}</td></tr>`; }).join('');
+  return `<div class="qdoc" id="qdoc"><div class="hdr"><div>${b.logo ? `<img class="logo" src="${e(b.logo)}" alt="">` : ''}<div><b>${e(b.name)}</b></div><div class="small">${e(b.address)}\n${e(b.phone)}${b.email ? ' · ' + e(b.email) : ''}${b.website ? '\n' + e(b.website) : ''}${b.regNo ? '\nReg: ' + e(b.regNo) : ''}${b.vatNo ? '\nVAT No: ' + e(b.vatNo) : ''}</div></div>
+   <div style="text-align:right"><h1>QUOTATION</h1><div><b>${e(q.number)}</b></div><div class="small">Date: ${fmtDate(q.date)}\nValid until: ${fmtDate(q.expiry)}${q.ref ? '\nReference: ' + e(q.ref) : ''}${q.staffName ? '\nPrepared by: ' + e(q.staffName) : ''}</div></div></div>
+   <div class="cols"><div><div class="small"><b>Quote for</b></div><div><b>${e(q.customer.name)}</b></div>${q.customer.company ? `<div>${e(q.customer.company)}</div>` : ''}<div class="small">${e(q.customer.phone)}${q.customer.email ? '\n' + e(q.customer.email) : ''}</div></div></div>
+   <table><thead><tr><th style="width:30px">#</th><th>Description</th><th class="r">Qty</th><th class="r">Unit price</th><th class="r">Discount</th><th class="r">Total</th></tr></thead><tbody>${rows}</tbody></table>
+   <div class="tot"><div><span>Items</span><span>${money(t.gross)}</span></div>${t.lineDiscounts > 0 ? `<div><span>Line discounts</span><span>-${money(t.lineDiscounts)}</span></div>` : ''}${t.quoteDiscount > 0 ? `<div><span>Discount</span><span>-${money(t.quoteDiscount)}</span></div>` : ''}${t.minOrderAdjustment > 0 ? `<div><span>Minimum order adjustment</span><span>${money(t.minOrderAdjustment)}</span></div>` : ''}
+   <div><span>Subtotal${t.vatEnabled ? ' (excl. VAT)' : ''}</span><span>${money(t.subtotal)}</span></div>${t.vatEnabled ? `<div><span>VAT ${pctf(t.vatRate)}</span><span>${money(t.vat)}</span></div>` : ''}<div class="g"><span>Total${t.vatEnabled ? ' (incl. VAT)' : ''}</span><span>${money(t.total)}</span></div></div>
+   <div class="small" style="text-align:right;margin-top:4px">${e(quoteVatLabel(q))}</div>
+   ${q.notes ? `<div style="margin-top:16px"><b>Notes</b><div class="small">${e(q.notes)}</div></div>` : ''}${q.paymentTerms ? `<div style="margin-top:12px"><b>Payment terms</b><div class="small">${e(q.paymentTerms)}</div></div>` : ''}${q.terms ? `<div style="margin-top:12px"><b>Terms & conditions</b><div class="small">${e(q.terms)}</div></div>` : ''}</div>`;
+}
+function viewQuote() {
+  const q = State.quotes[State.params.id];
+  if (!q || (!can('viewAllQuotes') && q.createdBy !== State.me.id)) return `<div class="top"><h1>Quote not found</h1><button class="btn" data-act="nav" data-v="quotes">Back</button></div>`;
+  const st = effStatus(q), t = q.totals || {}, ds = quoteApproval(q);
+  resolveNames([q.createdBy, ...(q.history || []).map(h => h.uid)]);
+  const next = STATUSES.filter(s => s[0] !== q.status && s[0] !== 'converted' && s[0] !== 'expired').map(s => `<button class="btn sm" data-act="q-status" data-id="${e(q.id)}" data-s="${s[0]}">Mark ${s[1]}</button>`).join('');
+  let internal = '';
+  if (can('viewCosts') || can('viewProfit') || can('viewMargin')) internal = `<div class="card noprint"><h2>Internal — not shown to the customer</h2><div class="grid g4">${can('viewCosts') ? `<div class="metric"><div class="k">Production cost</div><div class="v">${money(t.productionCost)}</div></div>` : ''}${can('viewProfit') ? `<div class="metric"><div class="k">Gross profit</div><div class="v">${money(t.grossProfit)}</div></div>` : ''}${can('viewMargin') ? `<div class="metric"><div class="k">Gross margin</div><div class="v">${pctf(t.marginPct)}</div></div>` : ''}<div class="metric"><div class="k">Total discount</div><div class="v">${pctf(t.discountPct)}</div></div></div>
+   ${(q.items || []).filter(i => i.override).map(i => `<div class="alert warn" style="margin-top:10px">Manual price override on “${e(i.productName)}”: calculated ${money(i.override.original)} → ${money(i.override.price)}${i.override.reason ? ' — ' + e(i.override.reason) : ''} (${e(nameOf(i.override.by))}, ${fmtTime(i.override.at)})</div>`).join('')}</div>`;
+  return `<div class="top noprint"><div><h1>${e(q.number)} ${badge(st)}</h1><div class="muted">Created by ${e(q.staffName || nameOf(q.createdBy))} · ${fmtTime(q.createdAt)}</div></div>
+   <div class="actions"><button class="btn" data-act="nav" data-v="quotes">← Quotes</button>${can('editQuotes') ? `<button class="btn" data-act="edit-quote" data-id="${e(q.id)}">Edit</button>` : ''}${can('createQuotes') ? `<button class="btn" data-act="dup-quote" data-id="${e(q.id)}">Duplicate</button>` : ''}<button class="btn" data-act="q-print">Print</button><button class="btn primary" data-act="q-pdf" data-id="${e(q.id)}">Download PDF</button></div></div>
+   ${ds.needs ? `<div class="alert warn noprint"><b>Discount of ${pctf(t.discountPct)} needs approval</b> before this quote can be sent or accepted. ${ds.canApprove ? `<button class="btn sm" data-act="q-approve" data-id="${e(q.id)}">Approve discount</button>` : 'Ask a manager to approve.'}</div>` : (q.discountApproval ? `<div class="alert ok noprint">Discount approved by ${e(nameOf(q.discountApproval.by))} on ${fmtTime(q.discountApproval.at)}.</div>` : '')}
+   ${can('changeStatus') ? `<div class="card noprint" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><b>Status</b>${next}${q.status !== 'converted' && (q.status === 'accepted' || can('createQuotes')) ? `<button class="btn sm primary" data-act="q-convert" data-id="${e(q.id)}">Convert to job</button>` : ''}${can('deleteQuotes') ? `<button class="btn sm danger" data-act="q-delete" data-id="${e(q.id)}" style="margin-left:auto">Delete</button>` : ''}</div>` : ''}
+   ${quoteDocHTML(q)}<div style="height:14px"></div>${internal}
+   <div class="card noprint"><h2>History</h2>${(q.history || []).slice().reverse().map(h => `<div class="rowline sub"><span>${e(h.action)}${h.detail ? ' — ' + e(h.detail) : ''}</span><span>${e(nameOf(h.uid))} · ${fmtTime(h.ts)}</span></div>`).join('') || '<p class="muted">No history.</p>'}</div>`;
+}
+function quoteApproval(q) {
+  const t = q.totals || {}, S = State.cfg.settings;
+  const pol = PQ.discountPolicy(S, q.createdRole || 'staff', PQ.num(t.discountPct));
+  const approved = q.discountApproval && PQ.num(q.discountApproval.pct) + 0.005 >= PQ.num(t.discountPct);
+  const mgrMax = PQ.num((S.discount || {}).managerMaxPct, 0);
+  return { needs: pol.needsApproval && !approved, canApprove: can('approveDiscount') && (isOwnerRole() || PQ.num(t.discountPct) <= mgrMax) };
+}
+async function setStatus(q, s) {
+  if (['sent', 'accepted', 'converted'].includes(s) && quoteApproval(q).needs) { toast('This quote\'s discount needs manager approval first', 'bad'); return false; }
+  const old = q.status, now = Date.now(), me = State.me.id || 'local'; const n = clone(q);
+  n.status = s; n.updatedAt = now; n.history = [...(n.history || []), { ts: now, uid: me, action: 'Status changed', detail: statusLabel(old) + ' → ' + statusLabel(s) }].slice(-100);
+  const r = await safe(() => DB.setQuote(n)); if (r) await DB.audit('Quote status changed', q.number, statusLabel(old), statusLabel(s)); return !!r;
+}
+Object.assign(ACT, {
+  'q-status': async el => { const q = State.quotes[el.dataset.id]; if (await setStatus(q, el.dataset.s)) { toast('Status updated'); render(true); } },
+  'q-approve': async el => {
+    const q = clone(State.quotes[el.dataset.id]), now = Date.now();
+    if (!await confirmDialog({ title: 'Approve discount?', body: `<p>Approve a total discount of <b>${pctf(q.totals.discountPct)}</b> on ${e(q.number)}?</p>`, okLabel: 'Approve' })) return;
+    q.discountApproval = { by: State.me.id || 'local', at: now, pct: q.totals.discountPct }; q.history = [...(q.history || []), { ts: now, uid: State.me.id || 'local', action: 'Manager approved discount', detail: pctf(q.totals.discountPct) }];
+    if (await safe(() => DB.setQuote(q), 'Discount approved')) { await DB.audit('Manager approved discount', q.number, '', pctf(q.totals.discountPct)); render(true); }
+  },
+  'q-convert': async el => {
+    const q = State.quotes[el.dataset.id];
+    if (quoteApproval(q).needs) { toast('Discount needs approval first', 'bad'); return; }
+    if (!await confirmDialog({ title: 'Convert to job?', body: `<p>Create a production job from ${e(q.number)} and mark the quote as <b>Converted to Job</b>.</p>`, okLabel: 'Convert' })) return;
+    const job = { id: 'job_' + q.id, quoteId: q.id, number: q.number.replace(/^[A-Za-z]+/, 'JOB'), customer: q.customer, items: q.items.map(i => ({ name: i.productName, desc: i.desc, spec: i.specText, qty: i.qty })), total: (q.totals || {}).total, status: 'new', createdAt: Date.now(), createdBy: State.me.id || 'local' };
+    await safe(async () => { await DB.setJob(job); await setStatus(q, 'converted'); }, 'Job created'); await DB.audit('Converted quote to job', q.number, '', job.number); render(true);
+  },
+  'q-delete': async el => { const q = State.quotes[el.dataset.id]; if (!await confirmDialog({ title: 'Delete quote ' + q.number + '?', body: '<p>This permanently removes the quote. Consider marking it Rejected instead. This cannot be undone.</p>', okLabel: 'Delete permanently', danger: true })) return; if (await safe(() => DB.delQuote(q.id), 'Quote deleted')) { await DB.audit('Deleted quote', q.number); go('quotes', {}); } },
+  'q-print': () => { try { window.print(); } catch (er) { toast('Printing is blocked here — use Download PDF', 'bad'); } },
+  'q-pdf': el => downloadPDF(State.quotes[el.dataset.id])
+});
+
+/* ---------- PDF ---------- */
+let pdfLib;
+function loadJsPDF() {
+  if (window.jspdf) return Promise.resolve(window.jspdf.jsPDF);
+  if (pdfLib) return pdfLib;
+  return pdfLib = new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'; s.onload = () => res(window.jspdf.jsPDF); s.onerror = () => { pdfLib = null; rej(new Error('PDF library could not load')); }; document.head.appendChild(s); });
+}
+async function downloadPDF(q) {
+  let J; try { J = await loadJsPDF(); } catch (er) { toast('PDF library could not load — use Print instead', 'bad'); return; }
+  const S = State.cfg.settings, b = S.business || {}, t = q.totals || {}, doc = new J({ unit: 'pt', format: 'a4' }), W = 595, M = 40, R = W - M; let y = M;
+  const ascii = s => String(s ?? '').replace(/[–—]/g, '-').replace(/[×]/g, 'x').replace(/[·]/g, '|').replace(/[^\x20-\x7E\n]/g, '');
+  const txt = (s, x, yy, o) => doc.text(ascii(s), x, yy, o);
+  const need = h => { if (y + h > 800) { doc.addPage(); y = M; } };
+  if (b.logo) { try { const lw = Math.min(150, PQ.num(b.logoW, 150)), lh = lw * PQ.num(b.logoH, 50) / Math.max(1, PQ.num(b.logoW, 150)); doc.addImage(b.logo, 'PNG', M, y, lw, lh); y += lh + 6; } catch (er) { /* skip logo */ } }
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(12); txt(b.name || '', M, y); y += 14; doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+  [b.address, [b.phone, b.email].filter(Boolean).join(' | '), b.website, b.regNo && 'Reg: ' + b.regNo, b.vatNo && 'VAT No: ' + b.vatNo].filter(Boolean).forEach(l => String(l).split('\n').forEach(s => { txt(s, M, y); y += 11; }));
+  let ry = M; doc.setFont('helvetica', 'bold'); doc.setFontSize(22); txt('QUOTATION', R, ry + 16, { align: 'right' }); doc.setFontSize(11); txt(q.number, R, ry + 34, { align: 'right' }); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+  ry += 48; [`Date: ${fmtDate(q.date)}`, `Valid until: ${fmtDate(q.expiry)}`, q.ref && `Reference: ${q.ref}`, q.staffName && `Prepared by: ${q.staffName}`].filter(Boolean).forEach(l => { txt(l, R, ry, { align: 'right' }); ry += 11; });
+  y = Math.max(y, ry) + 16; doc.setFont('helvetica', 'bold'); txt('Quote for', M, y); y += 13; doc.setFontSize(11); txt(q.customer.name, M, y); y += 13; doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+  [q.customer.company, q.customer.phone, q.customer.email].filter(Boolean).forEach(s => { txt(s, M, y); y += 11; }); y += 10;
+  const cx = [M, M + 22, 330, 375, 445, R]; // # | desc | qty | unit | disc | total(right-aligned)
+  const head = () => { doc.setFillColor(17, 17, 17); doc.rect(M, y, R - M, 18, 'F'); doc.setTextColor(255); doc.setFont('helvetica', 'bold'); txt('#', cx[0] + 4, y + 12); txt('Description', cx[1], y + 12); txt('Qty', 365, y + 12, { align: 'right' }); txt('Unit price', 435, y + 12, { align: 'right' }); txt('Discount', 500, y + 12, { align: 'right' }); txt('Total', R - 4, y + 12, { align: 'right' }); doc.setTextColor(0); doc.setFont('helvetica', 'normal'); y += 18; };
+  head();
+  (q.items || []).forEach((it, i) => {
+    const c = it.calc || {}, lines = [];
+    doc.setFont('helvetica', 'bold'); lines.push(...doc.splitTextToSize(ascii(it.productName + (it.desc ? ' - ' + it.desc : '')), 270).map(s => [s, 1]));
+    doc.setFont('helvetica', 'normal'); lines.push(...doc.splitTextToSize(ascii((it.specText || '') + (it.notes ? ' | ' + it.notes : '')), 270).map(s => [s, 0]));
+    const h = lines.length * 11 + 10; if (y + h > 790) { doc.addPage(); y = M; head(); }
+    txt(String(i + 1), cx[0] + 4, y + 13); let ly = y + 13; lines.forEach(([s, bold]) => { doc.setFont('helvetica', bold ? 'bold' : 'normal'); if (!bold) doc.setTextColor(90); txt(s, cx[1], ly); doc.setTextColor(0); ly += 11; }); doc.setFont('helvetica', 'normal');
+    txt(String(it.qty), 365, y + 13, { align: 'right' }); txt(money(c.unitPrice), 435, y + 13, { align: 'right' }); txt(c.discountAmount > 0 ? '-' + money(c.discountAmount) : '-', 500, y + 13, { align: 'right' }); txt(money(c.finalSubtotal), R - 4, y + 13, { align: 'right' });
+    y += h; doc.setDrawColor(220); doc.line(M, y - 3, R, y - 3);
+  });
+  need(140); y += 10; const row = (l, v, bold) => { doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(bold ? 12 : 9); txt(l, 360, y); txt(v, R - 4, y, { align: 'right' }); y += bold ? 18 : 13; };
+  row('Items', money(t.gross)); if (t.lineDiscounts > 0) row('Line discounts', '-' + money(t.lineDiscounts)); if (t.quoteDiscount > 0) row('Discount', '-' + money(t.quoteDiscount)); if (t.minOrderAdjustment > 0) row('Minimum order adjustment', money(t.minOrderAdjustment));
+  row('Subtotal' + (t.vatEnabled ? ' (excl. VAT)' : ''), money(t.subtotal)); if (t.vatEnabled) row('VAT ' + pctf(t.vatRate), money(t.vat)); doc.setDrawColor(0); doc.line(360, y - 9, R, y - 9); row('Total' + (t.vatEnabled ? ' (incl. VAT)' : ''), money(t.total), true);
+  doc.setFontSize(8); doc.setFont('helvetica', 'normal'); txt(quoteVatLabel(q), R - 4, y, { align: 'right' }); y += 16; doc.setFontSize(9);
+  [['Notes', q.notes], ['Payment terms', q.paymentTerms], ['Terms & conditions', q.terms]].forEach(([h, s]) => { if (!s) return; const ls = doc.splitTextToSize(ascii(s), R - M); need(16 + ls.length * 11); doc.setFont('helvetica', 'bold'); txt(h, M, y); y += 12; doc.setFont('helvetica', 'normal'); ls.forEach(l => { txt(l, M, y); y += 11; }); y += 8; });
+  const fn = ('Quote-' + q.number + '.pdf').replace(/[^A-Za-z0-9_.-]/g, '-');
+  try {
+    const dl = await useCap('downloads');
+    if (dl) { await dl.save({ filename: fn, data: doc.output('arraybuffer') }); toast('PDF ready'); }
+    else doc.save(fn);
+  } catch (er) { if (er && er.code === 'declined') return; try { doc.save(fn); } catch (x) { toast('Could not save the PDF here — use Print', 'bad'); } }
+}
+
+/* The embedded build has no Settings/Wizard/boot (those live in the management app). Minimal stubs keep shared code paths valid. */
+function viewSettings() { return ''; }
+const useCap = async () => null;
+function afterSettingsRender() {}
+function onSettingsChange() {}
+function onWizardInput() {}
+
+/* ===== PrintOps bridge: connects the existing calculator to the management app =====
+   The calculator code above is unchanged. This file only (1) receives catalogue/pricing from the host page,
+   (2) hides the calculator's own customer card / sidebar, and (3) hands the finished quote back to the host,
+   which stores it in PostgreSQL through the save_quote() database function. */
+(function () {
+  const ORIGIN = window.location.origin;
+  const post = (type, payload) => window.parent.postMessage({ source: 'printops-calc', type, payload }, ORIGIN);
+  let cur = null;
+
+  window.addEventListener('message', ev => {
+    if (ev.origin !== ORIGIN) return;
+    const m = ev.data; if (!m || m.source !== 'printops-host') return;
+    if (m.type === 'init') init(m.payload);
+    else if (m.type === 'error') { setBusy(false); toast(m.payload, 'bad'); }
+    else if (m.type === 'customer') { cur = m.payload; }
+  });
+
+  function setBusy(b) { $$('[data-act="ed-save"]').forEach(x => x.disabled = b); }
+
+  function itemFromDb(row, fresh) {
+    const it = JSON.parse(JSON.stringify(row.item || {}));
+    it.key = uid('i'); it.productId = it.productId || row.product_id;
+    if (fresh) { it.override = null; }
+    return it;
+  }
+
+  function init(p) {
+    State.mode = 'embedded'; State.me = { id: p.userId, name: p.userName, isOwner: true, canEdit: true, canData: true };
+    p.settings.demo = false; State.cfg.settings = p.settings;
+    ['products', 'materials', 'machines', 'labour', 'finishing', 'categories'].forEach(k => { State.cfg[k] = p[k] || {}; });
+    State.loaded.settings = true; State.customers = {}; State.quotes = {}; State.embedded = true; State.audit = [];
+    document.body.classList.add('embedded');
+    cur = p.customer || null;
+    const q = p.quote;
+    if (q) {
+      const Q = newQuoteDraft();
+      Q.customer = { name: q.customerName || (cur && cur.name) || '', company: '', phone: '', email: '' };
+      Q.ref = q.reference || ''; Q.notes = q.notes || ''; Q.terms = q.terms || Q.terms; Q.paymentTerms = q.payment_terms || Q.paymentTerms; Q.discount = q.discount && q.discount.type ? q.discount : Q.discount;
+      Q.date = q.quote_date || Q.date; Q.expiry = q.valid_until || Q.expiry;
+      const snapBox = q.pricing_snapshot || {}; if (snapBox.snap) Q.snap = snapBox.snap; if (snapBox.staffName) Q.staffName = snapBox.staffName;
+      if (p.mode === 'edit') {
+        Q.id = q.id; Q.number = q.number; Q.status = q.status; Q.version = q.version; Q.createdAt = Date.parse(q.created_at) || 0;
+        Q.items = (q.items || []).map(r => itemFromDb(r, false));
+        Q.items.forEach(i => { if (!i.calc) recalc(i); });
+      } else { // duplicate / repeat order: new quote, prices recalculated with CURRENT pricing, overrides dropped
+        Q.copiedFrom = q.number; Q.snap = newQuoteDraft().snap; Q.date = todayISO(); Q.expiry = addDays(Q.date, PQ.num((State.cfg.settings.quotes || {}).expiryDays, 14));
+        Q.items = (q.items || []).map(r => itemFromDb(r, true)); Q.items.forEach(recalc);
+      }
+      State.ed = { kind: 'quote', Q, isNew: !Q.id };
+      if (Q.copiedFrom) State.dirty = true;
+    }
+    State.view = p.start === 'calc' ? 'calc' : 'editor'; State.params = p.start === 'calc' ? { profile: 'dtf' } : {};
+    buildBar(); render(true);
+  }
+
+  function buildBar() {
+    if ($('#embedbar')) return;
+    const bar = document.createElement('div'); bar.id = 'embedbar';
+    bar.innerHTML = [['quote', 'Quote builder'], ['dtf', 'DTF calculator'], ['paper', 'Paper calculator'], ['large', 'Large-format calculator']].map(t => `<button data-bar="${t[0]}">${t[1]}</button>`).join('');
+    document.body.insertBefore(bar, $('#app'));
+    bar.addEventListener('click', e => {
+      const b = e.target.closest('[data-bar]'); if (!b) return; const v = b.dataset.bar;
+      State.ed = v === 'quote' ? State.ed : null;
+      if (v === 'quote') { State.view = 'editor'; State.params = {}; render(true); } else { State.ed = null; State.view = 'calc'; State.params = { profile: v }; render(true); }
+    });
+  }
+
+  /* quote is handed to the host instead of being written to the old claude.ai storage */
+  saveQuote = async function () {
+    const ed = State.ed; if (!ed || ed.kind !== 'quote') return; const Q = ed.Q, errs = [];
+    if (!cur || !cur.id) errs.push('Choose a customer above the calculator first');
+    if (!Q.date) errs.push('Quote date is required'); if (Q.expiry && Q.date && Q.expiry < Q.date) errs.push('Expiry date is before the quote date');
+    if (!Q.items.length) errs.push('Add at least one line item');
+    Q.items.forEach((it, i) => { recalc(it); if (!it.calc.ok) errs.push(`Line ${i + 1}: ${it.calc.errors[0]}`); if (it.override && !(PQ.has(it.override.price) && PQ.num(it.override.price) >= 0)) errs.push(`Line ${i + 1}: enter an override price`); });
+    const t = totalsFor(Q); t.errors.forEach(x => errs.push(x));
+    if (errs.length) { openModal({ title: 'Please fix before saving', body: `<ul>${errs.map(x => `<li>${e(x)}</li>`).join('')}</ul>`, footer: '<button class="btn primary" data-act="modal-close">OK</button>' }); return; }
+    const now = Date.now();
+    Q.items.forEach(it => { if (it.override && !it.override.at) it.override = { price: PQ.num(it.override.price), reason: it.override.reason || '', original: it.calc.calculatedPrice, by: State.me.id, at: now }; });
+    const payload = {
+      quote: { id: Q.id || null, quote_date: Q.date, valid_until: Q.expiry || null, reference: Q.ref || null, notes: Q.notes || null, terms: Q.terms || null, payment_terms: Q.paymentTerms || null,
+        discount: Q.discount || {}, pricing_snapshot: { snap: Q.snap, staffName: Q.staffName || '', pricedAt: now }, totals: t, expected_version: Q.version || null, copied_from_number: Q.copiedFrom || null },
+      items: Q.items.map(it => { const c = JSON.parse(JSON.stringify(it)); delete c.closed; return {
+        product_id: it.productId, product_name: it.productName, category_name: it.categoryName || '', profile: (State.cfg.products[it.productId] || {}).profile || 'general',
+        description: it.desc || '', quantity: PQ.num(it.qty), unit_price: PQ.num(it.calc.unitPrice), line_total: PQ.num(it.calc.finalSubtotal), item: c }; })
+    };
+    setBusy(true); post('save', payload);
+  };
+  ACT['ed-cancel'] = () => post('cancel');
+  document.addEventListener('input', () => { if (!State.dirty) { State.dirty = true; } post('dirty', true); }, { once: true });
+  if (window.ResizeObserver) new ResizeObserver(() => post('height', document.documentElement.scrollHeight)).observe(document.body);
+  post('ready', true);
+})();
+</script></body></html>

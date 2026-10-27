@@ -1,0 +1,1 @@
+module.exports={setQcResult:async(...a)=>{(module.exports.calls=module.exports.calls||[]).push(a);return{ok:true}}};

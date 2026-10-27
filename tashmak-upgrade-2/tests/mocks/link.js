@@ -1,0 +1,1 @@
+const R=require('react');module.exports=function Link(p){return R.createElement('a',{href:p.href,onClick:p.onClick},p.children)};module.exports.default=module.exports;
