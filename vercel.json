@@ -1,7 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rootDirectory": "tashmak-upgrade-2",
-  "regions": [
-    "lhr1"
-  ]
+  "regions": ["lhr1"]
 }
