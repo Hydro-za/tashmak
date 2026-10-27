@@ -1,8 +1,8 @@
 'use client';
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import Logo from '@/components/Logo';
-import ThemeToggle from '@/components/ThemeToggle';
+import { createClient } from '../../lib/supabase/client';
+import Logo from '../../components/Logo';
+import ThemeToggle from '../../components/ThemeToggle';
 
 export default function ChangePassword() {
   const [a, setA] = useState(''); const [b, setB] = useState(''); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
