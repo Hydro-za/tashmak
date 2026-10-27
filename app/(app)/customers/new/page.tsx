@@ -1,4 +1,4 @@
-import { requireOwner } from '@/lib/session';
+import { requirePerm } from '@/lib/session';
 import CustomerForm from '@/components/CustomerForm';
 import { Top } from '@/components/ui';
-export default async function NewCustomer() { await requireOwner(); return <><Top title="New customer" /><CustomerForm /></>; }
+export default async function NewCustomer() { await requirePerm('customers.manage'); return <><Top title="New customer" /><CustomerForm /></>; }

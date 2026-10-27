@@ -1,68 +1,60 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Logo, { LogoMark } from './Logo';
 import ThemeToggle from './ThemeToggle';
 import NavIcon from './NavIcons';
+import GlobalSearch from './GlobalSearch';
+import NotificationBell from './NotificationBell';
 
 type Item = { href: string; label: string; icon: string };
-const OWNER: Item[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' }, { href: '/jobs', label: 'Jobs', icon: 'jobs' }, { href: '/quotes', label: 'Quotes', icon: 'quotes' }, { href: '/customers', label: 'Customers', icon: 'customers' },
-  { href: '/products', label: 'Products & Pricing', icon: 'products' }, { href: '/employees', label: 'Employees', icon: 'employees' }, { href: '/reports', label: 'Reports', icon: 'reports' }, { href: '/settings', label: 'Settings', icon: 'settings' }
-];
-const EMPLOYEE: Item[] = [{ href: '/my-jobs', label: 'My Jobs', icon: 'my-jobs' }, { href: '/completed', label: 'Completed', icon: 'completed' }, { href: '/notifications', label: 'Notifications', icon: 'notifications' }, { href: '/profile', label: 'Profile', icon: 'profile' }];
+export type ShellProps = { name: string; roleName: string; isOwner: boolean; perms: string[]; unread: number; children: React.ReactNode };
 
-function GlobalSearch() {
-  const [q, setQ] = useState(''); const [res, setRes] = useState<any>(null); const timer = useRef<any>(null); const router = useRouter();
-  useEffect(() => {
-    clearTimeout(timer.current);
-    if (q.trim().length < 2) { setRes(null); return; }
-    timer.current = setTimeout(async () => { const { data } = await createClient().rpc('global_search', { p_q: q }); setRes(data); }, 250);
-    return () => clearTimeout(timer.current);
-  }, [q]);
-  const go = (href: string) => { setQ(''); setRes(null); router.push(href); };
-  const grp = (title: string, rows: any[], href: (r: any) => string, label: (r: any) => string) => rows?.length ? <><div className="grp">{title}</div>{rows.map(r => <a key={r.id} href={href(r)} onClick={e => { e.preventDefault(); go(href(r)); }}>{label(r)}</a>)}</> : null;
-  return (
-    <div className="search"><input type="search" placeholder="Search job no., quote no., customer, product, employee…" value={q} onChange={e => setQ(e.target.value)} aria-label="Search" />
-      {res && <div className="results">
-        {grp('Jobs', res.jobs, r => '/jobs/' + r.id, r => `${r.number} — ${r.customer} (${r.status})`)}
-        {grp('Quotes', res.quotes, r => '/quotes/' + r.id, r => `${r.number} — ${r.customer} (${r.status})`)}
-        {grp('Customers', res.customers, r => '/customers/' + r.id, r => r.name + (r.company ? ' — ' + r.company : ''))}
-        {grp('Employees', res.employees, r => '/employees/' + r.id, r => `${r.name} (${r.role})`)}
-        {!res.jobs?.length && !res.quotes?.length && !res.customers?.length && !res.employees?.length && <div className="grp">No matches</div>}
-      </div>}
-    </div>
-  );
+function navFor(isOwner: boolean, perms: string[]): Item[] {
+  const can = (...p: string[]) => isOwner || p.some(x => perms.includes(x));
+  const items: Item[] = [];
+  if (can('jobs.view_all')) items.push({ href: '/dashboard', label: 'Dashboard', icon: 'dashboard' }, { href: '/jobs', label: 'Jobs', icon: 'jobs' });
+  if (isOwner) items.push({ href: '/quotes', label: 'Quotes', icon: 'quotes' });
+  if (can('customers.view', 'customers.manage')) items.push({ href: '/customers', label: 'Customers', icon: 'customers' });
+  if (isOwner) items.push({ href: '/products', label: 'Products & Pricing', icon: 'products' });
+  if (can('employees.view', 'employees.manage', 'roles.manage')) items.push({ href: '/employees', label: 'Employees', icon: 'employees' });
+  if (can('reports.view')) items.push({ href: '/reports', label: 'Reports', icon: 'reports' });
+  if (can('settings.manage')) items.push({ href: '/settings', label: 'Settings', icon: 'settings' });
+  const works = !isOwner && (perms.some(p => ['jobs.work_design', 'jobs.work_production', 'qc.perform'].includes(p)) || !perms.includes('jobs.view_all'));
+  if (works) items.unshift({ href: '/my-jobs', label: 'My Jobs', icon: 'my-jobs' }, { href: '/completed', label: 'Completed', icon: 'completed' });
+  if (!isOwner) items.push({ href: '/notifications', label: 'Notifications', icon: 'notifications' }, { href: '/profile', label: 'Profile', icon: 'profile' });
+  return items;
 }
 
-export default function Shell({ role, name, unread, children }: { role: string; name: string; unread: number; children: React.ReactNode }) {
+export default function Shell({ name, roleName, isOwner, perms, unread, children }: ShellProps) {
   const path = usePathname(); const router = useRouter(); const [more, setMore] = useState(false);
-  const items = role === 'owner' ? OWNER : EMPLOYEE;
-  const on = (h: string) => path === h || path.startsWith(h + '/') || (h === '/quotes' && path.startsWith('/quotes'));
+  const items = navFor(isOwner, perms);
+  const on = (h: string) => path === h || path.startsWith(h + '/');
   useEffect(() => setMore(false), [path]);
   async function signOut() { await createClient().auth.signOut(); window.location.href = '/login'; }
-  const primary = role === 'owner' ? items.slice(0, 4) : items;
-  const rest = role === 'owner' ? items.slice(4) : [];
+  const primary = items.slice(0, items.length > 5 ? 4 : items.length); const rest = items.length > 5 ? items.slice(4) : [];
+  const viewAll = isOwner || perms.includes('jobs.view_all');
+  const canSearch = isOwner || perms.some(p => ['jobs.view_all', 'customers.view', 'employees.view'].includes(p));
   return (
     <div className="app">
       <aside className="side">
         <div className="brand"><Logo width={168} /></div>
         <nav className="nav">{items.map(i => <Link key={i.href} href={i.href} className={on(i.href) ? 'on' : ''}><NavIcon name={i.icon} /><span>{i.label}</span></Link>)}</nav>
-        <div className="who">{name}<br /><b style={{ textTransform: 'capitalize' }}>{role}</b><div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center' }}><ThemeToggle /><button className="btn sm" onClick={signOut}>Sign out</button></div></div>
+        <div className="who">{name}<br /><b>{roleName}</b><div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center' }}><ThemeToggle /><button className="btn sm" onClick={signOut}>Sign out</button></div></div>
       </aside>
       <main className="main">
-        <div className="hdr"><span className="mobilemark"><LogoMark size={32} /></span>{role === 'owner' ? <GlobalSearch /> : <b style={{ flex: 1 }}>{name}</b>}
+        <div className="hdr"><span className="mobilemark"><LogoMark size={32} /></span>{canSearch ? <GlobalSearch jobBase={viewAll ? '/jobs' : '/my-jobs'} /> : <b style={{ flex: 1 }}>{name}</b>}
           <span className="mobiletheme"><ThemeToggle /></span>
-          <Link href="/notifications" className="bell" aria-label="Notifications"><NavIcon name="notifications" />{unread > 0 && <b>{unread > 99 ? '99+' : unread}</b>}</Link></div>
+          <NotificationBell initialUnread={unread} jobBase={viewAll ? '/jobs' : '/my-jobs'} canQuotes={isOwner} /></div>
         {children}
       </main>
       <nav className="bottom">
         {primary.map(i => <button key={i.href} className={on(i.href) ? 'on' : ''} onClick={() => router.push(i.href)}><NavIcon name={i.icon} /><span>{i.label.split(' ')[0]}</span></button>)}
-        {role === 'owner' ? <button className={more ? 'on' : ''} onClick={() => setMore(!more)}><NavIcon name="more" /><span>More</span></button> : null}
+        {rest.length > 0 && <button className={more ? 'on' : ''} onClick={() => setMore(!more)}><NavIcon name="more" /><span>More</span></button>}
       </nav>
-      {more && <div className="sheet">{rest.map(i => <Link key={i.href} href={i.href}><NavIcon name={i.icon} /> {i.label}</Link>)}<a href="#" onClick={e => { e.preventDefault(); signOut(); }}>Sign out</a></div>}
+      {more && <div className="sheet">{rest.map(i => <Link key={i.href} href={i.href}><NavIcon name={i.icon} /> {i.label}</Link>)}<Link href="/profile">Profile</Link><a href="#" onClick={e => { e.preventDefault(); signOut(); }}>Sign out</a></div>}
     </div>
   );
 }

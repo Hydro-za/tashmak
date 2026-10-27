@@ -12,7 +12,6 @@ a{color:inherit}
 .app{display:flex;min-height:100vh}
 .side{width:212px;flex:none;background:var(--card);border-right:1px solid var(--line);padding:16px 10px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:2px}
 .brand{font-weight:700;font-size:15px;padding:4px 10px 14px;display:flex;align-items:center;gap:8px}
-.brand img{height:26px;max-width:120px;object-fit:contain}
 .nav a,.nav button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--muted);text-decoration:none;font-weight:500}
 .nav a:hover,.nav button:hover{background:var(--soft);color:var(--ink)}
 .nav .on{background:var(--accent);color:var(--accent-ink)}
@@ -120,7 +119,7 @@ body{-webkit-tap-highlight-color:transparent;transition:background-color .2s,col
 .stat{transition:transform .12s,box-shadow .12s,border-color .12s}a.stat:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}
 h1{font-size:24px;font-weight:750;letter-spacing:-.02em}h2{font-size:16px;font-weight:700}
 .side{padding:18px 12px;gap:3px}
-.brand{padding:2px 6px 16px}.brand img{height:auto;max-width:100%;width:168px;display:block}
+.brand{padding:2px 6px 16px}
 .nav a,.nav button{padding:10px 12px;border-radius:10px;font-weight:550;transition:background-color .12s,color .12s}
 .nav svg,.bottom svg{width:19px;height:19px;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .nav .on{background:var(--accent-soft);color:var(--accent);font-weight:650}
@@ -146,9 +145,9 @@ input[type=text],input[type=number],input[type=date],input[type=email],input[typ
 .bigbtn.ok{background:linear-gradient(135deg,#1a9a52,#127a3e)}.bigbtn.warn{background:var(--warn)}
 .jobcard{transition:transform .12s,box-shadow .12s}.jobcard:hover{transform:translateY(-1px)}
 .qdoc th{background:#04767b}.qdoc .tot .g{border-top-color:#04767b}.qdoc h1{color:#04767b}
-.logo-d{display:none}
-:root[data-theme="dark"] .logo-l{display:none}:root[data-theme="dark"] .logo-d{display:block}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .logo-l{display:none}:root:not([data-theme="light"]) .logo-d{display:block}}
+.brandlogo{display:block;background:url(/brand/logo.png) no-repeat left center/contain;max-width:100%}
+:root[data-theme="dark"] .brandlogo{background-image:url(/brand/logo-dark.png)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brandlogo{background-image:url(/brand/logo-dark.png)}}
 .themebtn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;flex:none}
 .themebtn:hover{background:var(--soft)}.themebtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}

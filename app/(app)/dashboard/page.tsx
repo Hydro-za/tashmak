@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { requireOwner } from '@/lib/session';
+import { requirePerm } from '@/lib/session';
 import { Top, StatusBadge, PrioBadge, Overdue } from '@/components/ui';
 import Timeline from '@/components/Timeline';
 import AutoRefresh from '@/components/AutoRefresh';
@@ -8,7 +8,7 @@ import { FINAL_JOB, fmtDate, overdueDays, todaySA } from '@/lib/labels';
 import { sortJobs, staffNames } from '@/lib/jobs';
 export const dynamic = 'force-dynamic';
 export default async function Dashboard({ searchParams }: { searchParams: { cat?: string } }) {
-  const { sb } = await requireOwner();
+  const me = await requirePerm('jobs.view_all'); const sb = me.sb;
   const [{ data: jobs }, { data: workload }, { data: act }, names, { data: cats }, { count: acceptedWaiting }] = await Promise.all([
     sb.from('jobs').select('*, job_items(category_name,product_name)').is('archived_at', null).order('created_at', { ascending: false }).limit(1000),
     sb.rpc('employee_workload'), sb.from('job_activity').select('*').order('created_at', { ascending: false }).limit(15), staffNames(sb), sb.from('product_categories').select('name').order('name'),
@@ -18,12 +18,12 @@ export default async function Dashboard({ searchParams }: { searchParams: { cat?
   const act_ = all.filter((j: any) => !FINAL_JOB.includes(j.status));
   const c = (f: (j: any) => boolean) => all.filter(f).length;
   const stat = (label: string, v: number, href: string, tone?: string) => <Link href={href} className="stat" style={{ textDecoration: 'none', borderColor: tone === 'bad' && v ? 'var(--bad)' : undefined }}><div className="k">{label}</div><div className="v" style={{ color: tone === 'bad' && v ? 'var(--bad)' : undefined }}>{v}</div></Link>;
-  const list = (title: string, rows: any[], empty: string) => <div className="card"><h2>{title} <span className="muted" style={{ fontWeight: 400 }}>({rows.length})</span></h2>{rows.slice(0, 6).map((j: any) => <div className="linkrow" key={j.id}><Link href={'/jobs/' + j.id}><b>{j.number}</b> · {j.customer_name} <Overdue due={j.due_date} status={j.status} /></Link><span><PrioBadge p={j.priority} /> {fmtDate(j.due_date)}</span></div>)}{!rows.length && <p className="muted">{empty}</p>}{rows.length > 6 && <p className="muted">+ {rows.length - 6} more in Jobs</p>}</div>;
+  const list = (title: string, rows: any[], empty: string) => <div className="card"><h2>{title} <span className="muted" style={{ fontWeight: 400 }}>({rows.length})</span></h2>{rows.slice(0, 6).map((j: any) => <div className="linkrow" key={j.id}><Link href={'/jobs/' + j.id}><b>{j.title || j.number}</b> · {j.customer_name} <Overdue due={j.due_date} status={j.status} /></Link><span><PrioBadge p={j.priority} /> {fmtDate(j.due_date)}</span></div>)}{!rows.length && <p className="muted">{empty}</p>}{rows.length > 6 && <p className="muted">+ {rows.length - 6} more in Jobs</p>}</div>;
   return (<>
     <AutoRefresh seconds={60} /><OverdueCheck />
-    <Top title="Dashboard" sub={fmtDate(t)}><Link href="/quotes/new" className="btn primary">+ NEW QUOTE</Link><Link href="/customers/new" className="btn">+ NEW CUSTOMER</Link><Link href="/jobs/new" className="btn">+ NEW JOB</Link><Link href="/jobs" className="btn">VIEW PRODUCTION QUEUE</Link><Link href="/jobs?due=overdue" className="btn">VIEW OVERDUE</Link></Top>
+    <Top title="Dashboard" sub={fmtDate(t)}>{me.isOwner && <Link href="/quotes/new" className="btn primary">+ NEW QUOTE</Link>}{me.can('customers.manage') && <Link href="/customers/new" className="btn">+ NEW CUSTOMER</Link>}{me.can('jobs.manage') && <Link href="/jobs/new" className="btn">+ NEW JOB</Link>}<Link href="/jobs" className="btn">VIEW PRODUCTION QUEUE</Link><Link href="/jobs?due=overdue" className="btn">VIEW OVERDUE</Link></Top>
     <div className="chips"><Link href="/dashboard" className={!cat ? 'on' : ''}>All products</Link>{(cats || []).map((k: any) => <Link key={k.name} href={'/dashboard?cat=' + encodeURIComponent(k.name)} className={cat === k.name ? 'on' : ''}>{k.name}</Link>)}</div>
-    {!!acceptedWaiting && <div className="alert info"><Link href="/jobs/new"><b>{acceptedWaiting} accepted quote{acceptedWaiting > 1 ? 's' : ''}</b> waiting for a job to be started →</Link></div>}
+    {me.isOwner && !!acceptedWaiting && <div className="alert info"><Link href="/jobs/new"><b>{acceptedWaiting} accepted quote{acceptedWaiting > 1 ? 's' : ''}</b> waiting for a job to be started →</Link></div>}
     <div className="stats">
       {stat('Due today', c(j => j.due_date === t && !FINAL_JOB.includes(j.status)), '/jobs?due=today')}{stat('Overdue', c(j => overdueDays(j.due_date, j.status) > 0), '/jobs?due=overdue', 'bad')}
       {stat('Awaiting design', c(j => ['design', 'design_review'].includes(j.status)), '/jobs?status=design')}{stat('In production', c(j => ['in_production', 'rework'].includes(j.status)), '/jobs?status=in_production')}

@@ -1,10 +1,10 @@
-import { requireOwner } from '@/lib/session';
+import { requirePerm } from '@/lib/session';
 import { Top } from '@/components/ui';
 import { SettingsCard, BusinessCard } from '@/components/SettingsForms';
 import { fmtDateTime } from '@/lib/labels';
 export const dynamic = 'force-dynamic';
 export default async function Settings() {
-  const { sb } = await requireOwner();
+  const me = await requirePerm('settings.manage'); const sb = me.sb;
   const [{ data: ss }, { data: cats }, { data: audit }] = await Promise.all([sb.from('system_settings').select('key,value'), sb.from('product_categories').select('name').order('name'), sb.from('config_audit').select('*').order('created_at', { ascending: false }).limit(40)]);
   const s = Object.fromEntries((ss || []).map((r: any) => [r.key, r.value]));
   const num: any[] = [{ k: 'prefix', l: 'Prefix', t: 'text' }, { k: 'yearFormat', l: 'Year in number', t: 'select', opts: [['none', 'None'], ['YYYY', '2026'], ['YY', '26']] }, { k: 'separator', l: 'Separator', t: 'text' }, { k: 'length', l: 'Digits', t: 'int' }, { k: 'startNumber', l: 'Start / next number at least', t: 'int', help: 'Numbers always go up and are never reused.' }];

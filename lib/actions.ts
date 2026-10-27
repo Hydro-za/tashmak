@@ -60,6 +60,20 @@ export async function addNote(jobId: string, note: string): Promise<R> {
 export async function recordQc(jobId: string, itemId: string | null, result: string, checked: number, rejected: number, notes: string): Promise<R> {
   const r = await rpc('record_qc', { p_job: jobId, p_item: itemId, p_result: result, p_checked: checked, p_rejected: rejected, p_notes: notes || null }); revalidatePath('/jobs/' + jobId); return r;
 }
+export async function setQcResult(jobId: string, result: 'passed' | 'not_passed', note?: string | null): Promise<R> {
+  if (!['passed', 'not_passed'].includes(result)) return { ok: false, error: 'Choose Passed or Not Passed.' };
+  if (note && note.length > 500) return { ok: false, error: 'Keep the note under 500 characters.' };
+  const r = await rpc('set_qc_result', { p_job: jobId, p_result: result, p_note: note || null }); revalidatePath('/jobs/' + jobId); revalidatePath('/my-jobs/' + jobId); return r;
+}
+export async function createJob(i: { customerId: string; title: string; dueDate: string | null; priority: string; designRequired: boolean; designApproval: boolean; designerId: string | null; productionIds: string[]; instructions: string; items: { product_name: string; qty_ordered: number; details: string; requires_qc: boolean }[] }): Promise<R> {
+  if (!i.customerId) return { ok: false, error: 'Choose a customer.' };
+  if (!Array.isArray(i.items) || !i.items.length) return { ok: false, error: 'Add at least one item.' };
+  for (const [n, it] of i.items.entries()) { if (!it.product_name?.trim()) return { ok: false, error: `Item ${n + 1}: enter what is being made.` }; if (!(Number(it.qty_ordered) > 0)) return { ok: false, error: `Item ${n + 1}: quantity must be more than zero.` }; }
+  if (i.title && i.title.length > 120) return { ok: false, error: 'Keep the job name under 120 characters.' };
+  const r = await rpc('create_job', { p_customer: i.customerId, p_title: i.title || null, p_due: i.dueDate || null, p_priority: i.priority, p_design_required: i.designRequired, p_design_approval: i.designApproval,
+    p_designer: i.designRequired ? i.designerId : null, p_production: i.productionIds, p_items: i.items.map(x => ({ product_name: x.product_name.trim(), qty_ordered: Number(x.qty_ordered), details: x.details || '', requires_qc: !!x.requires_qc })), p_instructions: i.instructions || null });
+  revalidatePath('/jobs'); return r;
+}
 export async function updateProgress(jobId: string, itemId: string, inProd: number, completed: number, rejected: number, rework: number): Promise<R> {
   const r = await rpc('update_item_progress', { p_item: itemId, p_in_production: inProd, p_completed: completed, p_rejected: rejected, p_rework: rework }); revalidatePath('/jobs/' + jobId); revalidatePath('/my-jobs/' + jobId); return r;
 }

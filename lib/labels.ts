@@ -40,9 +40,35 @@ const ERR: Record<string, string> = {
 export function friendlyError(e: any): string {
   const msg: string = (e && (e.message || e.error_description || String(e))) || 'Something went wrong';
   for (const k of Object.keys(ERR)) if (msg.includes(k)) return ERR[k];
+  if (/could not find the function|schema cache/i.test(msg)) return 'This feature needs a database update that has not been applied yet. Please contact the system administrator.';
   if (/duplicate key/i.test(msg)) return 'That already exists.';
   if (/violates check constraint/i.test(msg)) return 'One of the values is not allowed.';
   if (/permission denied|row-level security/i.test(msg)) return 'You do not have permission to do that.';
   if (/fetch failed|network/i.test(msg)) return 'Could not reach the server. Check your connection and try again.';
   return 'Could not complete that: ' + msg.slice(0, 160);
+}
+
+/* ---- simplified job status shown to everyone: Pending / In Progress / Awaiting Quality Check / Completed ---- */
+export type SimpleKey = 'pending' | 'in_progress' | 'awaiting_qc' | 'completed' | 'cancelled';
+export const SIMPLE: Record<SimpleKey, { label: string; tone: string }> = {
+  pending: { label: 'Pending', tone: 'draft' }, in_progress: { label: 'In Progress', tone: 'sent' }, awaiting_qc: { label: 'Awaiting Quality Check', tone: 'expired' },
+  completed: { label: 'Completed', tone: 'accepted' }, cancelled: { label: 'Cancelled', tone: 'rejected' }
+};
+export function simpleStatus(j: { status: string; design_started_at?: string | null }): SimpleKey {
+  const s = j.status;
+  if (s === 'cancelled') return 'cancelled';
+  if (s === 'queued') return 'pending';
+  if (s === 'design') return j.design_started_at ? 'in_progress' : 'pending';
+  if (s === 'design_review' || s === 'in_production' || s === 'rework') return 'in_progress';
+  if (s === 'qc') return 'awaiting_qc';
+  return 'completed';
+}
+export const isCompletedJob = (j: { status: string }) => simpleStatus(j) === 'completed' || j.status === 'cancelled';
+export const QC_LABEL: Record<string, { label: string; tone: string }> = { not_checked: { label: 'Not Checked', tone: 'draft' }, passed: { label: 'Passed', tone: 'accepted' }, not_passed: { label: 'Not Passed', tone: 'rejected' } };
+/** 'overdue' once past due; 'soon' when due today, tomorrow or the day after. Finished jobs never flag. */
+export function dueState(due: string | null, status: string): 'overdue' | 'soon' | null {
+  if (!due || FINAL_JOB.includes(status)) return null;
+  const t = todaySA(); if (due < t) return 'overdue';
+  const lim = new Date(t + 'T12:00:00Z'); lim.setUTCDate(lim.getUTCDate() + 2);
+  return due <= lim.toISOString().slice(0, 10) ? 'soon' : null;
 }

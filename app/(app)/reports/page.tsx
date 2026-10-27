@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import { requireOwner } from '@/lib/session';
+import { requirePerm } from '@/lib/session';
 import { Top } from '@/components/ui';
 import { staffNames } from '@/lib/jobs';
 import { FINAL_JOB, JOB_STATUS, overdueDays, fmtDate, todaySA } from '@/lib/labels';
 export const dynamic = 'force-dynamic';
 export default async function Reports({ searchParams }: { searchParams: { from?: string; to?: string } }) {
-  const { sb } = await requireOwner();
+  const me = await requirePerm('reports.view'); const sb = me.sb;
   const t = todaySA(); const d = new Date(t + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - 30);
   const from = searchParams.from || d.toISOString().slice(0, 10), to = searchParams.to || t;
   const [{ data: jobs }, names] = await Promise.all([sb.from('jobs').select('*, job_items(product_name,category_name,qty_ordered), job_assignments(user_id,stage,active)').is('archived_at', null).limit(2000), staffNames(sb)]);
