@@ -58,3 +58,8 @@ Migrations applied: 001_core_tables, 002_quotes_jobs_tables, 003a_helpers_quotes
 - Stage 2: roles UI + employee mgmt rewrite (custom roles CRUD, assign role, create owners, recovery email, deactivate/reactivate/delete w/ history kept, last-owner guard, no self-promotion) + pay (hourly/daily/monthly, validation, history).
 - Stage 3: labour costing per job (authorised users record time per employee per day; snapshot rate; estimated vs actual; incomplete when pay/time missing; Settings: hours/day, days/month).
 - Stage 4: password recovery (login "Forgot password?", username -> recovery email lookup server-side, rate limit, generic responses, owner-assisted reset, security audit) + branded 'Tashmak System' Resend email + admin 'send test email'. Needs user: RESEND_API_KEY, verified domain/sender, SUPABASE_SERVICE_ROLE_KEY (server only), Supabase OTP expiry 1800s, redirect URLs.
+
+
+## Deployment follow-up (2026-10-27)
+- Vercel project root directory is configured to `tashmak-upgrade-2` so this upgraded app, rather than the older repository-root app, is built.
+- Before relying on direct job creation (`/jobs/new`), apply `supabase/migrations/20261001000010_create_job_direct.sql` in the existing Supabase project's SQL Editor. This migration is still marked NOT YET APPLIED; do not assume it has run.
