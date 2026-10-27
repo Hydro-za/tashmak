@@ -13,6 +13,8 @@ Covers general printing **and** DTF/clothing: existing calculator → saved quot
 | `tests/` | Engine, embedded-calculator, PDF/spec tests. |
 
 ## Setup (about 15 minutes)
+
+**Vercel deployment:** Set the Vercel project's Root Directory to `tashmak-upgrade-2` so builds use this app's own `package.json` and `tsconfig.json`.
 1. **Supabase**: create a project (free plan is fine). SQL editor → run the files in `supabase/migrations/` in order, then `supabase/seed_owner.sql` (edit the email first).
 2. **GitHub → Vercel**: push this folder to a (private) GitHub repo → Vercel → *Add New Project* → import it (framework: Next.js, nothing else to configure).
 3. **Environment variables** (Vercel → Settings → Environment Variables; see `.env.example`):
