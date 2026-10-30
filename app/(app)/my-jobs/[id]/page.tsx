@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { requireEmployee } from '@/lib/session';
 import { loadJobBundle } from '@/lib/jobs';
 import { PrioBadge, JobStatus, QcBadge, DueFlag } from '@/components/ui';
-import ActionButton from '@/components/ActionButton';
 import JobWorkOrder from '@/components/JobWorkOrder';
 import JobFiles from '@/components/JobFiles';
 import FileUploader from '@/components/FileUploader';
@@ -12,7 +11,6 @@ import Timeline from '@/components/Timeline';
 import AutoRefresh from '@/components/AutoRefresh';
 import QcPanel from '@/components/QcPanel';
 import { SuppliedForm } from '@/components/JobForms';
-import { jobAction } from '@/lib/actions';
 import JobProgressActions from '@/components/JobProgressActions';
 import { fmtDate, JOB_STATUS } from '@/lib/labels';
 
