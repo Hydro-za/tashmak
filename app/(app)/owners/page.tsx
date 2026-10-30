@@ -1,0 +1,2 @@
+import {requireOwner} from '@/lib/session';import {Top} from '@/components/ui';import OwnerManager from '@/components/OwnerManager';export const dynamic='force-dynamic';
+export default async function OwnersPage(){const {sb}=await requireOwner();const {data:owners}=await sb.from('profiles').select('id,full_name,username,active,created_at').eq('role','owner').is('deleted_at',null).order('created_at');return <><Top title="Owner accounts" sub="Manage trusted people who have full owner access."/><OwnerManager owners={owners||[]}/></>;}
