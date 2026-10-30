@@ -45,7 +45,7 @@ export default async function JobPage({ params }: { params: { id: string } }) {
       <Link href="/jobs" className="btn">← Jobs</Link>{quote && me.isOwner && <Link href={'/quotes/' + quote.id + '/duplicate'} className="btn">Create repeat job</Link>}
     </Top>
     {cust?.notes && <div className="alert info" style={{ whiteSpace: 'pre-wrap' }}><b>Customer note:</b> {cust.notes}</div>}
-    {canManage && <div className="card" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+    {canManage && <div className="card job-progress-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
       <b>Job progress</b>
       {s === 'design_review' && <>{A('APPROVE DESIGN', 'design_approve', 'btn primary', { successText: 'Design approved' })}{A('Send back for changes', 'design_reject', 'btn danger', { askNote: 'What needs to change?', noteRequired: true })}</>}
       {s === 'design' && <>{!job.design_started_at && A('ACCEPT & START DESIGN', 'design_start', 'bigbtn')}{A('MARK DESIGN COMPLETE', 'design_complete', 'bigbtn ok')}</>}
