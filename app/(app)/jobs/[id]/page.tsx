@@ -48,7 +48,7 @@ export default async function JobPage({ params }: { params: { id: string } }) {
     {cust?.notes && <div className="alert info" style={{ whiteSpace: 'pre-wrap' }}><b>Customer note:</b> {cust.notes}</div>}
     {canManage && <JobProgressActions job={job} canDesign={!!job.design_required} canProduction hasArtwork={b.files.some((f: any) => ['artwork', 'design', 'print_ready', 'dtf_artwork'].includes(f.kind))} hasFinal={b.files.some((f: any) => f.is_final)} canCompleteUnstartedDesign />}
     {canManage && <div className="card job-progress-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-      <b>Job progress</b>
+      <b>Next steps</b>
       {s === 'design_review' && <>{A('APPROVE DESIGN', 'design_approve', 'btn primary', { successText: 'Design approved' })}{A('Send back for changes', 'design_reject', 'btn danger', { askNote: 'What needs to change?', noteRequired: true })}</>}
       {s === 'qc' && <span className="muted">Awaiting quality check — record it in the Quality check box below.</span>}
       {['completed', 'ready_collection', 'ready_delivery'].includes(s) && <>{A('READY FOR COLLECTION', 'ready_collection', s === 'ready_collection' ? 'btn primary' : 'btn')}{A('READY FOR DELIVERY', 'ready_delivery', s === 'ready_delivery' ? 'btn primary' : 'btn')}</>}
