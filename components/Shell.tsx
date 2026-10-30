@@ -39,18 +39,18 @@ export default function Shell({ name, roleName, isOwner, perms, unread, children
   const canSearch = isOwner || perms.some(p => ['jobs.view_all', 'customers.view', 'employees.view'].includes(p));
   return (
     <div className="app">
-      <aside className="side">
+      <aside className="side glass-surface">
         <div className="brand"><Logo width={168} /></div>
         <nav className="nav">{items.map(i => <Link key={i.href} href={i.href} className={on(i.href) ? 'on' : ''}><NavIcon name={i.icon} /><span>{i.label}</span></Link>)}</nav>
         <div className="who">{name}<br /><b>{roleName}</b><div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center' }}><ThemeToggle /><button className="btn sm" onClick={signOut}>Sign out</button></div></div>
       </aside>
       <main className="main">
-        <div className="hdr"><span className="mobilemark"><LogoMark size={32} /></span>{canSearch ? <GlobalSearch jobBase={viewAll ? '/jobs' : '/my-jobs'} /> : <b style={{ flex: 1 }}>{name}</b>}
+        <div className="hdr glass-surface"><span className="mobilemark"><LogoMark size={32} /></span>{canSearch ? <GlobalSearch jobBase={viewAll ? '/jobs' : '/my-jobs'} /> : <b style={{ flex: 1 }}>{name}</b>}
           <span className="mobiletheme"><ThemeToggle /></span>
           <NotificationBell initialUnread={unread} jobBase={viewAll ? '/jobs' : '/my-jobs'} canQuotes={isOwner} /></div>
         {children}
       </main>
-      <nav className="bottom">
+      <nav className="bottom glass-surface">
         {primary.map(i => <button key={i.href} className={on(i.href) ? 'on' : ''} onClick={() => router.push(i.href)}><NavIcon name={i.icon} /><span>{i.label.split(' ')[0]}</span></button>)}
         {rest.length > 0 && <button className={more ? 'on' : ''} onClick={() => setMore(!more)}><NavIcon name="more" /><span>More</span></button>}
       </nav>

@@ -19,7 +19,7 @@ export default async function Dashboard({ searchParams }: { searchParams: { cat?
   const c = (f: (j: any) => boolean) => all.filter(f).length;
   const stat = (label: string, v: number, href: string, tone?: string) => <Link href={href} className="stat" style={{ textDecoration: 'none', borderColor: tone === 'bad' && v ? 'var(--bad)' : undefined }}><div className="k">{label}</div><div className="v" style={{ color: tone === 'bad' && v ? 'var(--bad)' : undefined }}>{v}</div></Link>;
   const list = (title: string, rows: any[], empty: string) => <div className="card"><h2>{title} <span className="muted" style={{ fontWeight: 400 }}>({rows.length})</span></h2>{rows.slice(0, 6).map((j: any) => <div className="linkrow" key={j.id}><Link href={'/jobs/' + j.id}><b>{j.title || j.number}</b> · {j.customer_name} <Overdue due={j.due_date} status={j.status} /></Link><span><PrioBadge p={j.priority} /> {fmtDate(j.due_date)}</span></div>)}{!rows.length && <p className="muted">{empty}</p>}{rows.length > 6 && <p className="muted">+ {rows.length - 6} more in Jobs</p>}</div>;
-  return (<>
+  return (<div className="page-dashboard">
     <AutoRefresh seconds={60} /><OverdueCheck />
     <Top title="Dashboard" sub={fmtDate(t)}>{me.isOwner && <Link href="/quotes/new" className="btn primary">+ NEW QUOTE</Link>}{me.can('customers.manage') && <Link href="/customers/new" className="btn">+ NEW CUSTOMER</Link>}{me.can('jobs.manage') && <Link href="/jobs/new" className="btn">+ NEW JOB</Link>}<Link href="/jobs" className="btn">VIEW PRODUCTION QUEUE</Link><Link href="/jobs?due=overdue" className="btn">VIEW OVERDUE</Link></Top>
     <div className="chips"><Link href="/dashboard" className={!cat ? 'on' : ''}>All products</Link>{(cats || []).map((k: any) => <Link key={k.name} href={'/dashboard?cat=' + encodeURIComponent(k.name)} className={cat === k.name ? 'on' : ''}>{k.name}</Link>)}</div>
@@ -36,5 +36,5 @@ export default async function Dashboard({ searchParams }: { searchParams: { cat?
     </div>
     <div className="card"><h2>Employee workload</h2>{(workload || []).length ? <div className="tblwrap"><table className="tbl"><thead><tr><th>Employee</th><th className="r">Active</th><th className="r">Overdue</th><th className="r">Completed</th></tr></thead><tbody>{(workload || []).map((w: any) => <tr key={w.user_id}><td><Link href={'/employees/' + w.user_id}><b>{w.full_name}</b></Link> <span className="muted">— {w.role}</span></td><td className="r">{w.active_jobs}</td><td className="r" style={{ color: w.overdue_jobs ? 'var(--bad)' : undefined }}>{w.overdue_jobs}</td><td className="r">{w.completed_jobs}</td></tr>)}</tbody></table></div> : <p className="muted">No employees yet. <Link href="/employees/new">Add one</Link>.</p>}</div>
     <div className="card"><h2>Recent activity</h2><Timeline events={act || []} names={names} /></div>
-  </>);
+  </div>);
 }
