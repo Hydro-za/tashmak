@@ -49,7 +49,6 @@ export default async function Jobs({ searchParams }: { searchParams: SearchParam
 
   const activeCount = all.filter((job: any) => !isCompletedJob(job)).length;
   const completedCount = all.length - activeCount;
-  const staff = Object.entries(names);
   const getTeam = (job: any) => job.job_assignments
     .filter((assignment: any) => assignment.active)
     .map((assignment: any) => names[assignment.user_id])
@@ -58,7 +57,7 @@ export default async function Jobs({ searchParams }: { searchParams: SearchParam
     || job.job_items.map((item: any) => item.product_name).slice(0, 2).join(', ')
     || job.number;
 
-  const chip = (label: string, value: string, selected: boolean) => (
+  const chip = (label: string, value: string, selected: boolean, archived = !!searchParams.archived) => (
     <Link
       key={value}
       className={selected ? 'on' : ''}
@@ -66,7 +65,7 @@ export default async function Jobs({ searchParams }: { searchParams: SearchParam
         pathname: '/jobs',
         query: {
           ...(searchParams.q ? { q: searchParams.q } : {}),
-          ...(searchParams.archived ? { archived: '1' } : {}),
+          ...(archived ? { archived: '1' } : {}),
           ...(value !== 'all' ? { status: value } : {}),
         },
       }}
@@ -98,10 +97,10 @@ export default async function Jobs({ searchParams }: { searchParams: SearchParam
         {chip('All', 'all', !status || status === 'all')}
         {chip(`Active (${activeCount})`, 'active', status === 'active')}
         {chip(`Completed (${completedCount})`, 'completed', status === 'completed')}
-        {(Object.keys(SIMPLE) as SimpleKey[]).map((key) =>
+        {(Object.keys(SIMPLE) as SimpleKey[]).filter((key) => key !== 'completed').map((key) =>
           chip(SIMPLE[key].label, key, status === key)
         )}
-        {chip('Archived', 'all', !!searchParams.archived)}
+        {chip('Archived', 'all', !!searchParams.archived, !searchParams.archived)}
       </div>
 
       {!rows.length ? (
