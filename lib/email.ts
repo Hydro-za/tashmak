@@ -12,7 +12,7 @@ async function sendTemplate(to: string, templateId: string, variables: Record<st
   if (!key) throw new Error('RESEND_API_KEY is not configured');
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
-    headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },
+    headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json', 'User-Agent': 'tashmak-system/1.0' },
     body: JSON.stringify({ from: FROM, to: [to], template: { id: templateId, variables } }),
   });
   if (!response.ok) throw new Error('Resend template email failed: ' + (await response.text()).slice(0, 300));
