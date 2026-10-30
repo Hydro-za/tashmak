@@ -2,6 +2,7 @@ const P: Record<string, string> = {
   dashboard: 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z',
   jobs: 'M3 7h18v13H3zM8 7V4h8v3M3 12h18',
   quotes: 'M6 2h9l5 5v15H6zM14 2v6h6M9 13h8M9 17h8',
+  invoices: 'M6 2h9l5 5v15H6zM14 2v6h6M9 13h8M9 17h8M9 9h2',
   customers: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8',
   products: 'M20 7l-8-4-8 4 8 4 8-4zM4 7v10l8 4 8-4V7M12 11v10',
   employees: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',
