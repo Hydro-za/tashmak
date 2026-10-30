@@ -13,6 +13,7 @@ import AutoRefresh from '@/components/AutoRefresh';
 import QcPanel from '@/components/QcPanel';
 import { SuppliedForm } from '@/components/JobForms';
 import { jobAction } from '@/lib/actions';
+import JobProgressActions from '@/components/JobProgressActions';
 import { fmtDate, JOB_STATUS } from '@/lib/labels';
 
 export const dynamic = 'force-dynamic';
@@ -27,7 +28,6 @@ export default async function MyJob({ params }: { params: { id: string } }) {
   const itemNames = Object.fromEntries(items.map((i: any) => [i.id, i.product_name]));
   const itemOpts = items.map((i: any) => ({ id: i.id, name: i.product_name }));
   const title = job.title || items.map((i: any) => i.product_name).slice(0, 2).join(', ') || job.number;
-  const btn = (label: string, action: string, cls = 'bigbtn') => <ActionButton className={cls} label={label} pendingLabel="Please wait…" action={jobAction} args={[job.id, action]} successText={label.toLowerCase().includes('complete') ? 'Saved — well done' : 'Started'} />;
   const kinds = [...(isDes ? ['design', 'print_ready', 'dtf_artwork', 'artwork', 'reference', 'logo'] : []), ...(isProd || !isDes ? ['photo', 'production', 'reference', 'garment_ref'] : []), 'other'];
   return (<>
     <AutoRefresh seconds={30} />
@@ -36,14 +36,11 @@ export default async function MyJob({ params }: { params: { id: string } }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><h1>{title}</h1><span><PrioBadge p={job.priority} /> <JobStatus job={job} /></span></div>
       <div className="muted">{job.number} · <b>{job.customer_name}</b> · {(JOB_STATUS[s] || { label: s }).label}</div>
       <div className="muted" style={{ marginTop: 4 }}>Due <b>{fmtDate(job.due_date)}</b> <DueFlag due={job.due_date} status={s} /> {hasQc && <QcBadge status={job.qc_status} />}</div>
-      {isDes && s === 'design' && (!job.design_started_at ? btn('ACCEPT & START DESIGN', 'design_start') : btn('MARK DESIGN COMPLETE', 'design_complete', 'bigbtn ok'))}
       {isDes && s === 'design_review' && <div className="alert info" style={{ marginTop: 10 }}>Design sent — waiting for approval.</div>}
-      {isProd && ['queued', 'rework'].includes(s) && finals.length === 0 && b.files.some((f: any) => ['artwork', 'design', 'print_ready', 'dtf_artwork'].includes(f.kind)) && <div className="alert warn" style={{ marginTop: 10 }}>No file is marked FINAL yet — check before printing.</div>}
-      {isProd && ['queued', 'rework'].includes(s) && btn(s === 'rework' ? 'ACCEPT & RESTART PRODUCTION' : 'ACCEPT & START PRODUCTION', 'production_start')}
-      {isProd && s === 'in_production' && btn('MARK PRODUCTION COMPLETE', 'production_complete', 'bigbtn ok')}
       {s === 'qc' && !canQc && <div className="alert info" style={{ marginTop: 10 }}>Production is complete — waiting for the quality check.</div>}
       {s === 'design' && !isDes && <div className="alert info" style={{ marginTop: 10 }}>Waiting for design to finish. You will be notified when it is ready.</div>}
     </div>
+    <JobProgressActions job={job} canDesign={isDes} canProduction={isProd} hasArtwork={b.files.some((f: any) => ['artwork', 'design', 'print_ready', 'dtf_artwork'].includes(f.kind))} hasFinal={finals.length > 0} />
     {job.qc_status === 'not_passed' && job.qc_note && ['rework', 'in_production'].includes(s) && <div className="alert bad"><b>Did not pass the quality check:</b> {job.qc_note}</div>}
     {finals.length > 0 && <div className="alert ok"><b>FINAL / PRODUCTION READY FILE:</b> {finals.map((f: any) => <a key={f.id} href={b.urls[f.id]} target="_blank" rel="noreferrer" style={{ marginRight: 10 }}><b>{f.file_name}</b> (v{f.version})</a>)}</div>}
     <JobWorkOrder b={b} canProgress={isProd && ['in_production', 'rework'].includes(s)} />
