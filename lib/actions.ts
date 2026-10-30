@@ -47,8 +47,31 @@ export async function startJob(input: { quoteId: string; dueDate: string | null;
 }
 
 /* ---------- jobs ---------- */
+async function notifyJobCompleted(jobId: string, completedBy: string) {
+  const sb = createAdminClient();
+  const [{ data: job }, { data: employee }] = await Promise.all([
+    sb.from('jobs').select('number,title,customer_name,customer_id').eq('id', jobId).maybeSingle(),
+    sb.from('profiles').select('full_name,username').eq('id', completedBy).maybeSingle()
+  ]);
+  if (!job) return;
+  let customerName = job.customer_name || 'Customer';
+  if (!job.customer_name && job.customer_id) {
+    const { data: customer } = await sb.from('customers').select('name').eq('id', job.customer_id).maybeSingle();
+    customerName = customer?.name || customerName;
+  }
+  await sendJobCompletedEmails({
+    jobNumber: job.number, jobTitle: job.title || 'Production job', customerName,
+    employeeName: employee?.full_name || 'Tashmak team member', employeeId: employee?.username || '',
+    jobUrl: (process.env.NEXT_PUBLIC_APP_URL || 'https://tashmak-system.vercel.app') + '/jobs/' + jobId
+  });
+}
 export async function jobAction(jobId: string, action: string, note?: string | null): Promise<R> {
-  const r = await rpc('job_action', { p_job: jobId, p_action: action, p_note: note || null }); revalidatePath('/jobs/' + jobId); revalidatePath('/my-jobs'); return r;
+  const r = await rpc('job_action', { p_job: jobId, p_action: action, p_note: note || null });
+  if (r.ok && !r.noop && action === 'production_complete' && r.data?.status === 'completed') {
+    try { const sb = createClient(); const { data: { user } } = await sb.auth.getUser(); if (user?.id) await notifyJobCompleted(jobId, user.id); }
+    catch (e) { console.error('Job completion email failed', e); }
+  }
+  revalidatePath('/jobs/' + jobId); revalidatePath('/my-jobs'); return r;
 }
 export async function assignJob(jobId: string, stage: string, userIds: string[]): Promise<R> {
   const r = await rpc('job_assign', { p_job: jobId, p_stage: stage, p_users: userIds });
@@ -72,7 +95,12 @@ export async function addNote(jobId: string, note: string): Promise<R> {
   const r = await rpc('add_job_note', { p_job: jobId, p_note: note.trim() }); revalidatePath('/jobs/' + jobId); revalidatePath('/my-jobs/' + jobId); return r;
 }
 export async function recordQc(jobId: string, itemId: string | null, result: string, checked: number, rejected: number, notes: string): Promise<R> {
-  const r = await rpc('record_qc', { p_job: jobId, p_item: itemId, p_result: result, p_checked: checked, p_rejected: rejected, p_notes: notes || null }); revalidatePath('/jobs/' + jobId); return r;
+  const r = await rpc('record_qc', { p_job: jobId, p_item: itemId, p_result: result, p_checked: checked, p_rejected: rejected, p_notes: notes || null });
+  if (r.ok && r.data?.status === 'completed') {
+    try { const sb = createClient(); const { data: { user } } = await sb.auth.getUser(); if (user?.id) await notifyJobCompleted(jobId, user.id); }
+    catch (e) { console.error('Job completion email failed', e); }
+  }
+  revalidatePath('/jobs/' + jobId); return r;
 }
 export async function setQcResult(jobId: string, result: 'passed' | 'not_passed', note?: string | null): Promise<R> {
   if (!['passed', 'not_passed'].includes(result)) return { ok: false, error: 'Choose Passed or Not Passed.' };
