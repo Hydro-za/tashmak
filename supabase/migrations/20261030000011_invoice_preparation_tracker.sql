@@ -29,6 +29,7 @@ create table public.job_invoices (
 );
 create index job_invoices_job_version on public.job_invoices(job_id,version desc);
 create index job_invoices_status on public.job_invoices(status,prepared_at desc);
+create unique index job_invoices_invoice_number_active on public.job_invoices(lower(trim(invoice_number))) where status in ('ready_for_invoice','invoice_sent');
 create table public.job_invoice_events (
  id bigint generated always as identity primary key,
  invoice_id uuid not null references public.job_invoices(id) on delete restrict,
@@ -101,7 +102,7 @@ begin
   select distinct on (i.job_id) i.* from public.job_invoices i order by i.job_id,i.version desc
  )
  select b.id,b.number,b.title,b.customer,l.invoice_number,
-   coalesce(l.verified_total,b.total),coalesce(l.prepared_at,b.updated_at),
+   b.total,coalesce(l.prepared_at,b.updated_at),
    case when l.status is not null then l.status
      when b.quote_id is null or b.customer is null or b.number is null then 'preparation_needed'
      when b.errors>0 or b.item_count=0 or not b.items_valid or b.sales is null or b.vat is null or b.total is null then 'needs_review'
