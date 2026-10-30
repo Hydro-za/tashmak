@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: 'Quotes, jobs and production for Tashmak Design & Print',
   applicationName: 'Tashmak', appleWebApp: { capable: true, title: 'Tashmak', statusBarStyle: 'default' }, formatDetection: { telephone: false }
 };
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: [{ media: '(prefers-color-scheme: light)', color: '#04767b' }, { media: '(prefers-color-scheme: dark)', color: '#0d1214' }] };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: [{ media: '(prefers-color-scheme: light)', color: '#2563eb' }, { media: '(prefers-color-scheme: dark)', color: '#0d1214' }] };
 
 // Applies the saved theme before first paint (no white flash in dark mode). 'system' = no saved choice.
 const THEME_JS = "try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}";
