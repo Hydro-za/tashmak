@@ -59,7 +59,7 @@ export default async function Jobs({ searchParams }: { searchParams: SearchParam
 
   const chip = (label: string, value: string, selected: boolean, archived = !!searchParams.archived) => (
     <Link
-      key={value}
+      key={label}
       className={selected ? 'on' : ''}
       href={{
         pathname: '/jobs',
@@ -94,7 +94,7 @@ export default async function Jobs({ searchParams }: { searchParams: SearchParam
       </form>
 
       <div className="chips">
-        {chip('All', 'all', !status || status === 'all')}
+        {chip('All', 'all', !searchParams.archived && (!status || status === 'all'))}
         {chip(`Active (${activeCount})`, 'active', status === 'active')}
         {chip(`Completed (${completedCount})`, 'completed', status === 'completed')}
         {(Object.keys(SIMPLE) as SimpleKey[]).filter((key) => key !== 'completed').map((key) =>
