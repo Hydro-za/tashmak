@@ -15,6 +15,7 @@ import QcPanel from '@/components/QcPanel';
 import { SuppliedForm } from '@/components/JobForms';
 import { jobAction, archiveRecord } from '@/lib/actions';
 import { JOB_STATUS, fmtDate } from '@/lib/labels';
+import JobInvoicePanel from '@/components/JobInvoicePanel';
 
 export const dynamic = 'force-dynamic';
 export default async function JobPage({ params }: { params: { id: string } }) {
@@ -29,6 +30,9 @@ export default async function JobPage({ params }: { params: { id: string } }) {
   const s = job.status; const final = ['completed', 'ready_collection', 'ready_delivery', 'collected', 'delivered', 'ready_invoice', 'cancelled'].includes(s);
   const itemNames = Object.fromEntries(items.map((i: any) => [i.id, i.product_name]));
   const title = job.title || items.map((i: any) => i.product_name).slice(0, 2).join(', ') || job.number;
+  const invoiceEligible = me.isOwner && ['collected', 'delivered', 'ready_invoice'].includes(s);
+  const [{data: invoiceSnapshot}, {data: invoiceRows}, {data: invoiceEvents}] = invoiceEligible ? await Promise.all([sb.rpc('invoice_job_snapshot', { p_job_id: job.id }), sb.from('job_invoices').select('*').eq('job_id', job.id).order('version', { ascending: false }).limit(1), sb.from('job_invoice_events').select('*').eq('job_id', job.id).order('performed_at', { ascending: false }).limit(20)]) : [{data:null},{data:[]},{data:[]}];
+  const currentInvoice = invoiceRows?.[0] || null;
   const prodStarted = !!job.production_started_at; const hasQc = items.some((i: any) => i.requires_qc) || job.qc_status !== 'not_checked' || s === 'qc';
   const A = (label: string, action: string, cls = 'btn', extra: any = {}) => <ActionButton key={action + label} className={cls} label={label} action={jobAction} args={[job.id, action]} {...extra} />;
   return (<>
@@ -47,8 +51,8 @@ export default async function JobPage({ params }: { params: { id: string } }) {
       {['completed', 'ready_collection', 'ready_delivery'].includes(s) && <>{A('READY FOR COLLECTION', 'ready_collection', s === 'ready_collection' ? 'btn primary' : 'btn')}{A('READY FOR DELIVERY', 'ready_delivery', s === 'ready_delivery' ? 'btn primary' : 'btn')}</>}
       {s === 'ready_collection' && A('COLLECTED', 'collected', 'btn primary', { askNote: 'Collected by / notes (optional)', successText: 'Marked collected' })}
       {s === 'ready_delivery' && A('DELIVERED', 'delivered', 'btn primary', { askNote: 'Delivery notes (optional)', successText: 'Marked delivered' })}
-      {['collected', 'delivered'].includes(s) && A('READY FOR INVOICE', 'ready_invoice', 'btn primary', { successText: 'Ready for invoice' })}
-      {s === 'ready_invoice' && <span className="badge b-converted">Ready for you to invoice in your accounting software</span>}
+      {['collected', 'delivered'].includes(s) && me.isOwner && <span className="badge b-converted">Ready for invoice</span>}
+      {s === 'ready_invoice' && <span className="badge b-converted">Ready for invoice</span>}
       {s === 'cancelled' && <span className="muted">Cancelled{job.cancel_reason ? ': ' + job.cancel_reason : ''}</span>}
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {final && A('Reopen job', 'reopen_queued', 'btn', { askNote: 'Reason for reopening (required)', noteRequired: true, successText: 'Job reopened' })}
@@ -57,6 +61,7 @@ export default async function JobPage({ params }: { params: { id: string } }) {
         {me.isOwner && ['ready_invoice', 'cancelled'].includes(s) && <ActionButton className="btn ghost sm" label={job.archived_at ? 'Restore' : 'Archive'} action={archiveRecord} args={['job', job.id, !job.archived_at]} confirmText={job.archived_at ? undefined : 'Archive this job? It stays under archived records.'} />}
       </span>
     </div>}
+    {invoiceEligible && <JobInvoicePanel snapshot={invoiceSnapshot} invoice={currentInvoice} events={invoiceEvents || []} />}
     <div className="split"><div>
       <div className="card"><h2>Work order</h2>
         <div className="grid g3" style={{ marginBottom: 12 }}>

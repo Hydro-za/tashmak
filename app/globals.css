@@ -526,3 +526,31 @@ button:focus-visible,.btn:focus-visible,a.btn:focus-visible{outline:2px solid va
 .page-employees .workspace-tabs a{display:inline-flex;align-items:center;justify-content:center;padding:9px 12px;color:var(--muted);font-weight:600;white-space:nowrap;text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px}
 .page-employees .workspace-tabs a.active{color:var(--ink);border-bottom-color:var(--ink)}
 .page-employees .workspace-tabs a:hover{color:var(--ink);background:var(--soft)}
+
+/* Jobs and invoice workspace: focused responsive layout */
+.job-switch{align-items:center;gap:8px}
+.job-switch a{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:10px;text-decoration:none;color:var(--muted);font-weight:650;white-space:nowrap}
+.job-switch a.on{background:var(--soft);color:var(--ink);border-bottom:2px solid var(--accent)}
+.jobs-search{display:flex;gap:8px;align-items:center}
+.jobs-search input{flex:1;min-width:0}
+.jobs-table .tbl{min-width:720px}
+.job-invoice-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.job-invoice-head h2{margin:0}
+.job-invoice-head p{margin:4px 0 0}
+.job-invoice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.job-invoice-grid .metric{min-width:0}
+.job-invoice-grid .metric .v{overflow-wrap:anywhere}
+.job-invoice-panel details summary{cursor:pointer;font-weight:650;padding:8px 0}
+@media(max-width:820px){
+ .job-switch{display:flex;overflow-x:auto;white-space:nowrap}
+ .jobs-search{display:grid;grid-template-columns:minmax(0,1fr) auto}
+ .jobs-search .btn{min-width:76px}
+ .jobs-table{padding:8px}
+ .jobs-table .tbl{min-width:690px}
+ .job-invoice-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .job-invoice-grid .metric{padding:9px}
+ .job-invoice-grid .metric .v{font-size:14px}
+ .job-invoice-head{align-items:flex-start}
+ .job-invoice-head .btn{width:100%}
+}
+@media(max-width:390px){.job-invoice-grid{grid-template-columns:1fr 1fr}.jobs-search{grid-template-columns:1fr}.jobs-search .btn{width:100%}}
