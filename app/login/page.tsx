@@ -20,8 +20,13 @@ export default function Login() {
     setErr(''); setInfo('');
     if (!id.includes('@')) { setErr('Enter your registered employee or owner email address above.'); return; }
     setBusy(true);
-    const result=await requestPasswordReset(id.trim().toLowerCase());
-    setBusy(false);
-    if(!result.ok) setErr(result.error||'Could not send the reset email. Please try again.');
-    else setInfo('If this email is registered, a secure password reset link has been sent.');
+    try {
+      const result = await requestPasswordReset(id.trim().toLowerCase());
+      if (!result.ok) setErr(result.error || 'Could not send the reset email. Please try again.');
+      else setInfo('If this email is registered, a secure password reset link has been sent.');
+    } catch {
+      setErr('Could not send the reset email. Please try again in a few minutes.');
+    } finally {
+      setBusy(false);
+    }
   }
