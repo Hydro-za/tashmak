@@ -36,11 +36,11 @@ export default async function MyJob({ params }: { params: { id: string } }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><h1>{title}</h1><span><PrioBadge p={job.priority} /> <JobStatus job={job} /></span></div>
       <div className="muted">{job.number} · <b>{job.customer_name}</b> · {(JOB_STATUS[s] || { label: s }).label}</div>
       <div className="muted" style={{ marginTop: 4 }}>Due <b>{fmtDate(job.due_date)}</b> <DueFlag due={job.due_date} status={s} /> {hasQc && <QcBadge status={job.qc_status} />}</div>
-      {isDes && s === 'design' && (!job.design_started_at ? btn('START DESIGN', 'design_start') : btn('DESIGN COMPLETE', 'design_complete', 'bigbtn ok'))}
+      {isDes && s === 'design' && (!job.design_started_at ? btn('ACCEPT & START DESIGN', 'design_start') : btn('MARK DESIGN COMPLETE', 'design_complete', 'bigbtn ok'))}
       {isDes && s === 'design_review' && <div className="alert info" style={{ marginTop: 10 }}>Design sent — waiting for approval.</div>}
       {isProd && ['queued', 'rework'].includes(s) && finals.length === 0 && b.files.some((f: any) => ['artwork', 'design', 'print_ready', 'dtf_artwork'].includes(f.kind)) && <div className="alert warn" style={{ marginTop: 10 }}>No file is marked FINAL yet — check before printing.</div>}
-      {isProd && ['queued', 'rework'].includes(s) && btn(s === 'rework' ? 'RESTART PRODUCTION (REWORK)' : 'START PRODUCTION', 'production_start')}
-      {isProd && s === 'in_production' && btn('PRODUCTION COMPLETE', 'production_complete', 'bigbtn ok')}
+      {isProd && ['queued', 'rework'].includes(s) && btn(s === 'rework' ? 'ACCEPT & RESTART PRODUCTION' : 'ACCEPT & START PRODUCTION', 'production_start')}
+      {isProd && s === 'in_production' && btn('MARK PRODUCTION COMPLETE', 'production_complete', 'bigbtn ok')}
       {s === 'qc' && !canQc && <div className="alert info" style={{ marginTop: 10 }}>Production is complete — waiting for the quality check.</div>}
       {s === 'design' && !isDes && <div className="alert info" style={{ marginTop: 10 }}>Waiting for design to finish. You will be notified when it is ready.</div>}
     </div>
