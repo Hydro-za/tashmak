@@ -5,6 +5,7 @@ import { friendlyError } from '@/lib/labels';
 import { buildSpec } from '@/lib/spec';
 import { sendJobAssignedEmails, sendJobCompletedEmails, sendPasswordResetEmail } from '@/lib/email';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createHash, randomInt } from 'node:crypto';
 
 type R = { ok: boolean; error?: string; noop?: boolean; data?: any };
 const ok = (data?: any, noop?: boolean): R => ({ ok: true, data, noop });
@@ -151,41 +152,90 @@ export async function createEmployee(v: { username: string; fullName: string; ro
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return {ok:false,error:'Enter a valid employee email address.'};
   const r = await rpc('create_employee_multi', { p_username: v.username, p_full_name: v.fullName, p_role_ids: v.roleIds, p_password: v.password, p_recovery_email: email, p_phone: null }); revalidatePath('/employees'); return r;
 }
-export async function requestPasswordReset(email:string):Promise<R>{
-  const address=(email||'').trim().toLowerCase();
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) return {ok:false,error:'Enter a valid email address.'};
+function passwordResetCodeHash(email: string, code: string) {
+  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) throw new Error('Password reset security configuration is missing.');
+  return createHash('sha256').update(email + ':' + code + ':' + secret).digest('hex');
+}
+
+export async function requestPasswordReset(email: string): Promise<R> {
+  const address = (email || '').trim().toLowerCase();
+  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(address)) return { ok: false, error: 'Enter a valid email address.' };
   try {
-    const sb=createAdminClient();
-    let profile:any=null;
-    const {data:employee}=await sb.from('profiles').select('id,full_name,recovery_email').ilike('recovery_email',address).eq('active',true).maybeSingle();
-    profile=employee;
-    // Owners may have no recovery_email; their verified Auth email is their recovery address.
-    if(!profile){
-      for(let page=1;page<=20&&!profile;page++){
-        const {data,error}=await sb.auth.admin.listUsers({page,perPage:1000});
-        if(error) throw error;
-        const matched=data.users.find((u:any)=>(u.email||'').toLowerCase()===address);
-        if(matched){
-          const {data:p}=await sb.from('profiles').select('id,full_name,recovery_email').eq('id',matched.id).eq('active',true).maybeSingle();
-          profile=p;
+    const sb = createAdminClient();
+    let profile: any = null;
+    const { data: employee } = await sb.from('profiles').select('id,full_name,recovery_email')
+      .ilike('recovery_email', address).eq('active', true).maybeSingle();
+    profile = employee;
+
+    // Owners may use their verified Auth email rather than a recovery_email field.
+    if (!profile) {
+      for (let page = 1; page <= 20 && !profile; page++) {
+        const { data, error } = await sb.auth.admin.listUsers({ page, perPage: 1000 });
+        if (error) throw error;
+        const matched = data.users.find((u: any) => (u.email || '').toLowerCase() === address);
+        if (matched) {
+          const { data: p } = await sb.from('profiles').select('id,full_name,recovery_email')
+            .eq('id', matched.id).eq('active', true).maybeSingle();
+          profile = p;
         }
-        if(data.users.length<1000) break;
+        if (data.users.length < 1000) break;
       }
     }
-    if(profile){
-      const {data:userData,error:userError}=await sb.auth.admin.getUserById(profile.id);
-      if(userError) throw userError;
-      const authEmail=userData?.user?.email;
-      if(authEmail){
-        const {data:link,error}=await sb.auth.admin.generateLink({type:'recovery',email:authEmail,options:{redirectTo:(process.env.NEXT_PUBLIC_APP_URL||'https://tashmak-system.vercel.app')+'/auth/callback?next=/change-password'}});
-        if(error) throw error;
-        const actionUrl=link.properties?.action_link;
-        if(actionUrl) await sendPasswordResetEmail(address,profile.full_name||'there',actionUrl);
+
+    if (profile) {
+      const { data: userData, error: userError } = await sb.auth.admin.getUserById(profile.id);
+      if (userError) throw userError;
+      if (userData?.user?.email) {
+        const code = String(randomInt(1000, 10000));
+        const codeHash = passwordResetCodeHash(address, code);
+        await sb.from('password_reset_codes').update({ consumed_at: new Date().toISOString() })
+          .eq('email', address).is('consumed_at', null);
+        const { error: insertError } = await sb.from('password_reset_codes').insert({
+          email: address, user_id: profile.id, code_hash: codeHash,
+          expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+        });
+        if (insertError) throw insertError;
+        try {
+          await sendPasswordResetEmail(address, profile.full_name || 'there', code);
+        } catch (sendError) {
+          await sb.from('password_reset_codes').update({ consumed_at: new Date().toISOString() })
+            .eq('email', address).eq('code_hash', codeHash);
+          throw sendError;
+        }
       }
     }
     // Do not reveal whether an account exists.
     return ok();
-  }catch(e){return fail(e);}
+  } catch (e) {
+    console.error('Password reset request failed', e);
+    return { ok: false, error: 'Could not send the reset email. Please try again in a few minutes.' };
+  }
+}
+
+export async function completePasswordReset(email: string, code: string, password: string): Promise<R> {
+  const address = (email || '').trim().toLowerCase();
+  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(address)) return { ok: false, error: 'Enter a valid email address.' };
+  if (!/^\\d{4}$/.test(code || '')) return { ok: false, error: 'Enter the four-digit code from your email.' };
+  if (typeof password !== 'string' || password.length < 8 || password.length > 128) return { ok: false, error: 'Password must be between 8 and 128 characters.' };
+
+  try {
+    const sb = createAdminClient();
+    const { data: userId, error: consumeError } = await sb.rpc('consume_password_reset_code', {
+      p_email: address,
+      p_code_hash: passwordResetCodeHash(address, code),
+    });
+    if (consumeError) throw consumeError;
+    if (!userId) return { ok: false, error: 'That code is invalid or expired. Request a new code and try again.' };
+
+    const { error: updateError } = await sb.auth.admin.updateUserById(userId, { password });
+    if (updateError) throw updateError;
+    await sb.from('profiles').update({ must_change_password: false }).eq('id', userId);
+    return ok();
+  } catch (e) {
+    console.error('Password reset completion failed', e);
+    return { ok: false, error: 'Could not change the password. Please request a new code and try again.' };
+  }
 }
 export async function resetEmployeePassword(userId: string, pw: string): Promise<R> { return rpc('reset_employee_password', { p_user: userId, p_password: pw }); }
 export async function setEmployeeActive(userId: string, active: boolean): Promise<R> { const r = await rpc('set_employee_active', { p_user: userId, p_active: active }); revalidatePath('/employees'); return r; }
