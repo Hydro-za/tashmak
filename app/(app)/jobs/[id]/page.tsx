@@ -46,11 +46,11 @@ export default async function JobPage({ params }: { params: { id: string } }) {
     </Top>
     {cust?.notes && <div className="alert info" style={{ whiteSpace: 'pre-wrap' }}><b>Customer note:</b> {cust.notes}</div>}
     {canManage && <div className="card" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-      <b>Next step</b>
+      <b>Job progress</b>
       {s === 'design_review' && <>{A('APPROVE DESIGN', 'design_approve', 'btn primary', { successText: 'Design approved' })}{A('Send back for changes', 'design_reject', 'btn danger', { askNote: 'What needs to change?', noteRequired: true })}</>}
-      {s === 'design' && <span className="muted">{job.design_started_at ? 'Designer is working on it…' : 'Waiting for the designer to start…'}</span>}
-      {s === 'queued' && <span className="muted">Waiting for production to start…</span>}
-      {['in_production', 'rework'].includes(s) && <span className="muted">{s === 'rework' ? 'Back in production (rework)…' : 'In production…'}</span>}
+      {s === 'design' && <>{!job.design_started_at && A('ACCEPT & START DESIGN', 'design_start', 'bigbtn')}{A('MARK DESIGN COMPLETE', 'design_complete', 'bigbtn ok')}</>}
+      {s === 'queued' && A('ACCEPT & START PRODUCTION', 'production_start', 'bigbtn')}
+      {s === 'rework' && A('ACCEPT & RESTART PRODUCTION', 'production_start', 'bigbtn')}{s === 'in_production' && A('MARK PRODUCTION COMPLETE', 'production_complete', 'bigbtn ok')}
       {s === 'qc' && <span className="muted">Awaiting quality check — record it in the Quality check box below.</span>}
       {['completed', 'ready_collection', 'ready_delivery'].includes(s) && <>{A('READY FOR COLLECTION', 'ready_collection', s === 'ready_collection' ? 'btn primary' : 'btn')}{A('READY FOR DELIVERY', 'ready_delivery', s === 'ready_delivery' ? 'btn primary' : 'btn')}</>}
       {s === 'ready_collection' && A('COLLECTED', 'collected', 'btn primary', { askNote: 'Collected by / notes (optional)', successText: 'Marked collected' })}
@@ -79,9 +79,7 @@ export default async function JobPage({ params }: { params: { id: string } }) {
       <div className="card"><h2>Internal notes</h2>{canManage && <NoteBox jobId={job.id} />}{b.notes.map((n: any) => <div className="linkrow" key={n.id}><span style={{ whiteSpace: 'pre-wrap' }}>{n.note}</span><span className="muted" style={{ whiteSpace: 'nowrap' }}>{names[n.user_id] || 'Someone'}</span></div>)}{!b.notes.length && !canManage && <p className="muted">No notes.</p>}</div>
     </div><div>
       {canManage && <div className="card"><h2>Manage</h2><JobManage job={job} designers={designers} producers={producers} designerIds={ids('design')} producerIds={ids('production')} /></div>}
-      {canManage && !final && s !== 'cancelled' && <details className="card"><summary style={{ cursor: 'pointer', fontWeight: 600 }}>Act on behalf of staff</summary><div style={{ display: 'grid', gap: 6, marginTop: 10 }}>
-        {s === 'design' && !job.design_started_at && A('Start design', 'design_start', 'btn sm')}{s === 'design' && A('Design complete', 'design_complete', 'btn sm')}
-        {['queued', 'rework'].includes(s) && A('Start production', 'production_start', 'btn sm')}{s === 'in_production' && A('Production complete', 'production_complete', 'btn sm')}</div></details>}
+      
       <div className="card"><h2>Timeline</h2><Timeline events={[...b.activity].reverse()} names={names} /></div>
     </div></div>
   </>);
