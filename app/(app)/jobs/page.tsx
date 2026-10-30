@@ -19,7 +19,7 @@ export default async function Jobs({ searchParams }: { searchParams: SearchParam
  const assignMap:Record<string,any[]>={};for(const x of ar.data||[])(assignMap[x.job_id]||=[]).push(x);
  const term=(searchParams.q||'').trim().toLowerCase();const status=searchParams.status==='completed'?'completed':'active';
  const activeCount=all.filter((j:any)=>!isCompletedJob(j)).length;const completedCount=all.length-activeCount;
- const rows=all.filter((j:any)=>((status==='completed')===isCompletedJob(j))&&(!term||[j.number,j.title,j.customer_name,...(itemMap[j.id]||[]).map((i:any)=>i.product_name)].join(' ').toLowerCase().includes(term)))
+ const rows=all.filter((j:any)=>(archived||((status==='completed')===isCompletedJob(j)))&&(!term||[j.number,j.title,j.customer_name,...(itemMap[j.id]||[]).map((i:any)=>i.product_name)].join(' ').toLowerCase().includes(term)))
  .sort(status==='completed'?(a:any,b:any)=>String(b.completed_at||b.updated_at).localeCompare(String(a.completed_at||a.updated_at)):sortJobs);
  const getName=(j:any)=>j.title||(itemMap[j.id]||[]).map((i:any)=>i.product_name).slice(0,2).join(', ')||j.number;
  return <div className="page-jobs"><Top title="Jobs">{me.can('jobs.manage')&&<Link href="/jobs/new" className="btn primary">+ New job</Link>}</Top>
