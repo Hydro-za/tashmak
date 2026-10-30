@@ -20,7 +20,7 @@ function navFor(isOwner: boolean, perms: string[]): Item[] {
   if (can('customers.view', 'customers.manage')) items.push({ href: '/customers', label: 'Customers', icon: 'customers' });
   if (isOwner) items.push({ href: '/products', label: 'Products & Pricing', icon: 'products' });
   if (can('employees.view', 'employees.manage', 'roles.manage')) items.push({ href: '/employees', label: 'Employees', icon: 'employees' });
-  if (isOwner) items.push({ href: '/roles', label: 'Roles & permissions', icon: 'settings' }, { href: '/owners', label: 'Owner accounts', icon: 'profile' });
+
   if (can('reports.view')) items.push({ href: '/reports', label: 'Reports', icon: 'reports' });
   if (can('settings.manage')) items.push({ href: '/settings', label: 'Settings', icon: 'settings' });
   const works = !isOwner && (perms.some(p => ['jobs.work_design', 'jobs.work_production', 'qc.perform'].includes(p)) || !perms.includes('jobs.view_all'));
