@@ -176,7 +176,7 @@ export async function requestPasswordReset(email:string):Promise<R>{
       const {data:userData,error:userError}=await sb.auth.admin.getUserById(profile.id);
       if(userError) throw userError;
       const authEmail=userData?.user?.email;
-      if(authEmail && authEmail.toLowerCase()===address){
+      if(authEmail){
         const {data:link,error}=await sb.auth.admin.generateLink({type:'recovery',email:authEmail,options:{redirectTo:(process.env.NEXT_PUBLIC_APP_URL||'https://tashmak-system.vercel.app')+'/auth/callback?next=/change-password'}});
         if(error) throw error;
         const actionUrl=link.properties?.action_link;
