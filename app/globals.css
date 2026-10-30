@@ -488,3 +488,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(139,163,191,.65);
  .page-jobs .queue{grid-template-columns:1fr!important}
  .page-quotes>form.card,.page-customers>form.card{align-items:stretch}
 }
+
+
+/* Password visibility controls */
+.password-control{position:relative;display:flex;align-items:center;width:100%;min-width:0}
+.password-control input{width:100%;min-width:0;padding-right:78px!important}
+.password-toggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:58px;min-height:30px;padding:4px 7px;border:1px solid var(--line);border-radius:8px;background:var(--soft);color:var(--muted);font:600 11px/1 inherit;cursor:pointer;text-decoration:none!important;transition:background .15s,color .15s,border-color .15s}
+.password-toggle:hover{background:var(--accent-soft);color:var(--ink);border-color:var(--glass-border)}
+.password-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.password-toggle svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.password-toggle:disabled{opacity:.45;cursor:not-allowed}
+/* Keep action controls clean: no browser-default or inherited underlines */
+button,.btn,a.btn,.password-toggle{text-decoration:none!important}
+button:focus-visible,.btn:focus-visible,a.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
