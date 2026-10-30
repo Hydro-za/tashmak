@@ -153,7 +153,7 @@ export async function createEmployee(v: { username: string; fullName: string; ro
 }
 export async function requestPasswordReset(email:string):Promise<R>{
   const address=(email||'').trim().toLowerCase();
-  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(address)) return {ok:false,error:'Enter a valid email address.'};
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) return {ok:false,error:'Enter a valid email address.'};
   try {
     const sb=createAdminClient();
     let profile:any=null;
