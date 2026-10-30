@@ -160,7 +160,7 @@ function passwordResetCodeHash(email: string, code: string) {
 
 export async function requestPasswordReset(email: string): Promise<R> {
   const address = (email || '').trim().toLowerCase();
-  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(address)) return { ok: false, error: 'Enter a valid email address.' };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) return { ok: false, error: 'Enter a valid email address.' };
   try {
     const sb = createAdminClient();
     let profile: any = null;
@@ -215,8 +215,8 @@ export async function requestPasswordReset(email: string): Promise<R> {
 
 export async function completePasswordReset(email: string, code: string, password: string): Promise<R> {
   const address = (email || '').trim().toLowerCase();
-  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(address)) return { ok: false, error: 'Enter a valid email address.' };
-  if (!/^\\d{4}$/.test(code || '')) return { ok: false, error: 'Enter the four-digit code from your email.' };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) return { ok: false, error: 'Enter a valid email address.' };
+  if (!/^\d{4}$/.test(code || '')) return { ok: false, error: 'Enter the four-digit code from your email.' };
   if (typeof password !== 'string' || password.length < 8 || password.length > 128) return { ok: false, error: 'Password must be between 8 and 128 characters.' };
 
   try {
