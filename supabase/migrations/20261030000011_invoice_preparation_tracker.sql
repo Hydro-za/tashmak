@@ -102,12 +102,12 @@ begin
   select distinct on (i.job_id) i.* from public.job_invoices i order by i.job_id,i.version desc
  )
  select b.id,b.number,b.title,b.customer,l.invoice_number,
-   b.total,coalesce(l.prepared_at,b.updated_at),
+   coalesce(l.invoice_total,b.total),coalesce(l.prepared_at,b.updated_at),
    case when l.status is not null then l.status
      when b.quote_id is null or b.customer is null or b.number is null then 'preparation_needed'
      when b.errors>0 or b.item_count=0 or not b.items_valid or b.sales is null or b.vat is null or b.total is null then 'needs_review'
      else 'preparation_needed' end,
-   b.qnumber,b.sales,b.vat_label,b.vat,b.mats,b.labour,l.id,
+   b.qnumber,coalesce(l.sales_amount,b.sales),coalesce(l.vat_treatment,b.vat_label),coalesce(l.vat_amount,b.vat),coalesce(l.materials_cost,b.mats),coalesce(l.labour_cost,b.labour),l.id,
    case when l.review_reason is not null then l.review_reason
      when b.errors>0 then 'The saved quote contains calculation errors.'
      when b.item_count=0 or not b.items_valid then 'One or more quote items do not have a valid saved cost calculation.'
