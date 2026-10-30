@@ -33,7 +33,7 @@ export default async function Jobs({ searchParams: sp }: { searchParams: SP }) {
   const staff = Object.entries(names);
   const name = (j: any) => j.title || j.job_items.map((i: any) => i.product_name).slice(0, 2).join(', ') || j.number;
   const card = (j: any) => <Link key={j.id} href={'/jobs/' + j.id} className="qcard"><b>{name(j)}</b> <PrioBadge p={j.priority} /><div className="muted">{j.number} · {j.customer_name}</div><div className="muted">{team(j).join(', ') || 'Not assigned'}</div><div className="muted">Due {fmtDate(j.due_date)} <DueFlag due={j.due_date} status={j.status} /></div></Link>;
-  return (<>
+  return (<div className="page-jobs">
     <Suspense fallback={null}><FilterMemory /></Suspense>
     <Top title="Jobs">{me.can('jobs.manage') && <Link href="/jobs/new" className="btn primary">+ New job</Link>}</Top>
     <div className="tabs"><Link href={q({ tab: 'active', status: '', view: '' }).replace('tab=active&', '')} className={tab === 'active' ? 'tablink on' : 'tablink'}>Active ({activeCount})</Link><Link href={q({ tab: 'completed', status: '', view: '' })} className={tab === 'completed' ? 'tablink on' : 'tablink'}>Completed ({doneCount})</Link></div>
@@ -54,5 +54,5 @@ export default async function Jobs({ searchParams: sp }: { searchParams: SP }) {
         <td>{j.customer_name}</td><td className="muted">{team(j).join(', ') || <span className="overdue">Not assigned</span>}</td>
         <td><JobStatus job={j} /><div style={{ marginTop: 4 }}>{j.job_items.length > 0 && j.qc_status !== 'not_checked' || j.status === 'qc' ? <QcBadge status={j.qc_status} /> : null}</div></td>
         <td>{fmtDate(j.created_at)}</td><td>{tab === 'completed' ? fmtDate(j.completed_at || j.updated_at) : <>{fmtDate(j.due_date)} <div><DueFlag due={j.due_date} status={j.status} /></div></>}</td></tr>)}</tbody></table></div></div>}
-  </>);
+  </div>);
 }
