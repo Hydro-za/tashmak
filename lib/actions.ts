@@ -184,6 +184,13 @@ export async function requestPasswordReset(email: string): Promise<R> {
     }
 
     if (profile) {
+      // Limit reset email delivery to one request per address per minute.
+      const since = new Date(Date.now() - 60 * 1000).toISOString();
+      const { data: recentCode } = await sb.from('password_reset_codes').select('id')
+        .eq('email', address).gte('created_at', since).limit(1).maybeSingle();
+      if (recentCode) return ok();
+      await sb.from('password_reset_codes').delete()
+        .lt('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
       const { data: userData, error: userError } = await sb.auth.admin.getUserById(profile.id);
       if (userError) throw userError;
       if (userData?.user?.email) {
