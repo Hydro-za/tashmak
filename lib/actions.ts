@@ -158,68 +158,69 @@ function passwordResetCodeHash(email: string, code: string) {
   return createHash('sha256').update(email + ':' + code + ':' + secret).digest('hex');
 }
 
-export async function requestPasswordReset(email: string): Promise<R> {
-  const address = (email || '').trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) return { ok: false, error: 'Enter a valid email address.' };
+export async function requestPasswordReset(identifier: string): Promise<R> {
+  const supplied = (identifier || '').trim().toLowerCase();
+  if (!supplied) return { ok: false, error: 'Enter your username or registered email address.' };
   try {
     const sb = createAdminClient();
+    const isEmail = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(supplied);
+    let address = supplied;
     let profile: any = null;
-    const { data: employee } = await sb.from('profiles').select('id,full_name,recovery_email')
-      .ilike('recovery_email', address).eq('active', true).is('deleted_at', null).maybeSingle();
-    profile = employee;
-
-    // Owners may use their verified Auth email rather than a recovery_email field.
-    if (!profile) {
-      for (let page = 1; page <= 20 && !profile; page++) {
-        const { data, error } = await sb.auth.admin.listUsers({ page, perPage: 1000 });
-        if (error) throw error;
-        const matched = data.users.find((u: any) => (u.email || '').toLowerCase() === address);
-        if (matched) {
-          const { data: p } = await sb.from('profiles').select('id,full_name,recovery_email')
-            .eq('id', matched.id).eq('active', true).is('deleted_at', null).maybeSingle();
-          profile = p;
+    if (isEmail) {
+      const { data: employee, error: employeeError } = await sb.from('profiles').select('id,full_name,recovery_email,role').ilike('recovery_email', address).eq('active', true).is('deleted_at', null).maybeSingle();
+      if (employeeError) throw employeeError;
+      profile = employee;
+      if (!profile) {
+        for (let page = 1; page <= 20 && !profile; page++) {
+          const { data, error } = await sb.auth.admin.listUsers({ page, perPage: 1000 });
+          if (error) throw error;
+          const matched = data.users.find((u: any) => (u.email || '').toLowerCase() === address);
+          if (matched) {
+            const { data: p, error: profileError } = await sb.from('profiles').select('id,full_name,recovery_email,role').eq('id', matched.id).eq('active', true).is('deleted_at', null).maybeSingle();
+            if (profileError) throw profileError;
+            profile = p;
+          }
+          if (data.users.length < 1000) break;
         }
-        if (data.users.length < 1000) break;
       }
+    } else {
+      const { data: matchedProfile, error: profileError } = await sb.from('profiles').select('id,full_name,recovery_email,role').ilike('username', supplied).eq('active', true).is('deleted_at', null).maybeSingle();
+      if (profileError) throw profileError;
+      profile = matchedProfile;
+      if (profile?.recovery_email) address = String(profile.recovery_email).trim().toLowerCase();
+      else if (profile?.role === 'owner') {
+        const { data: ownerUser, error: ownerError } = await sb.auth.admin.getUserById(profile.id);
+        if (ownerError) throw ownerError;
+        address = (ownerUser.user?.email || '').toLowerCase();
+      } else return ok();
+      if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(address)) return ok();
     }
-
     if (profile) {
-      // Limit reset email delivery to one request per address per minute.
       const since = new Date(Date.now() - 60 * 1000).toISOString();
-      const { data: recentCode } = await sb.from('password_reset_codes').select('id')
-        .eq('email', address).gte('created_at', since).limit(1).maybeSingle();
+      const { data: recentCode, error: recentError } = await sb.from('password_reset_codes').select('id').eq('email', address).gte('created_at', since).limit(1).maybeSingle();
+      if (recentError) throw recentError;
       if (recentCode) return ok();
-      await sb.from('password_reset_codes').delete()
-        .lt('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+      const { error: cleanupError } = await sb.from('password_reset_codes').delete().lt('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+      if (cleanupError) throw cleanupError;
       const { data: userData, error: userError } = await sb.auth.admin.getUserById(profile.id);
       if (userError) throw userError;
-      if (userData?.user?.email) {
+      if (userData?.user) {
         const code = String(randomInt(1000, 10000));
         const codeHash = passwordResetCodeHash(address, code);
-        await sb.from('password_reset_codes').update({ consumed_at: new Date().toISOString() })
-          .eq('email', address).is('consumed_at', null);
-        const { error: insertError } = await sb.from('password_reset_codes').insert({
-          email: address, user_id: profile.id, code_hash: codeHash,
-          expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-        });
+        const { error: consumeOldError } = await sb.from('password_reset_codes').update({ consumed_at: new Date().toISOString() }).eq('email', address).is('consumed_at', null);
+        if (consumeOldError) throw consumeOldError;
+        const { error: insertError } = await sb.from('password_reset_codes').insert({ email: address, user_id: profile.id, code_hash: codeHash, expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString() });
         if (insertError) throw insertError;
-        try {
-          await sendPasswordResetEmail(address, profile.full_name || 'there', code);
-        } catch (sendError) {
-          await sb.from('password_reset_codes').update({ consumed_at: new Date().toISOString() })
-            .eq('email', address).eq('code_hash', codeHash);
-          throw sendError;
-        }
+        try { await sendPasswordResetEmail(address, profile.full_name || 'there', code); }
+        catch (sendError) { await sb.from('password_reset_codes').update({ consumed_at: new Date().toISOString() }).eq('email', address).eq('code_hash', codeHash); throw sendError; }
       }
     }
-    // Do not reveal whether an account exists.
     return ok();
   } catch (e) {
     console.error('Password reset request failed', e);
     return { ok: false, error: 'Could not send the reset email. Please try again in a few minutes.' };
   }
 }
-
 export async function completePasswordReset(email: string, code: string, password: string): Promise<R> {
   const address = (email || '').trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) return { ok: false, error: 'Enter a valid email address.' };
