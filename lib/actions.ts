@@ -163,7 +163,7 @@ export async function requestPasswordReset(identifier: string): Promise<R> {
   if (!supplied) return { ok: false, error: 'Enter your username or registered email address.' };
   try {
     const sb = createAdminClient();
-    const isEmail = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(supplied);
+    const isEmail = supplied.includes('@') && supplied.indexOf('@') > 0 && supplied.indexOf('.', supplied.indexOf('@') + 2) > supplied.indexOf('@') + 1 && !supplied.includes(' ');
     let address = supplied;
     let profile: any = null;
     if (isEmail) {
@@ -184,7 +184,7 @@ export async function requestPasswordReset(identifier: string): Promise<R> {
         }
       }
     } else {
-      const { data: matchedProfile, error: profileError } = await sb.from('profiles').select('id,full_name,recovery_email,role').ilike('username', supplied).eq('active', true).is('deleted_at', null).maybeSingle();
+      const { data: matchedProfile, error: profileError } = await sb.from('profiles').select('id,full_name,recovery_email,role').eq('username', supplied).eq('active', true).is('deleted_at', null).maybeSingle();
       if (profileError) throw profileError;
       profile = matchedProfile;
       if (profile?.recovery_email) address = String(profile.recovery_email).trim().toLowerCase();
@@ -193,7 +193,7 @@ export async function requestPasswordReset(identifier: string): Promise<R> {
         if (ownerError) throw ownerError;
         address = (ownerUser.user?.email || '').toLowerCase();
       } else return ok();
-      if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(address)) return ok();
+      if (!(address.includes('@') && address.indexOf('@') > 0 && address.indexOf('.', address.indexOf('@') + 2) > address.indexOf('@') + 1 && !address.includes(' '))) return ok();
     }
     if (profile) {
       const since = new Date(Date.now() - 60 * 1000).toISOString();
