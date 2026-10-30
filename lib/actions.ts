@@ -165,7 +165,7 @@ export async function requestPasswordReset(email: string): Promise<R> {
     const sb = createAdminClient();
     let profile: any = null;
     const { data: employee } = await sb.from('profiles').select('id,full_name,recovery_email')
-      .ilike('recovery_email', address).eq('active', true).maybeSingle();
+      .ilike('recovery_email', address).eq('active', true).is('deleted_at', null).maybeSingle();
     profile = employee;
 
     // Owners may use their verified Auth email rather than a recovery_email field.
@@ -176,7 +176,7 @@ export async function requestPasswordReset(email: string): Promise<R> {
         const matched = data.users.find((u: any) => (u.email || '').toLowerCase() === address);
         if (matched) {
           const { data: p } = await sb.from('profiles').select('id,full_name,recovery_email')
-            .eq('id', matched.id).eq('active', true).maybeSingle();
+            .eq('id', matched.id).eq('active', true).is('deleted_at', null).maybeSingle();
           profile = p;
         }
         if (data.users.length < 1000) break;
