@@ -217,7 +217,69 @@ body.embedded .stickybar{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur
  body.embedded .listrow{grid-template-columns:1fr 1fr}
 }
 
-</style><script>try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}addEventListener('storage',function(e){if(e.key==='theme'){var v=e.newValue;if(v==='dark'||v==='light')document.documentElement.setAttribute('data-theme',v);else document.documentElement.removeAttribute('data-theme')}})</script></head><body><div id="app"></div>
+</style><script>try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}addEventListener('storage',function(e){if(e.key==='theme'){var v=e.newValue;if(v==='dark'||v==='light')document.documentElement.setAttribute('data-theme',v);else document.documentElement.removeAttribute('data-theme')}})</script><style>
+/* Match the main Tashmak liquid-glass design system without changing pricing behaviour. */
+:root{
+ --bg:#f2f4f7;--card:rgba(255,255,255,.72);--ink:#171b22;--muted:#737d8c;
+ --line:rgba(26,38,54,.10);--soft:rgba(231,236,243,.72);
+ --accent:#627b98;--accent-ink:#fff;--accent-strong:#4f6784;--accent-soft:rgba(98,123,152,.12);
+ --shadow:0 12px 34px rgba(26,38,54,.07),inset 0 1px 0 rgba(255,255,255,.82);
+ --glass:rgba(255,255,255,.64);--glass-heavy:rgba(255,255,255,.78);--glass-border:rgba(255,255,255,.72);
+ --r:20px;color-scheme:light
+}
+:root[data-theme="dark"]{
+ --bg:#080a0e;--card:rgba(20,24,32,.68);--ink:#f3f5f8;--muted:#929baa;
+ --line:rgba(218,228,244,.10);--soft:rgba(255,255,255,.055);
+ --accent:#a8bad0;--accent-ink:#111821;--accent-strong:#c4d1e0;--accent-soft:rgba(168,186,208,.12);
+ --shadow:0 18px 48px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.055);
+ --glass:rgba(18,22,30,.62);--glass-heavy:rgba(21,26,35,.82);--glass-border:rgba(224,234,249,.12);color-scheme:dark
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+ --bg:#080a0e;--card:rgba(20,24,32,.68);--ink:#f3f5f8;--muted:#929baa;
+ --line:rgba(218,228,244,.10);--soft:rgba(255,255,255,.055);
+ --accent:#a8bad0;--accent-ink:#111821;--accent-strong:#c4d1e0;--accent-soft:rgba(168,186,208,.12);
+ --shadow:0 18px 48px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.055);
+ --glass:rgba(18,22,30,.62);--glass-heavy:rgba(21,26,35,.82);--glass-border:rgba(224,234,249,.12);color-scheme:dark
+}}
+html{background:var(--bg)}
+body{background:radial-gradient(ellipse at 15% -10%,rgba(125,151,184,.10),transparent 36%),radial-gradient(ellipse at 95% 12%,rgba(153,169,190,.07),transparent 30%),var(--bg);color:var(--ink);letter-spacing:-.018em}
+body.embedded .main{padding:14px 8px 90px;background:transparent}
+body.embedded .card,body.embedded .stat,body.embedded .item,body.embedded .metric,body.embedded .modal,body.embedded .listrow{
+ background:var(--glass);border:1px solid var(--glass-border);border-radius:18px;
+ box-shadow:var(--shadow);backdrop-filter:blur(24px) saturate(155%);-webkit-backdrop-filter:blur(24px) saturate(155%)
+}
+body.embedded .card{padding:19px;margin-bottom:16px}
+body.embedded .stat{border-radius:16px;padding:17px}
+body.embedded .item>.ih{background:var(--soft);border-bottom:1px solid var(--line)}
+body.embedded .item>.ib{background:transparent}
+body.embedded .btn{border-radius:11px;border-color:var(--line);background:var(--glass);color:var(--ink);font-weight:650;box-shadow:inset 0 1px rgba(255,255,255,.22)}
+body.embedded .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 5px 16px rgba(65,83,108,.18)}
+body.embedded .btn.primary:hover{background:var(--accent-strong);border-color:var(--accent-strong)}
+body.embedded input[type=text],body.embedded input[type=number],body.embedded input[type=date],body.embedded input[type=email],body.embedded input[type=tel],body.embedded input[type=search],body.embedded input:not([type]),body.embedded select,body.embedded textarea{
+ border-radius:11px;border-color:var(--line);background:var(--glass);color:var(--ink);padding:10px 12px
+}
+body.embedded input:focus,body.embedded select:focus,body.embedded textarea:focus{outline:2px solid color-mix(in srgb,var(--accent) 48%,transparent);outline-offset:0;border-color:var(--accent)}
+body.embedded .tabs{gap:8px;border-bottom-color:var(--line)}
+body.embedded .tabs button{padding:10px 14px;border-radius:10px 10px 0 0}
+body.embedded .tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+body.embedded .pill{border-radius:10px;background:var(--glass);border-color:var(--line);color:var(--muted);padding:7px 12px}
+body.embedded .pill.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+body.embedded .tbl th{text-transform:uppercase;letter-spacing:.075em;font-size:10.5px;padding:11px 12px}
+body.embedded .tbl td{padding:12px;border-bottom-color:var(--line)}
+body.embedded .tbl tr.click:hover td,body.embedded .tbl tbody tr:hover td{background:var(--soft)}
+body.embedded .metric{border-color:var(--line);border-radius:13px;background:var(--soft)}
+body.embedded .item{overflow:hidden}
+body.embedded .modal{border-color:var(--glass-border);border-radius:18px}
+body.embedded .overlay{background:rgba(3,6,12,.48);backdrop-filter:blur(8px)}
+body.embedded .alert{border:1px solid var(--line);border-radius:13px}
+body.embedded .toast{border:1px solid var(--glass-border);border-radius:13px;backdrop-filter:blur(18px)}
+body.embedded .stickybar{background:var(--glass-heavy);color:var(--ink);border-top:1px solid var(--glass-border);backdrop-filter:blur(22px)}
+body.embedded .qdoc{background:#fff;color:#111;border-radius:16px}
+body.embedded .qdoc th{background:#202a38}
+body.embedded .qdoc h1{color:#202a38}
+@media(max-width:820px){body.embedded .main{padding:8px 3px 90px}body.embedded .card{padding:15px;border-radius:16px}body.embedded .stats{gap:9px}body.embedded .stat{padding:13px}}
+@media(prefers-reduced-motion:reduce){body.embedded *{transition:none!important;animation:none!important}}
+</style></head><body><div id="app"></div>
 <script>/* PrintQuote pricing engine — pure, deterministic, no DOM, no hard-coded prices.
    Everything it needs comes from the `cfg` object (settings + catalogs). */
 (function (root, factory) {
