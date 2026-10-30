@@ -31,8 +31,12 @@ export default async function JobPage({ params }: { params: { id: string } }) {
   const itemNames = Object.fromEntries(items.map((i: any) => [i.id, i.product_name]));
   const title = job.title || items.map((i: any) => i.product_name).slice(0, 2).join(', ') || job.number;
   const invoiceEligible = me.isOwner && ['collected', 'delivered', 'ready_invoice'].includes(s);
-  const [{data: invoiceSnapshot}, {data: invoiceRows}, {data: invoiceEvents}] = invoiceEligible ? await Promise.all([sb.rpc('invoice_job_snapshot', { p_job_id: job.id }), sb.from('job_invoices').select('*').eq('job_id', job.id).order('version', { ascending: false }).limit(1), sb.from('job_invoice_events').select('*').eq('job_id', job.id).order('performed_at', { ascending: false }).limit(20)]) : [{data:null},{data:[]},{data:[]}];
-  const currentInvoice = invoiceRows?.[0] || null;
+  let invoiceSnapshot: any = null; let invoiceRows: any[] = []; let invoiceEvents: any[] = [];
+  if (invoiceEligible) {
+    const [snapshotResult, rowsResult, eventsResult] = await Promise.all([sb.rpc('invoice_job_snapshot', { p_job_id: job.id }), sb.from('job_invoices').select('*').eq('job_id', job.id).order('version', { ascending: false }).limit(1), sb.from('job_invoice_events').select('*').eq('job_id', job.id).order('performed_at', { ascending: false }).limit(20)]);
+    invoiceSnapshot = snapshotResult.data; invoiceRows = rowsResult.data || []; invoiceEvents = eventsResult.data || [];
+  }
+  const currentInvoice = invoiceRows[0] || null;
   const prodStarted = !!job.production_started_at; const hasQc = items.some((i: any) => i.requires_qc) || job.qc_status !== 'not_checked' || s === 'qc';
   const A = (label: string, action: string, cls = 'btn', extra: any = {}) => <ActionButton key={action + label} className={cls} label={label} action={jobAction} args={[job.id, action]} {...extra} />;
   return (<>
