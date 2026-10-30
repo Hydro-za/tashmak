@@ -3,6 +3,8 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { friendlyError } from '@/lib/labels';
 import { buildSpec } from '@/lib/spec';
+import { sendJobAssignedEmails, sendJobCompletedEmails, sendPasswordResetEmail } from '@/lib/email';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 type R = { ok: boolean; error?: string; noop?: boolean; data?: any };
 const ok = (data?: any, noop?: boolean): R => ({ ok: true, data, noop });
@@ -48,7 +50,19 @@ export async function startJob(input: { quoteId: string; dueDate: string | null;
 export async function jobAction(jobId: string, action: string, note?: string | null): Promise<R> {
   const r = await rpc('job_action', { p_job: jobId, p_action: action, p_note: note || null }); revalidatePath('/jobs/' + jobId); revalidatePath('/my-jobs'); return r;
 }
-export async function assignJob(jobId: string, stage: string, userIds: string[]): Promise<R> { const r = await rpc('job_assign', { p_job: jobId, p_stage: stage, p_users: userIds }); revalidatePath('/jobs/' + jobId); return r; }
+export async function assignJob(jobId: string, stage: string, userIds: string[]): Promise<R> {
+  const r = await rpc('job_assign', { p_job: jobId, p_stage: stage, p_users: userIds });
+  if (r.ok && !r.noop && userIds.length) {
+    const sb = createClient();
+    const [{data: job},{data: customer},{data: employees}] = await Promise.all([
+      sb.from('jobs').select('number,title,customer_name,customer_id,instructions').eq('id',jobId).maybeSingle(),
+      sb.from('jobs').select('customer_id').eq('id',jobId).maybeSingle().then(async x=>x.data?.customer_id?sb.from('customers').select('name').eq('id',x.data.customer_id).maybeSingle():{data:null}),
+      sb.from('profiles').select('id,full_name,username,recovery_email').in('id',userIds).eq('active',true)
+    ]);
+    if (job && employees?.length) await sendJobAssignedEmails(employees.filter((e:any)=>e.recovery_email).map((e:any)=>({email:e.recovery_email,name:e.full_name,employeeId:e.username})),{jobNumber:job.number,jobTitle:job.title||'Production job',customerName:job.customer_name||customer?.name||'Customer',description:job.instructions||'Please review the job details in Tashmak System.',assignedBy:'Tashmak System',jobUrl:(process.env.NEXT_PUBLIC_APP_URL||'https://tashmak-system.vercel.app')+'/jobs/'+jobId});
+  }
+  revalidatePath('/jobs/' + jobId); return r;
+}
 export async function updateJobDetails(jobId: string, patch: any, expectedVersion?: number): Promise<R> {
   const r = await rpc('job_update_details', { p_job: jobId, p_patch: patch, p_expected_version: expectedVersion ?? null }); revalidatePath('/jobs/' + jobId); return r;
 }
@@ -104,10 +118,36 @@ export async function saveCustomer(v: { id?: string; name: string; company?: str
 }
 
 /* ---------- employees (all privileged work happens inside the database) ---------- */
-export async function createEmployee(v: { username: string; fullName: string; roleIds: string[]; password: string }): Promise<R> { const r = await rpc('create_employee_multi', { p_username: v.username, p_full_name: v.fullName, p_role_ids: v.roleIds, p_password: v.password, p_recovery_email: null, p_phone: null }); revalidatePath('/employees'); return r; }
+export async function createEmployee(v: { username: string; fullName: string; roleIds: string[]; password: string; email:string }): Promise<R> {
+  const email=(v.email||'').trim().toLowerCase();
+  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return {ok:false,error:'Enter a valid employee email address.'};
+  const r = await rpc('create_employee_multi', { p_username: v.username, p_full_name: v.fullName, p_role_ids: v.roleIds, p_password: v.password, p_recovery_email: email, p_phone: null }); revalidatePath('/employees'); return r;
+}
+export async function requestPasswordReset(email:string):Promise<R>{
+  const address=(email||'').trim().toLowerCase();
+  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(address)) return {ok:false,error:'Enter a valid email address.'};
+  try {
+    const sb=createAdminClient();
+    const {data:profile}=await sb.from('profiles').select('id,full_name,recovery_email').ilike('recovery_email',address).eq('active',true).maybeSingle();
+    if(profile){
+      const {data:userData}=await sb.auth.admin.getUserById(profile.id);
+      if(userData?.user?.email){
+        const {data:link,error}=await sb.auth.admin.generateLink({type:'recovery',email:userData.user.email,options:{redirectTo:(process.env.NEXT_PUBLIC_APP_URL||'https://tashmak-system.vercel.app')+'/auth/callback?next=/change-password'}});
+        if(error) throw error;
+        const actionUrl=link.properties?.action_link;
+        if(actionUrl) await sendPasswordResetEmail(address,profile.full_name||'there',actionUrl);
+      }
+    }
+    return ok();
+  }catch(e){return fail(e);}
+}
 export async function resetEmployeePassword(userId: string, pw: string): Promise<R> { return rpc('reset_employee_password', { p_user: userId, p_password: pw }); }
 export async function setEmployeeActive(userId: string, active: boolean): Promise<R> { const r = await rpc('set_employee_active', { p_user: userId, p_active: active }); revalidatePath('/employees'); return r; }
-export async function updateEmployee(userId: string, fullName: string, roleIds: string[], phone: string): Promise<R> { const r = await rpc('update_employee_multi', { p_user: userId, p_full_name: fullName, p_role_ids: roleIds, p_phone: phone || null, p_recovery_email: null, p_clear_recovery: false }); revalidatePath('/employees'); revalidatePath('/employees/' + userId); revalidatePath('/dashboard'); return r; }
+export async function updateEmployee(userId: string, fullName: string, roleIds: string[], phone: string, email:string): Promise<R> {
+  const recovery=(email||'').trim().toLowerCase();
+  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(recovery)) return {ok:false,error:'Enter a valid employee email address.'};
+  const r = await rpc('update_employee_multi', { p_user: userId, p_full_name: fullName, p_role_ids: roleIds, p_phone: phone || null, p_recovery_email: recovery, p_clear_recovery: false }); revalidatePath('/employees'); revalidatePath('/employees/' + userId); revalidatePath('/dashboard'); return r;
+}
 export async function saveRole(id: string | null, name: string, description: string, permissions: string[]): Promise<R> { const r = await rpc('save_role', { p_id: id, p_name: name, p_description: description, p_perms: permissions }); revalidatePath('/roles'); revalidatePath('/employees'); return r; }
 export async function deleteRole(id: string): Promise<R> { const r = await rpc('delete_role', { p_id: id }); revalidatePath('/roles'); revalidatePath('/employees'); return r; }
 export async function createOwner(v: { email: string; username: string; fullName: string; password: string }): Promise<R> { const r = await rpc('create_owner', { p_email: v.email, p_username: v.username, p_full_name: v.fullName, p_password: v.password }); revalidatePath('/owners'); return r; }
