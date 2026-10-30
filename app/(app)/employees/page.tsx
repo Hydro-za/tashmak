@@ -16,7 +16,13 @@ export default async function Employees({ searchParams }: { searchParams: { tab?
     sb.from('profiles').select('id,full_name,username,active,created_at').eq('role', 'owner').is('deleted_at', null).order('created_at')
   ]);
   const w = Object.fromEntries((load || []).map((l: any) => [l.user_id, l]));
-  const permissions = (permissionRows || []).map((x: any) => typeof x === 'string' ? x : (x.valid_permissions || x.permission)).filter(Boolean);
+  const flattenPermissions = (value: any): string[] => {
+    if (Array.isArray(value)) return value.flatMap(flattenPermissions);
+    if (typeof value === 'string') return [value];
+    if (value && typeof value === 'object') return Object.values(value).flatMap(flattenPermissions);
+    return [];
+  };
+  const permissions = [...new Set(flattenPermissions(permissionRows))];
   const tabs = [{ id: 'employees', label: 'Employees' }, { id: 'roles', label: 'Roles & permissions' }, { id: 'owners', label: 'Owner accounts' }];
   return <div className="page-employees">
     <Top title="Employees" sub="Manage your team, access levels and owner accounts.">
