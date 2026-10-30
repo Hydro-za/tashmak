@@ -104,3 +104,41 @@ end $$;
 grant execute on function public.create_employee_multi(text,text,uuid[],text,text,text) to authenticated;
 grant execute on function public.update_employee_multi(uuid,text,uuid[],text,text,boolean) to authenticated;
 grant execute on function public.assert_can_assign_roles(uuid[]) to authenticated;
+
+-- Keep operational role labels and permission notifications accurate for role unions.
+create or replace function public.employee_workload()
+returns table(user_id uuid, full_name text, role text, active_jobs integer, overdue_jobs integer, completed_jobs integer)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+ if not public.has_perm('employees.view') then raise exception 'forbidden' using errcode='42501'; end if;
+ return query
+ select p.id,p.full_name,
+   coalesce((select string_agg(r.name, ', ' order by r.name) from public.profile_roles x join public.roles r on r.id=x.role_id where x.user_id=p.id),r.name,p.role),
+   (count(distinct j.id) filter (where j.status not in ('completed','ready_collection','ready_delivery','collected','delivered','ready_invoice','cancelled')))::int,
+   (count(distinct j.id) filter (where public.job_overdue_days(j.due_date,j.status)>0))::int,
+   (count(distinct j.id) filter (where j.status in ('completed','ready_collection','ready_delivery','collected','delivered','ready_invoice')))::int
+ from public.profiles p
+ left join public.roles r on r.id=p.role_id
+ left join public.job_assignments a on a.user_id=p.id and a.active
+ left join public.jobs j on j.id=a.job_id and j.archived_at is null
+ where p.active and p.role<>'owner'
+ group by p.id,p.full_name,p.role,r.name
+ order by p.full_name;
+end $$;
+
+create or replace function public.notify_perm(p_perm text,p_type text,p_title text,p_body text,p_job uuid,p_quote uuid,p_dedupe text)
+returns void language plpgsql security definer set search_path = '' as $$
+declare u uuid;
+begin
+ for u in
+   select pr.id from public.profiles pr
+   where pr.active and pr.deleted_at is null and (
+     pr.role='owner'
+     or exists(select 1 from public.profile_roles x join public.role_permissions rp on rp.role_id=x.role_id where x.user_id=pr.id and rp.permission=p_perm)
+     or (not exists(select 1 from public.profile_roles x where x.user_id=pr.id)
+         and exists(select 1 from public.role_permissions rp where rp.role_id=pr.role_id and rp.permission=p_perm))
+   )
+ loop
+   perform public.notify(u,p_type,p_title,p_body,p_job,p_quote,p_dedupe||':'||u::text);
+ end loop;
+end $$;
