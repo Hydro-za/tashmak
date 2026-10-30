@@ -120,12 +120,12 @@ export async function saveCustomer(v: { id?: string; name: string; company?: str
 /* ---------- employees (all privileged work happens inside the database) ---------- */
 export async function createEmployee(v: { username: string; fullName: string; roleIds: string[]; password: string; email:string }): Promise<R> {
   const email=(v.email||'').trim().toLowerCase();
-  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return {ok:false,error:'Enter a valid employee email address.'};
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return {ok:false,error:'Enter a valid employee email address.'};
   const r = await rpc('create_employee_multi', { p_username: v.username, p_full_name: v.fullName, p_role_ids: v.roleIds, p_password: v.password, p_recovery_email: email, p_phone: null }); revalidatePath('/employees'); return r;
 }
 export async function requestPasswordReset(email:string):Promise<R>{
   const address=(email||'').trim().toLowerCase();
-  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(address)) return {ok:false,error:'Enter a valid email address.'};
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) return {ok:false,error:'Enter a valid email address.'};
   try {
     const sb=createAdminClient();
     const {data:profile}=await sb.from('profiles').select('id,full_name,recovery_email').ilike('recovery_email',address).eq('active',true).maybeSingle();
@@ -145,7 +145,7 @@ export async function resetEmployeePassword(userId: string, pw: string): Promise
 export async function setEmployeeActive(userId: string, active: boolean): Promise<R> { const r = await rpc('set_employee_active', { p_user: userId, p_active: active }); revalidatePath('/employees'); return r; }
 export async function updateEmployee(userId: string, fullName: string, roleIds: string[], phone: string, email:string): Promise<R> {
   const recovery=(email||'').trim().toLowerCase();
-  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(recovery)) return {ok:false,error:'Enter a valid employee email address.'};
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recovery)) return {ok:false,error:'Enter a valid employee email address.'};
   const r = await rpc('update_employee_multi', { p_user: userId, p_full_name: fullName, p_role_ids: roleIds, p_phone: phone || null, p_recovery_email: recovery, p_clear_recovery: false }); revalidatePath('/employees'); revalidatePath('/employees/' + userId); revalidatePath('/dashboard'); return r;
 }
 export async function saveRole(id: string | null, name: string, description: string, permissions: string[]): Promise<R> { const r = await rpc('save_role', { p_id: id, p_name: name, p_description: description, p_perms: permissions }); revalidatePath('/roles'); revalidatePath('/employees'); return r; }
