@@ -16,7 +16,7 @@ function navFor(isOwner: boolean, perms: string[]): Item[] {
   const can = (...p: string[]) => isOwner || p.some(x => perms.includes(x));
   const items: Item[] = [];
   if (can('jobs.view_all')) items.push({ href: '/dashboard', label: 'Dashboard', icon: 'dashboard' }, { href: '/jobs', label: 'Jobs', icon: 'jobs' });
-  if (isOwner) items.push({ href: '/quotes', label: 'Quotes', icon: 'quotes' }, { href: '/invoices', label: 'Invoices', icon: 'invoices' });
+  if (isOwner) items.push({ href: '/quotes', label: 'Quotes', icon: 'quotes' });
   if (can('customers.view', 'customers.manage')) items.push({ href: '/customers', label: 'Customers', icon: 'customers' });
   if (isOwner) items.push({ href: '/products', label: 'Products & Pricing', icon: 'products' });
   if (can('employees.view', 'employees.manage', 'roles.manage')) items.push({ href: '/employees', label: 'Employees', icon: 'employees' });

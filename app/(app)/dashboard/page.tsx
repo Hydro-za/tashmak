@@ -6,7 +6,6 @@ import AutoRefresh from '@/components/AutoRefresh';
 import OverdueCheck from '@/components/OverdueCheck';
 import { FINAL_JOB, fmtDate, overdueDays, todaySA } from '@/lib/labels';
 import { sortJobs, staffNames } from '@/lib/jobs';
-import DashboardInvoices from '@/components/DashboardInvoices';
 export const dynamic = 'force-dynamic';
 export default async function Dashboard({ searchParams }: { searchParams: { cat?: string } }) {
   const me = await requirePerm('jobs.view_all'); const sb = me.sb;
@@ -14,7 +13,6 @@ export default async function Dashboard({ searchParams }: { searchParams: { cat?
     sb.from('jobs').select('*, job_items(category_name,product_name)').is('archived_at', null).order('created_at', { ascending: false }).limit(1000),
     sb.rpc('employee_workload'), sb.from('job_activity').select('*').order('created_at', { ascending: false }).limit(15), staffNames(sb), sb.from('product_categories').select('name').order('name'),
     sb.from('quotes').select('id', { count: 'exact', head: true }).eq('status', 'accepted').is('job_id', null).is('archived_at', null)]);
-  const { data: invoiceQueue } = me.isOwner ? await sb.rpc('owner_invoice_queue') : { data: [] as any[] };
   const cat = searchParams.cat; const t = todaySA();
   const all = (jobs || []).filter((j: any) => !cat || j.job_items.some((i: any) => i.category_name === cat));
   const act_ = all.filter((j: any) => !FINAL_JOB.includes(j.status));
@@ -24,14 +22,13 @@ export default async function Dashboard({ searchParams }: { searchParams: { cat?
   return (<div className="page-dashboard">
     <AutoRefresh seconds={60} /><OverdueCheck />
     <Top title="Dashboard" sub={fmtDate(t)}>{me.isOwner && <Link href="/quotes/new" className="btn primary">+ NEW QUOTE</Link>}{me.can('customers.manage') && <Link href="/customers/new" className="btn">+ NEW CUSTOMER</Link>}{me.can('jobs.manage') && <Link href="/jobs/new" className="btn">+ NEW JOB</Link>}<Link href="/jobs" className="btn">VIEW PRODUCTION QUEUE</Link><Link href="/jobs?due=overdue" className="btn">VIEW OVERDUE</Link></Top>
-    {me.isOwner && <DashboardInvoices rows={invoiceQueue || []} />}
     <div className="chips"><Link href="/dashboard" className={!cat ? 'on' : ''}>All products</Link>{(cats || []).map((k: any) => <Link key={k.name} href={'/dashboard?cat=' + encodeURIComponent(k.name)} className={cat === k.name ? 'on' : ''}>{k.name}</Link>)}</div>
     {me.isOwner && !!acceptedWaiting && <div className="alert info"><Link href="/jobs/new"><b>{acceptedWaiting} accepted quote{acceptedWaiting > 1 ? 's' : ''}</b> waiting for a job to be started →</Link></div>}
     <div className="stats">
       {stat('Due today', c(j => j.due_date === t && !FINAL_JOB.includes(j.status)), '/jobs?due=today')}{stat('Overdue', c(j => overdueDays(j.due_date, j.status) > 0), '/jobs?due=overdue', 'bad')}
       {stat('Awaiting design', c(j => ['design', 'design_review'].includes(j.status)), '/jobs?status=design')}{stat('In production', c(j => ['in_production', 'rework'].includes(j.status)), '/jobs?status=in_production')}
       {stat('Waiting to start', c(j => j.status === 'queued'), '/jobs?status=queued')}{stat('Awaiting QC', c(j => j.status === 'qc'), '/jobs?status=qc')}{stat('Completed', c(j => j.status === 'completed'), '/jobs?status=completed')}
-      {stat('Ready for collection', c(j => j.status === 'ready_collection'), '/jobs?status=ready_collection')}{stat('Ready for delivery', c(j => j.status === 'ready_delivery'), '/jobs?status=ready_delivery')}{stat('Ready for invoice', c(j => j.status === 'ready_invoice'), '/jobs?status=ready_invoice')}
+      {stat('Ready for collection', c(j => j.status === 'ready_collection'), '/jobs?status=ready_collection')}{stat('Ready for delivery', c(j => j.status === 'ready_delivery'), '/jobs?status=ready_delivery')}
     </div>
     <div className="grid g2">
       {list('Due today', act_.filter((j: any) => j.due_date === t).sort(sortJobs), 'Nothing due today.')}{list('Overdue', act_.filter((j: any) => overdueDays(j.due_date, j.status) > 0).sort(sortJobs), 'Nothing is overdue. 🎉')}

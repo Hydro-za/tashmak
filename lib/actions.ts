@@ -112,8 +112,8 @@ export async function saveRole(id: string | null, name: string, description: str
 export async function deleteRole(id: string): Promise<R> { const r = await rpc('delete_role', { p_id: id }); revalidatePath('/roles'); revalidatePath('/employees'); return r; }
 export async function createOwner(v: { email: string; username: string; fullName: string; password: string }): Promise<R> { const r = await rpc('create_owner', { p_email: v.email, p_username: v.username, p_full_name: v.fullName, p_password: v.password }); revalidatePath('/owners'); return r; }
 
-export async function saveJobInvoice(jobId: string, invoiceNumber: string, verifiedTotal: number): Promise<R> { const r = await rpc('save_job_invoice', { p_job_id: jobId, p_invoice_number: invoiceNumber, p_verified_total: verifiedTotal }); revalidatePath('/invoices'); revalidatePath('/dashboard'); return r; }
-export async function markJobInvoiceSent(invoiceId: string): Promise<R> { const r = await rpc('mark_job_invoice_sent', { p_invoice_id: invoiceId }); revalidatePath('/invoices'); revalidatePath('/dashboard'); return r; }
+export async function saveJobInvoice(jobId: string, invoiceNumber: string, verifiedTotal: number): Promise<R> { const r = await rpc('save_job_invoice', { p_job_id: jobId, p_invoice_number: invoiceNumber, p_verified_total: verifiedTotal }); revalidatePath('/invoices'); revalidatePath('/dashboard'); revalidatePath('/jobs'); revalidatePath('/jobs/' + jobId); return r; }
+export async function markJobInvoiceSent(invoiceId: string): Promise<R> { const r = await rpc('mark_job_invoice_sent', { p_invoice_id: invoiceId }); revalidatePath('/invoices'); revalidatePath('/dashboard'); revalidatePath('/jobs'); return r; }
 export async function cancelJobInvoice(invoiceId: string, reason: string): Promise<R> { const r = await rpc('cancel_job_invoice', { p_invoice_id: invoiceId, p_reason: reason }); revalidatePath('/invoices'); revalidatePath('/dashboard'); return r; }
 
 /* ---------- settings ---------- */
