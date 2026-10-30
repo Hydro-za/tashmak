@@ -104,10 +104,13 @@ export async function saveCustomer(v: { id?: string; name: string; company?: str
 }
 
 /* ---------- employees (all privileged work happens inside the database) ---------- */
-export async function createEmployee(v: { username: string; fullName: string; role: string; password: string }): Promise<R> { const r = await rpc('create_employee', { p_username: v.username, p_full_name: v.fullName, p_role: v.role, p_password: v.password }); revalidatePath('/employees'); return r; }
+export async function createEmployee(v: { username: string; fullName: string; roleId: string; password: string }): Promise<R> { const r = await rpc('create_employee', { p_username: v.username, p_full_name: v.fullName, p_role_id: v.roleId, p_password: v.password, p_recovery_email: null, p_phone: null }); revalidatePath('/employees'); return r; }
 export async function resetEmployeePassword(userId: string, pw: string): Promise<R> { return rpc('reset_employee_password', { p_user: userId, p_password: pw }); }
 export async function setEmployeeActive(userId: string, active: boolean): Promise<R> { const r = await rpc('set_employee_active', { p_user: userId, p_active: active }); revalidatePath('/employees'); return r; }
-export async function updateEmployee(userId: string, fullName: string, role: string, phone: string): Promise<R> { const r = await rpc('update_employee', { p_user: userId, p_full_name: fullName, p_role: role, p_phone: phone || null }); revalidatePath('/employees'); return r; }
+export async function updateEmployee(userId: string, fullName: string, roleId: string, phone: string): Promise<R> { const r = await rpc('update_employee', { p_user: userId, p_full_name: fullName, p_role_id: roleId, p_phone: phone || null, p_recovery_email: null, p_clear_recovery: false }); revalidatePath('/employees'); revalidatePath('/employees/' + userId); return r; }
+export async function saveRole(id: string | null, name: string, description: string, permissions: string[]): Promise<R> { const r = await rpc('save_role', { p_id: id, p_name: name, p_description: description, p_perms: permissions }); revalidatePath('/roles'); revalidatePath('/employees'); return r; }
+export async function deleteRole(id: string): Promise<R> { const r = await rpc('delete_role', { p_id: id }); revalidatePath('/roles'); revalidatePath('/employees'); return r; }
+export async function createOwner(v: { email: string; username: string; fullName: string; password: string }): Promise<R> { const r = await rpc('create_owner', { p_email: v.email, p_username: v.username, p_full_name: v.fullName, p_password: v.password }); revalidatePath('/owners'); return r; }
 
 /* ---------- settings ---------- */
 const PRIOS = ['low', 'normal', 'high', 'urgent'];
