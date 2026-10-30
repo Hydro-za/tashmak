@@ -37,18 +37,23 @@ export default function Login() {
   async function forgot() {
     setErr('');
     setInfo('');
-    if (!id.includes('@')) {
-      setErr('Enter your registered employee or owner email address above.');
+    const identifier = id.trim();
+    if (!identifier) {
+      setErr('Enter your username or registered email address above first.');
       return;
     }
     setBusy(true);
     try {
-      const result = await requestPasswordReset(id.trim().toLowerCase());
-      if (!result.ok) setErr(result.error || 'Could not send the reset email. Please try again.');
-      else window.location.href = '/change-password';
+      const result = await requestPasswordReset(identifier);
+      if (!result.ok) {
+        setErr(result.error || 'Could not send the reset email. Please try again.');
+        setBusy(false);
+        return;
+      }
+      const email = identifier.includes('@') ? identifier.toLowerCase() : '';
+      window.location.href = '/change-password' + (email ? '?email=' + encodeURIComponent(email) : '');
     } catch {
       setErr('Could not send the reset email. Please try again in a few minutes.');
-    } finally {
       setBusy(false);
     }
   }

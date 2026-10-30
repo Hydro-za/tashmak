@@ -25,7 +25,9 @@ function navFor(isOwner: boolean, perms: string[]): Item[] {
   if (can('settings.manage')) items.push({ href: '/settings', label: 'Settings', icon: 'settings' });
   const works = !isOwner && (perms.some(p => ['jobs.work_design', 'jobs.work_production', 'qc.perform'].includes(p)) || !perms.includes('jobs.view_all'));
   if (works) items.unshift({ href: '/my-jobs', label: 'My Jobs', icon: 'my-jobs' }, { href: '/completed', label: 'Completed', icon: 'completed' });
-  if (!isOwner) items.push({ href: '/notifications', label: 'Notifications', icon: 'notifications' }, { href: '/profile', label: 'Profile', icon: 'profile' });
+  if (!isOwner) items.push({ href: '/notifications', label: 'Notifications', icon: 'notifications' });
+  // Every account can manage its own password and access profile-level controls.
+  items.push({ href: '/profile', label: 'Profile', icon: 'profile' });
   return items;
 }
 
