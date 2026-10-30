@@ -13,7 +13,7 @@ export function CreateEmployeeForm({ roles }: { roles: Role[] }) {
  return <form onSubmit={submit} className="card"><div className="grid g2">
   <div className="field"><label>Full name *</label><input value={v.fullName} onChange={e=>setV({...v,fullName:e.target.value})} required/></div>
   <div className="field"><label>Username * (used to sign in)</label><input autoCapitalize="none" value={v.username} onChange={e=>setV({...v,username:e.target.value})} required/><div className="help">3–32 letters, numbers, dot, dash, underscore.</div></div>
-  <div className="field"><label>Role</label><select value={v.roleId} onChange={e=>setV({...v,roleId:e.target.value})} required>{roles.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select><div className="help"><a href="/roles">Manage roles and permissions</a></div></div>
+  <div className="field"><label>Role</label><select value={v.roleId} onChange={e=>setV({...v,roleId:e.target.value})} required>{roles.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select><div className="help"><a href="/employees?tab=roles">Manage roles and permissions</a></div></div>
   <div className="field"><label>Temporary password *</label><div style={{display:'flex',gap:6}}><PasswordInput value={v.password} onChange={password=>setV({...v,password})} autoComplete="new-password" required/><button type="button" className="btn" onClick={()=>setV({...v,password:genPw()})}>Generate</button></div></div></div>
   {err&&<div className="alert bad" style={{marginTop:12}}>{err}</div>}<button className="btn primary" style={{marginTop:12}} disabled={busy||!roles.length}>{busy?'Creating…':'Create employee'}</button></form>;
 }
