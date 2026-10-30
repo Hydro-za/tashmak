@@ -32,7 +32,7 @@ export default async function MyJob({ params }: { params: { id: string } }) {
   return (<>
     <AutoRefresh seconds={30} />
     <Link href="/my-jobs" className="btn ghost sm">← My Jobs</Link>
-    <div className="card" style={{ marginTop: 8, borderLeft: '8px solid ' + (job.priority === 'urgent' ? 'var(--bad)' : job.priority === 'high' ? 'var(--warn)' : 'var(--line)') }}>
+    <div className="card job-progress-actions" style={{ marginTop: 8, borderLeft: '8px solid ' + (job.priority === 'urgent' ? 'var(--bad)' : job.priority === 'high' ? 'var(--warn)' : 'var(--line)') }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><h1>{title}</h1><span><PrioBadge p={job.priority} /> <JobStatus job={job} /></span></div>
       <div className="muted">{job.number} · <b>{job.customer_name}</b> · {(JOB_STATUS[s] || { label: s }).label}</div>
       <div className="muted" style={{ marginTop: 4 }}>Due <b>{fmtDate(job.due_date)}</b> <DueFlag due={job.due_date} status={s} /> {hasQc && <QcBadge status={job.qc_status} />}</div>
