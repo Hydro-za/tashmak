@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createEmployee, resetEmployeePassword, updateEmployee, setEmployeeActive } from '@/lib/actions';
 import { toast } from './ToastHost';
+import PasswordInput from './PasswordInput';
 
 const genPw = () => { const c = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789'; const a = new Uint32Array(10); crypto.getRandomValues(a); return Array.from(a, n => c[n % c.length]).join(''); };
 export function CreateEmployeeForm() {
@@ -17,7 +18,7 @@ export function CreateEmployeeForm() {
     <div className="field"><label>Full name *</label><input value={v.fullName} onChange={e => setV({ ...v, fullName: e.target.value })} required /></div>
     <div className="field"><label>Username * (used to sign in)</label><input autoCapitalize="none" value={v.username} onChange={e => setV({ ...v, username: e.target.value })} required /><div className="help">3–32 letters, numbers, dot, dash, underscore.</div></div>
     <div className="field"><label>Role</label><select value={v.role} onChange={e => setV({ ...v, role: e.target.value })}><option value="production">Production / Printer</option><option value="designer">Designer</option></select></div>
-    <div className="field"><label>Temporary password *</label><div style={{ display: 'flex', gap: 6 }}><input value={v.password} onChange={e => setV({ ...v, password: e.target.value })} required /><button type="button" className="btn" onClick={() => setV({ ...v, password: genPw() })}>Generate</button></div></div></div>
+    <div className="field"><label>Temporary password *</label><div style={{ display: 'flex', gap: 6 }}><PasswordInput value={v.password} onChange={password => setV({ ...v, password })} autoComplete="new-password" required /><button type="button" className="btn" onClick={() => setV({ ...v, password: genPw() })}>Generate</button></div></div></div>
     {err && <div className="alert bad" style={{ marginTop: 12 }}>{err}</div>}<button className="btn primary" style={{ marginTop: 12 }} disabled={busy}>{busy ? 'Creating…' : 'Create employee'}</button></form>);
 }
 export function EmployeeAdmin({ e }: { e: any }) {
@@ -34,6 +35,6 @@ export function EmployeeAdmin({ e }: { e: any }) {
   return (<div className="card"><h2>Account</h2><div className="grid g3"><div className="field"><label>Name</label><input value={name} onChange={ev => setName(ev.target.value)} /></div>
     <div className="field"><label>Role</label><select value={role} onChange={ev => setRole(ev.target.value)}><option value="production">Production / Printer</option><option value="designer">Designer</option></select></div><div className="field"><label>Phone</label><input value={phone} onChange={ev => setPhone(ev.target.value)} /></div></div>
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10, alignItems: 'end' }}><button className="btn primary" onClick={save} disabled={busy}>Save</button>
-      <div className="field" style={{ flex: 1, minWidth: 200 }}><label>New temporary password</label><div style={{ display: 'flex', gap: 6 }}><input value={pw} onChange={ev => setPw(ev.target.value)} /><button className="btn" onClick={() => setPw(genPw())}>Generate</button><button className="btn" onClick={reset} disabled={busy}>Reset password</button></div></div>
+      <div className="field" style={{ flex: 1, minWidth: 200 }}><label>New temporary password</label><div style={{ display: 'flex', gap: 6 }}><PasswordInput value={pw} onChange={setPw} autoComplete="new-password" /><button className="btn" onClick={() => setPw(genPw())}>Generate</button><button className="btn" onClick={reset} disabled={busy}>Reset password</button></div></div>
       <button className={'btn ' + (e.active ? 'danger' : 'primary')} onClick={toggle} disabled={busy}>{e.active ? 'Deactivate account' : 'Activate account'}</button></div></div>);
 }
