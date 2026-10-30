@@ -153,19 +153,37 @@ export async function createEmployee(v: { username: string; fullName: string; ro
 }
 export async function requestPasswordReset(email:string):Promise<R>{
   const address=(email||'').trim().toLowerCase();
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) return {ok:false,error:'Enter a valid email address.'};
+  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(address)) return {ok:false,error:'Enter a valid email address.'};
   try {
     const sb=createAdminClient();
-    const {data:profile}=await sb.from('profiles').select('id,full_name,recovery_email').ilike('recovery_email',address).eq('active',true).maybeSingle();
+    let profile:any=null;
+    const {data:employee}=await sb.from('profiles').select('id,full_name,recovery_email').ilike('recovery_email',address).eq('active',true).maybeSingle();
+    profile=employee;
+    // Owners may have no recovery_email; their verified Auth email is their recovery address.
+    if(!profile){
+      for(let page=1;page<=20&&!profile;page++){
+        const {data,error}=await sb.auth.admin.listUsers({page,perPage:1000});
+        if(error) throw error;
+        const matched=data.users.find((u:any)=>(u.email||'').toLowerCase()===address);
+        if(matched){
+          const {data:p}=await sb.from('profiles').select('id,full_name,recovery_email').eq('id',matched.id).eq('active',true).maybeSingle();
+          profile=p;
+        }
+        if(data.users.length<1000) break;
+      }
+    }
     if(profile){
-      const {data:userData}=await sb.auth.admin.getUserById(profile.id);
-      if(userData?.user?.email){
-        const {data:link,error}=await sb.auth.admin.generateLink({type:'recovery',email:userData.user.email,options:{redirectTo:(process.env.NEXT_PUBLIC_APP_URL||'https://tashmak-system.vercel.app')+'/auth/callback?next=/change-password'}});
+      const {data:userData,error:userError}=await sb.auth.admin.getUserById(profile.id);
+      if(userError) throw userError;
+      const authEmail=userData?.user?.email;
+      if(authEmail && authEmail.toLowerCase()===address){
+        const {data:link,error}=await sb.auth.admin.generateLink({type:'recovery',email:authEmail,options:{redirectTo:(process.env.NEXT_PUBLIC_APP_URL||'https://tashmak-system.vercel.app')+'/auth/callback?next=/change-password'}});
         if(error) throw error;
         const actionUrl=link.properties?.action_link;
         if(actionUrl) await sendPasswordResetEmail(address,profile.full_name||'there',actionUrl);
       }
     }
+    // Do not reveal whether an account exists.
     return ok();
   }catch(e){return fail(e);}
 }
