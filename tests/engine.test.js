@@ -87,6 +87,8 @@ cfg.finishing.fin_pct = { id: 'fin_pct', name: 'Rush', method: 'percent', price:
 const withPct = PQ.calcLine(line('p_banner', { w: 2, h: 1, unit: 'm', finishing: [{ id: 'fin_pct' }] }), cfg);
 const direct = ['material', 'print', 'machine', 'labour', 'base'].reduce((a, g) => a + (withPct.groups[g] || 0), 0);
 near(withPct.lines.find(l => l.group === 'finishing').amount, direct * 0.1, 'percentage finishing on direct cost');
+const malformedFinishing = PQ.calcLine(line('p_banner', { w: 2, h: 1, unit: 'm', finishing: [undefined] }), cfg);
+ok(!malformedFinishing.ok && malformedFinishing.errors.includes('A selected finishing option is incomplete. Remove it before saving.'), 'missing finishing selection id returns a validation error instead of throwing');
 
 // 9. Discounts & manual override
 cfg = mk(); cfg.settings.pricing.rounding = { step: 0 };

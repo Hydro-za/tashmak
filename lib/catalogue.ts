@@ -8,6 +8,8 @@ export async function loadCalcConfig(sb: SupabaseClient) {
     sb.from('products').select('id,data'), sb.from('product_categories').select('id,data'), sb.from('materials').select('id,data'), sb.from('machines').select('id,data'),
     sb.from('labour_types').select('id,data'), sb.from('finishing_options').select('id,data'), sb.from('pricing_settings').select('data').eq('id', 1).maybeSingle(), sb.from('system_settings').select('key,value')
   ]);
+  const failed = [pr, cat, mat, mac, lab, fin, ps, ss].find(result => result.error);
+  if (failed?.error) throw new Error(`Could not load quote pricing data: ${failed.error.message}`);
   const sys = Object.fromEntries((ss.data || []).map((r: any) => [r.key, r.value]));
   const pricing = ps.data?.data || {};
   const settings = { ...pricing, business: sys.business || {}, quotes: sys.quotes || {}, permissions: { manager: {}, staff: {} }, defaultRole: 'staff' };

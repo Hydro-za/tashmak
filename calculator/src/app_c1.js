@@ -19,7 +19,7 @@ function recalc(it) {
     const m = it.materialId && cfg.materials[it.materialId]; if (m) parts.push(m.name);
     if (p.profile === 'paper') { parts.push(PQ.num(it.sides) === 2 ? 'double-sided' : 'single-sided'); parts.push(it.colour === 'bw' ? 'B&W' : 'full colour'); if (PQ.num(it.pages) > 1) parts.push(it.pages + ' pages'); }
     if (p.profile === 'dtf') { if (it.garmentColour) parts.push(it.garmentColour); (it.prints || []).forEach(x => parts.push(`${x.label || 'Print'} ${x.w}×${x.h}cm${PQ.num(x.count) > 1 ? ' ×' + x.count : ''}`)); }
-    const fin = (it.finishing || []).map(s => (cfg.finishing[s.id] || {}).name).filter(Boolean); if (fin.length) parts.push('Finishing: ' + fin.join(', '));
+    const fin = (Array.isArray(it.finishing) ? it.finishing : []).filter(s => s && typeof s.id === 'string').map(s => (cfg.finishing[s.id] || {}).name).filter(Boolean); if (fin.length) parts.push('Finishing: ' + fin.join(', '));
     it.specText = parts.join(' · ');
   }
 }
@@ -63,10 +63,11 @@ function itemFieldsHTML(it) {
     });
     h += `<datalist id="poslist">${POSITIONS.map(x => `<option value="${x}">`).join('')}</datalist><button class="btn sm" type="button" data-act="pr-add" data-key="${k}">+ Add print position</button>`;
   }
-  const allowed = (p.allowedFinishing || []).map(id => cfg.finishing[id]).filter(f => f && (f.active !== false || (it.finishing || []).some(s => s.id === f.id)));
+  const selections = (Array.isArray(it.finishing) ? it.finishing : []).filter(s => s && typeof s.id === 'string');
+  const allowed = (p.allowedFinishing || []).map(id => cfg.finishing[id]).filter(f => f && (f.active !== false || selections.some(s => s.id === f.id)));
   if (allowed.length) {
     h += `<div class="lbl" style="margin:14px 0 4px">Finishing & extras</div><div>${allowed.map(f => {
-      const sel = (it.finishing || []).find(s => s.id === f.id);
+      const sel = selections.find(s => s.id === f.id);
       return `<div class="fin"><input type="checkbox" ${sel ? 'checked' : ''} data-i="${k}" data-f="finOn" data-fin="${e(f.id)}" id="fin-${k}-${e(f.id)}"><label for="fin-${k}-${e(f.id)}">${e(f.name)}</label>${f.askQty ? `<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:12px">${e(f.qtyLabel || 'Qty')}</span><input type="number" min="0" step="1" data-i="${k}" data-f="finQty" data-fin="${e(f.id)}" value="${e(sel ? sel.qty : f.defaultQty || 1)}" ${sel ? '' : 'disabled'}></span>` : '<span></span>'}</div>`;
     }).join('')}</div>`;
   }
@@ -247,7 +248,7 @@ function onEditorInput(t) {
       case 'ovOn': { it.override = v ? { price: it.calc.calculatedPrice, reason: '' } : null; const b = $('#ov-' + it.key); if (b) { b.style.display = v ? '' : 'none'; const pi = $('[data-f="ovPrice"]', b); if (pi && v) pi.value = it.calc.calculatedPrice; } break; }
       case 'ovPrice': if (it.override) it.override.price = v; break; case 'ovReason': if (it.override) it.override.reason = v; break;
       case 'finOn': { const id = t.dataset.fin; it.finishing = (it.finishing || []).filter(s => s.id !== id); if (v) it.finishing.push({ id, qty: finDefaultQty(id) }); const qi = $(`[data-i="${it.key}"][data-f="finQty"][data-fin="${id}"]`); if (qi) { qi.disabled = !v; if (v) qi.value = finDefaultQty(id); } break; }
-      case 'finQty': { const s = (it.finishing || []).find(x => x.id === t.dataset.fin); if (s) s.qty = v; break; }
+      case 'finQty': { const s = (Array.isArray(it.finishing) ? it.finishing : []).find(x => x && x.id === t.dataset.fin); if (s) s.qty = v; break; }
       case 'prLabel': case 'prW': case 'prH': case 'prCount': { const pr = it.prints[+t.dataset.pr]; pr[{ prLabel: 'label', prW: 'w', prH: 'h', prCount: 'count' }[f]] = f === 'prLabel' ? v : v; break; }
       case 'prPreset': { const s = PRINT_SIZES.find(x => x[0] === v); if (s) { const pr = it.prints[+t.dataset.pr]; pr.w = s[1]; pr.h = s[2]; rerenderFields(it); } break; }
       default: it[f] = v;

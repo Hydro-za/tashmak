@@ -258,6 +258,7 @@ function calcLine(line, cfg) {
   // ---- 6. finishing
   const directSoFar = () => res.lines.filter(l => ['material', 'print', 'machine', 'labour', 'base'].includes(l.group)).reduce((a, l) => a + l.amount, 0);
   if (C.includeFinishing !== false) (line.finishing || []).forEach(sel => {
+    if (!sel || typeof sel.id !== 'string' || !sel.id) { err('A selected finishing option is incomplete. Remove it before saving.'); return; }
     const f = (cfg.finishing || {})[sel.id];
     if (!f) { err('A selected finishing option no longer exists'); return; }
     if (f.active === false) warn('Finishing "' + f.name + '" is disabled');

@@ -8,7 +8,7 @@ import { toast } from './ToastHost';
 type Cust = { id: string; name: string; company: string | null };
 export default function QuoteBuilder({ init, customers: initial, customerId: initialCustomer, backHref }: { init: any; customers: Cust[]; customerId: string; backHref: string }) {
   const router = useRouter();
-  const [customers, setCustomers] = useState<Cust[]>(initial); const [cid, setCid] = useState(initialCustomer || '');
+  const [customers, setCustomers] = useState<Cust[]>(Array.isArray(initial) ? initial.filter(c => c && typeof c.id === 'string') : []); const [cid, setCid] = useState(initialCustomer || '');
   const [dirty, setDirty] = useState(false); const [adding, setAdding] = useState(false); const [nc, setNc] = useState({ name: '', company: '', phone: '', email: '' }); const [busy, setBusy] = useState(false);
   const reqId = useRef(typeof crypto !== 'undefined' ? crypto.randomUUID() : String(Math.random()));
   const replyRef = useRef<((t: string, p: any) => void) | null>(null); const saving = useRef(false);
@@ -19,6 +19,7 @@ export default function QuoteBuilder({ init, customers: initial, customerId: ini
   async function addCustomer() {
     setBusy(true); const r = await saveCustomer(nc).catch(() => ({ ok: false, error: 'Could not reach the server.' } as any)); setBusy(false);
     if (!r.ok) { toast(r.error, 'bad'); return; }
+    if (!r.data?.id) { toast('Customer save returned no customer record. Refresh and check the customer list before continuing.', 'bad'); return; }
     const c = { id: r.data.id, name: nc.name.trim(), company: nc.company.trim() || null }; setCustomers([...customers, c].sort((a, b) => a.name.localeCompare(b.name))); setCid(c.id); setAdding(false); setNc({ name: '', company: '', phone: '', email: '' });
     replyRef.current?.('customer', { id: c.id, name: c.name }); toast('Customer added');
   }
@@ -46,7 +47,9 @@ export default function QuoteBuilder({ init, customers: initial, customerId: ini
             if (saving.current) return; saving.current = true;
             try {
               const r = await saveQuoteAction({ customerId: cidRef.current, requestId: reqId.current, quote: p.quote, items: p.items });
-              if (r.ok) { setDirty(false); toast('Quote ' + (r.data?.number || '') + ' saved'); router.push('/quotes/' + r.data.id); router.refresh(); } else reply('error', r.error || 'Could not save');
+              if (r.ok && r.data?.id) { setDirty(false); toast('Quote ' + (r.data.number || '') + ' saved'); router.push('/quotes/' + r.data.id); router.refresh(); }
+              else if (r.ok) reply('error', 'The server reported success but returned no quote ID. Refresh the quotes list before trying again.');
+              else reply('error', r.error || 'Could not save');
             } catch { reply('error', 'Could not reach the server. Nothing was saved — please try again.'); } finally { saving.current = false; }
           }
         }} />
