@@ -35,7 +35,7 @@ const ERR: Record<string, string> = {
   quote_not_accepted: 'The quote must be accepted first.', note_required: 'A note is required.', reason_required: 'A reason is required.', confirm_required: 'Confirmation is required because production has already started.',
   username_taken: 'That username is already in use.', invalid_username: 'Username must be 3–32 characters: letters, numbers, dot, dash or underscore.', password_too_short: 'Password must be at least 8 characters.',
   customer_required: 'Choose a customer.', quote_needs_items: 'Add at least one item.', invalid_quantities: 'Those quantities are not valid.', completed_exceeds_ordered: 'Completed quantity cannot exceed the ordered quantity.',
-  job_archived: 'This job is archived.', last_owner: 'At least one active owner is required.', one_designer_only: 'Only one designer can be assigned.', invalid_employee_for_stage: 'That employee cannot be assigned to this stage.'
+  job_archived: 'This job is archived.', job_not_found: 'This job could not be found. Reload and try again.', job_not_ready_for_accounting: 'This job is no longer ready for accounting. Refresh and check its status.', accounting_figures_need_review: 'The saved quote figures need review before the accounting entry can be completed.', last_owner: 'At least one active owner is required.', one_designer_only: 'Only one designer can be assigned.', invalid_employee_for_stage: 'That employee cannot be assigned to this stage.'
 };
 export function friendlyError(e: any): string {
   const msg: string = (e && (e.message || e.error_description || String(e))) || 'Something went wrong';

@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { requirePerm } from '@/lib/session';
 import { Top, PrioBadge } from '@/components/ui';
 import AutoRefresh from '@/components/AutoRefresh';
-import DashboardInvoices from '@/components/DashboardInvoices';
 import { FINAL_JOB, fmtDate, todaySA } from '@/lib/labels';
 import { sortJobs } from '@/lib/jobs';
 
@@ -10,11 +9,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function Dashboard() {
   const me = await requirePerm('jobs.view_all'); const sb = me.sb;
-  const [{ data: jobs }, workloadResult, { count: acceptedWaiting }, invoiceQueueResult] = await Promise.all([
+  const [{ data: jobs }, workloadResult, { count: acceptedWaiting }] = await Promise.all([
     sb.from('jobs').select('*, job_items(category_name,product_name)').is('archived_at', null).order('created_at', { ascending: false }).limit(1000),
     me.can('employees.view') ? sb.rpc('employee_workload') : Promise.resolve({ data: [] }),
-    sb.from('quotes').select('id', { count: 'exact', head: true }).eq('status', 'accepted').is('job_id', null).is('archived_at', null),
-    me.isOwner ? sb.rpc('owner_invoice_queue') : Promise.resolve({ data: [] })
+    sb.from('quotes').select('id', { count: 'exact', head: true }).eq('status', 'accepted').is('job_id', null).is('archived_at', null)
   ]);
   const t = todaySA();
   const workload = workloadResult.data || [];
@@ -24,7 +22,7 @@ export default async function Dashboard() {
   const production = active.filter((j: any) => ['queued', 'design', 'design_review', 'in_production', 'rework', 'qc'].includes(j.status));
   const awaitingQc = active.filter((j: any) => j.status === 'qc');
   const readyForHandoff = all.filter((j: any) => ['ready_collection', 'ready_delivery'].includes(j.status));
-  const invoiceRows = invoiceQueueResult.data || [];
+  const readyForInvoice = all.filter((j: any) => j.status === 'ready_invoice');
   const attention = [...new Map([...dueToday, ...active.filter((j: any) => j.status === 'qc')].map(j => [j.id, j])).values()].sort(sortJobs);
   const stat = (label: string, value: number, href: string, danger = false) => <Link href={href} className="stat" style={{ textDecoration: 'none', borderColor: danger && value ? 'var(--bad)' : undefined }}><div className="k">{label}</div><div className="v" style={{ color: danger && value ? 'var(--bad)' : undefined }}>{value}</div></Link>;
 
@@ -42,9 +40,8 @@ export default async function Dashboard() {
       {stat('Active work', production.length, '/jobs?status=active')}
       {stat('Awaiting QC', awaitingQc.length, '/jobs?status=qc')}
       {stat('Ready for handoff', readyForHandoff.length, '/jobs?status=ready_handoff')}
+      {stat('Ready for invoice', readyForInvoice.length, '/jobs?status=ready_invoice')}
     </div>
-
-    {me.isOwner && <DashboardInvoices rows={invoiceRows} />}
 
     <div className="card">
       <h2>Needs attention <span className="muted" style={{ fontWeight: 400 }}>({attention.length})</span></h2>
