@@ -44,7 +44,7 @@ export default async function QuotePage({ params }: { params: { id: string } }) 
       {q.accepted_at && <span className="muted">Accepted {fmtDateTime(q.accepted_at)}{q.accepted_by ? ' by ' + (names[q.accepted_by] || 'Owner') : ''}</span>}
       {q.declined_at && <span className="muted">Declined {fmtDateTime(q.declined_at)}</span>}
     </div>
-    <div className="qdoc">
+    <div className="qdoc"><style>{`.qdoc .hdr{position:static!important;top:auto!important;z-index:auto!important;margin:0 0 22px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important;}`}</style>
       <div className="hdr"><div><img className="logo" src={business.logo || '/brand/logo.png'} alt="" /><div><b>{business.name}</b></div><div className="small">{business.address}{'\n'}{business.phone}{business.email ? ' · ' + business.email : ''}{business.vatNo ? '\nVAT No: ' + business.vatNo : ''}</div></div>
         <div style={{ textAlign: 'right' }}><h1>QUOTATION</h1><div><b>{q.number}</b></div><div className="small">Date: {fmtDate(q.quote_date)}{'\n'}Valid until: {fmtDate(q.valid_until)}{q.reference ? '\nReference: ' + q.reference : ''}</div></div></div>
       <div className="small"><b>Quote for</b></div><div><b>{c.name}</b></div>{c.company && <div>{c.company}</div>}<div className="small">{c.phone}{c.email ? '\n' + c.email : ''}</div>

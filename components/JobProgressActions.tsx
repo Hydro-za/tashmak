@@ -1,6 +1,6 @@
 'use client';
 import ActionButton from './ActionButton';
-import { jobAction } from '@/lib/actions';
+import { assignedJobAction } from '@/lib/assigned-job-actions';
 
 type Props = {
   job: any;
@@ -19,7 +19,7 @@ export default function JobProgressActions({ job, canDesign, canProduction, canC
   if (!designStage && !productionWaiting && !productionActive) return null;
 
   const action = (label: string, key: string, className: string, successText: string) =>
-    <ActionButton className={className} label={label} pendingLabel="Please wait…" action={jobAction} args={[job.id, key]} successText={successText} />;
+    <ActionButton className={className} label={label} pendingLabel="Please wait…" action={assignedJobAction} args={[job.id, key]} successText={successText} />;
 
   return <section className="card job-progress-actions">
     <h2>Job progress</h2>

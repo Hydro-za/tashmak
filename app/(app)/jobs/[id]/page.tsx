@@ -7,16 +7,12 @@ import ActionButton from '@/components/ActionButton';
 import Timeline from '@/components/Timeline';
 import JobWorkOrder from '@/components/JobWorkOrder';
 import JobManage from '@/components/JobManage';
-import JobFiles from '@/components/JobFiles';
-import FileUploader from '@/components/FileUploader';
 import NoteBox from '@/components/NoteBox';
 import AutoRefresh from '@/components/AutoRefresh';
 import QcPanel from '@/components/QcPanel';
-import { SuppliedForm } from '@/components/JobForms';
 import { jobAction, archiveRecord } from '@/lib/actions';
 import { JOB_STATUS, fmtDate } from '@/lib/labels';
 import JobInvoicePanel from '@/components/JobInvoicePanel';
-import JobProgressActions from '@/components/JobProgressActions';
 
 export const dynamic = 'force-dynamic';
 export default async function JobPage({ params }: { params: { id: string } }) {
@@ -29,7 +25,6 @@ export default async function JobPage({ params }: { params: { id: string } }) {
   const live = staff.filter(e => e.active && !e.deleted); const designers = live.filter(e => e.can_design); const producers = live.filter(e => e.can_produce);
   const ids = (stage: string) => assignments.filter((a: any) => a.stage === stage).map((a: any) => a.user_id);
   const s = job.status; const final = ['completed', 'ready_collection', 'ready_delivery', 'collected', 'delivered', 'ready_invoice', 'cancelled'].includes(s);
-  const itemNames = Object.fromEntries(items.map((i: any) => [i.id, i.product_name]));
   const title = job.title || items.map((i: any) => i.product_name).slice(0, 2).join(', ') || job.number;
   const invoiceEligible = me.isOwner && ['collected', 'delivered', 'ready_invoice'].includes(s);
   let invoiceSnapshot: any = null; let invoiceRows: any[] = []; let invoiceEvents: any[] = [];
@@ -38,7 +33,7 @@ export default async function JobPage({ params }: { params: { id: string } }) {
     invoiceSnapshot = snapshotResult.data; invoiceRows = rowsResult.data || []; invoiceEvents = eventsResult.data || [];
   }
   const currentInvoice = invoiceRows[0] || null;
-  const prodStarted = !!job.production_started_at; const hasQc = items.some((i: any) => i.requires_qc) || job.qc_status !== 'not_checked' || s === 'qc';
+  const hasQc = items.some((i: any) => i.requires_qc) || job.qc_status !== 'not_checked' || s === 'qc';
   const A = (label: string, action: string, cls = 'btn', extra: any = {}) => <ActionButton key={action + label} className={cls} label={label} action={jobAction} args={[job.id, action]} {...extra} />;
   return (<>
     <AutoRefresh seconds={45} />
@@ -46,7 +41,6 @@ export default async function JobPage({ params }: { params: { id: string } }) {
       <Link href="/jobs" className="btn">← Jobs</Link>{quote && me.isOwner && <Link href={'/quotes/' + quote.id + '/duplicate'} className="btn">Create repeat job</Link>}
     </Top>
     {cust?.notes && <div className="alert info" style={{ whiteSpace: 'pre-wrap' }}><b>Customer note:</b> {cust.notes}</div>}
-    {canManage && <JobProgressActions job={job} canDesign={!!job.design_required} canProduction hasArtwork={b.files.some((f: any) => ['artwork', 'design', 'print_ready', 'dtf_artwork'].includes(f.kind))} hasFinal={b.files.some((f: any) => f.is_final)} canCompleteUnstartedDesign />}
     {canManage && <div className="card job-progress-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
       <b>Next steps</b>
       {s === 'design_review' && <>{A('APPROVE DESIGN', 'design_approve', 'btn primary', { successText: 'Design approved' })}{A('Send back for changes', 'design_reject', 'btn danger', { askNote: 'What needs to change?', noteRequired: true })}</>}
@@ -72,9 +66,6 @@ export default async function JobPage({ params }: { params: { id: string } }) {
           <div><div className="lbl">Production</div>{ids('production').map((i: string) => names[i]).join(', ') || <span className="overdue">not assigned</span>}</div></div>
         <JobWorkOrder b={b} canProgress={canManage && ['in_production', 'rework', 'qc', 'queued'].includes(s)} /></div>
       {hasQc && <div className="card"><h2>Quality check</h2><QcPanel jobId={job.id} status={s} qcStatus={job.qc_status} checkedBy={job.qc_checked_by ? names[job.qc_checked_by] || null : null} checkedAt={job.qc_checked_at} note={job.qc_note} canCheck={me.can('qc.perform')} awaiting={s === 'qc'} /></div>}
-      <div className="card"><h2>Files & artwork</h2><JobFiles jobId={job.id} files={b.files} urls={b.urls} names={names} canFinal={canManage} itemNames={itemNames} productionStarted={prodStarted} />
-        {canManage && <div style={{ marginTop: 14 }}><FileUploader jobId={job.id} items={items.map((i: any) => ({ id: i.id, name: i.product_name }))} /></div>}</div>
-      {canManage && <div className="card"><h2>Customer-supplied items</h2><SuppliedForm jobId={job.id} items={items.map((i: any) => ({ id: i.id, name: i.product_name }))} /></div>}
       <div className="card"><h2>Internal notes</h2>{canManage && <NoteBox jobId={job.id} />}{b.notes.map((n: any) => <div className="linkrow" key={n.id}><span style={{ whiteSpace: 'pre-wrap' }}>{n.note}</span><span className="muted" style={{ whiteSpace: 'nowrap' }}>{names[n.user_id] || 'Someone'}</span></div>)}{!b.notes.length && !canManage && <p className="muted">No notes.</p>}</div>
     </div><div>
       {canManage && <div className="card"><h2>Manage</h2><JobManage job={job} designers={designers} producers={producers} designerIds={ids('design')} producerIds={ids('production')} /></div>}
