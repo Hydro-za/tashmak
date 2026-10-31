@@ -121,13 +121,13 @@ document.addEventListener('click', ev => {
 document.addEventListener('input', ev => {
   const t = ev.target;
   if (t.id === 'qsearch') { State.qFilter.text = t.value; const l = $('#qlist'); if (l) l.innerHTML = quoteListHTML(); }
-  else if (t.dataset && (t.dataset.i || t.dataset.q || t.dataset.calc)) onEditorInput && onEditorInput(t, ev);
+  else if (t.dataset && (t.dataset.i || t.dataset.q || t.dataset.calc) && !(t.tagName === 'SELECT' || (t.tagName === 'INPUT' && ['checkbox', 'radio'].includes(t.type)))) onEditorInput && onEditorInput(t, ev);
   else if (t.dataset && t.dataset.w !== undefined) onWizardInput && onWizardInput(t, ev);
 });
 document.addEventListener('change', ev => {
   const t = ev.target;
   if (t.id === 'qstatus') { State.qFilter.status = t.value; const l = $('#qlist'); if (l) l.innerHTML = quoteListHTML(); }
-  else if (t.dataset && (t.dataset.i || t.dataset.q || t.dataset.calc)) onEditorInput && onEditorInput(t, ev);
+  else if (t.dataset && (t.dataset.i || t.dataset.q || t.dataset.calc) && (t.tagName === 'SELECT' || (t.tagName === 'INPUT' && ['checkbox', 'radio'].includes(t.type)))) onEditorInput && onEditorInput(t, ev);
   else if (t.dataset && t.dataset.w !== undefined) onWizardInput && onWizardInput(t, ev, true);
   else if (t.dataset && t.dataset.cfg !== undefined) onSettingsChange && onSettingsChange(t, ev);
 });

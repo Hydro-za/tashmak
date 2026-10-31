@@ -20,29 +20,38 @@ export async function requestPasswordReset(identifier: string): Promise<Result> 
     let profile: any = null;
     let address = supplied;
     if (isEmail) {
-      const { data: employee, error } = await sb.from('profiles').select('id,full_name,recovery_email,role')
-        .ilike('recovery_email', supplied).eq('active', true).is('deleted_at', null).maybeSingle();
-      if (error) throw error;
-      profile = employee;
+      const { data: recoveryRows, error: recoveryError } = await sb.from('employee_recovery').select('user_id,email').eq('email', supplied).limit(2);
+      if (recoveryError) throw recoveryError;
+      if (recoveryRows?.length > 1) throw new Error('Recovery email is assigned to more than one account.');
+      if (recoveryRows?.[0]) {
+        const { data, error } = await sb.from('profiles').select('id,full_name,role').eq('id', recoveryRows[0].user_id).eq('active', true).is('deleted_at', null).maybeSingle();
+        if (error) throw error;
+        profile = data;
+      }
       if (!profile) {
-        const { data: users, error: usersError } = await sb.auth.admin.listUsers({ page: 1, perPage: 1000 });
-        if (usersError) throw usersError;
-        const match = users.users.find((u: any) => (u.email || '').toLowerCase() === supplied);
-        if (match) {
-          const { data, error: pError } = await sb.from('profiles').select('id,full_name,recovery_email,role')
-            .eq('id', match.id).eq('active', true).is('deleted_at', null).maybeSingle();
-          if (pError) throw pError;
-          profile = data;
+        for (let page = 1; page <= 20 && !profile; page++) {
+          const { data: users, error: usersError } = await sb.auth.admin.listUsers({ page, perPage: 1000 });
+          if (usersError) throw usersError;
+          const match = users.users.find((u: any) => (u.email || '').toLowerCase() === supplied);
+          if (match) {
+            const { data, error } = await sb.from('profiles').select('id,full_name,role').eq('id', match.id).eq('active', true).is('deleted_at', null).maybeSingle();
+            if (error) throw error;
+            profile = data;
+          }
+          if (users.users.length < 1000) break;
         }
       }
     } else {
       // Username matching is case-insensitive: login accepts the original case, so reset must too.
-      const { data, error } = await sb.from('profiles').select('id,full_name,recovery_email,role')
-        .ilike('username', supplied).eq('active', true).is('deleted_at', null).maybeSingle();
+      const { data, error } = await sb.from('profiles').select('id,full_name,role')
+        .eq('username', supplied).eq('active', true).is('deleted_at', null).maybeSingle();
       if (error) throw error;
       profile = data;
-      if (profile?.recovery_email) address = String(profile.recovery_email).trim().toLowerCase();
-      else if (profile?.role === 'owner') {
+      if (profile && profile.role !== 'owner') {
+        const { data: recovery, error: recoveryError } = await sb.from('employee_recovery').select('email').eq('user_id', profile.id).maybeSingle();
+        if (recoveryError) throw recoveryError;
+        address = String(recovery?.email || '').trim().toLowerCase();
+      } else if (profile?.role === 'owner') {
         const { data: owner, error: ownerError } = await sb.auth.admin.getUserById(profile.id);
         if (ownerError) throw ownerError;
         address = (owner.user?.email || '').toLowerCase();

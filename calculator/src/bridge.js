@@ -6,6 +6,9 @@
   const ORIGIN = window.location.origin;
   const post = (type, payload) => window.parent.postMessage({ source: 'printops-calc', type, payload }, ORIGIN);
   let cur = null;
+  let quoteSession = null;
+  let quoteDirty = false;
+  const calculatorSessions = Object.create(null);
 
   window.addEventListener('message', ev => {
     if (ev.origin !== ORIGIN) return;
@@ -25,6 +28,10 @@
   }
 
   function init(p) {
+    quoteSession = null;
+    quoteDirty = false;
+    Object.keys(calculatorSessions).forEach(k => delete calculatorSessions[k]);
+    State.dirty = false;
     State.mode = 'embedded'; State.me = { id: p.userId, name: p.userName, isOwner: true, canEdit: true, canData: true };
     p.settings.demo = false; State.cfg.settings = p.settings;
     ['products', 'materials', 'machines', 'labour', 'finishing', 'categories'].forEach(k => { State.cfg[k] = p[k] || {}; });
@@ -47,7 +54,8 @@
         Q.items = (q.items || []).map(r => itemFromDb(r, true)); Q.items.forEach(recalc);
       }
       State.ed = { kind: 'quote', Q, isNew: !Q.id };
-      if (Q.copiedFrom) State.dirty = true;
+      if (Q.copiedFrom) State.dirty = quoteDirty = true;
+      quoteSession = State.ed;
     }
     State.view = p.start === 'calc' ? 'calc' : 'editor'; State.params = p.start === 'calc' ? { profile: 'dtf' } : {};
     buildBar(); render(true);
@@ -60,8 +68,18 @@
     document.body.insertBefore(bar, $('#app'));
     bar.addEventListener('click', e => {
       const b = e.target.closest('[data-bar]'); if (!b) return; const v = b.dataset.bar;
-      State.ed = v === 'quote' ? State.ed : null;
-      if (v === 'quote') { State.view = 'editor'; State.params = {}; render(true); } else { State.ed = null; State.view = 'calc'; State.params = { profile: v }; render(true); }
+      if (State.view === 'editor' && State.ed && State.ed.kind === 'quote') { quoteSession = State.ed; quoteDirty = State.dirty; }
+      if (State.view === 'calc') calculatorSessions[State.params.profile] = { ed: State.ed, params: State.params };
+      if (v === 'quote') {
+        State.ed = quoteSession;
+        State.view = 'editor'; State.params = {};
+        State.dirty = quoteDirty;
+      } else {
+        const saved = calculatorSessions[v];
+        State.ed = saved ? saved.ed : null;
+        State.view = 'calc'; State.params = saved ? saved.params : { profile: v };
+      }
+      render(true);
     });
   }
 
