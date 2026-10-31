@@ -1,4 +1,5 @@
 'use server';
+import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { jobAction as runJobAction } from '@/lib/actions';
 
@@ -13,5 +14,8 @@ export async function assignedJobAction(jobId: string, action: string, note?: st
     if (error) return { ok: false, error: 'Could not verify this job assignment.' };
     if (!data?.length) return { ok: false, error: 'Only the employee assigned to this stage can accept and start this job.' };
   }
-  return runJobAction(jobId, action, note);
+  const result = await runJobAction(jobId, action, note);
+  revalidatePath('/jobs/' + jobId);
+  revalidatePath('/my-jobs');
+  return result;
 }
