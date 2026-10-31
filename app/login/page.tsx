@@ -4,7 +4,7 @@ import { createClient } from '../../lib/supabase/client';
 import Logo from '../../components/Logo';
 import ThemeToggle from '../../components/ThemeToggle';
 import PasswordInput from '../../components/PasswordInput';
-import { requestPasswordReset } from '@/lib/actions';
+import { requestPasswordReset } from '@/lib/password-reset-actions';
 
 export default function Login() {
   const [id, setId] = useState('');
