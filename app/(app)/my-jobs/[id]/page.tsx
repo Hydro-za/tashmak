@@ -22,7 +22,6 @@ export default async function MyJob({ params }: { params: { id: string } }) {
   const finals = b.files.filter((f: any) => f.is_final);
   const title = job.title || items.map((i: any) => i.product_name).slice(0, 2).join(', ') || job.number;
   const { data: customer } = isDes && job.customer_id ? await sb.from('customers').select('notes').eq('id', job.customer_id).maybeSingle() : { data: null };
-  const kinds = ['other'];
   return (<>
     <AutoRefresh seconds={30} />
     <Link href="/my-jobs" className="btn ghost sm">← My Jobs</Link>
