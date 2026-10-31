@@ -1335,7 +1335,7 @@ function calcPanelHTML(it, profile) {
   let h = `<h2>${profile === 'dtf' ? 'DTF result' : profile === 'paper' ? 'Paper result' : 'Large-format result'}</h2><div class="grid g2" style="margin-bottom:12px">${m}</div>`;
   if (!c.ok) h += c.errors.map(x => `<div class="alert bad">${e(x)}</div>`).join('');
   if (showC) {
-    h += GROUPS.filter(([k]) => (c.groups || {})[k]).map(([k, l]) => `<div class="rowline sub"><span>${l}</span><span>${g(k)}</span></div>`).join('');
+    h += GROUPS.filter(([k]) => k !== 'design_fee' && (c.groups || {})[k]).map(([k, l]) => `<div class="rowline sub"><span>${l}</span><span>${g(k)}</span></div>`).join('');
     h += `<div class="rowline"><span><b>Production cost</b></span><b>${money(c.productionCost)}</b></div><div class="rowline sub"><span>${c.markupMode === 'margin' ? 'Margin' : 'Markup'} ${pctf(c.markupPct)}</span><span>${money(c.sellingBeforeMin - c.productionCost)}</span></div>`;
     if (can('viewProfit')) h += `<div class="rowline sub"><span>Profit</span><span>${money(c.grossProfit)}${can('viewMargin') ? ` (${pctf(c.marginPct)})` : ''}</span></div>`;
   }
