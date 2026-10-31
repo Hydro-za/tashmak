@@ -21,6 +21,24 @@ const init = (extra) => ({ userId: 'u1', userName: 'Damian', settings: JSON.pars
   const add = pid => { $('#addprod').value = pid; $('[data-act="item-add"]').dispatchEvent(new w.MouseEvent('click', { bubbles: true })); };
   add('p_banner'); add('p_dtf_tee'); add('p_cards');
   ok(ev('State.ed.Q.items.length') === 3 && ev('State.ed.Q.items.every(i=>i.calc.ok)'), 'three different product types calculate (large-format, DTF, paper)');
+  const firstKey = ev('State.ed.Q.items[0].key');
+  const productSelect = $(`[data-i="${firstKey}"][data-f="productId"]`);
+  let inputCalls = 0; const originalInput = w.onEditorInput;
+  w.onEditorInput = function (...args) { inputCalls++; return originalInput.apply(this, args); };
+  productSelect.value = 'p_cards';
+  productSelect.dispatchEvent(new w.Event('input', { bubbles: true }));
+  productSelect.dispatchEvent(new w.Event('change', { bubbles: true }));
+  ok(inputCalls === 1 && ev(`State.ed.Q.items.find(i=>i.key==='${firstKey}').productId`) === 'p_cards', 'a product select change is handled exactly once');
+  w.onEditorInput = originalInput;
+  const restoredProductSelect = $(`[data-i="${firstKey}"][data-f="productId"]`);
+  restoredProductSelect.value = 'p_banner'; restoredProductSelect.dispatchEvent(new w.Event('change', { bubbles: true }));
+  const beforeSwitch = JSON.stringify(ev('State.ed.Q.items'));
+  const quoteDirty = ev('State.dirty');
+  $('[data-bar="paper"]').dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+  ok(ev("State.view === 'calc' && State.params.profile === 'paper'"), 'switching from the quote to a calculator tab works');
+  $('[data-bar="quote"]').dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+  ok(ev("State.view === 'editor' && State.ed.kind === 'quote'"), 'returning to the quote tab restores the quote editor');
+  ok(JSON.stringify(ev('State.ed.Q.items')) === beforeSwitch && ev('State.dirty') === quoteDirty, 'quote lines and unsaved state survive leaving and reopening the quote tab');
   ok($('#totals').textContent.includes('Production cost'), 'owner sees full calculator detail');
   // identical numbers to the standalone engine (calculator unchanged)
   const PQ = require('../calculator/engine.js'); const cfg = { settings, products: by(seed.products), materials: by(seed.materials), machines: by(seed.machines), labour: by(seed.labour), finishing: by(seed.finishing), categories: by(seed.categories) };

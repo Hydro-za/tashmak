@@ -16,22 +16,23 @@ export async function updateMyProfile(input: { fullName: string; email: string; 
   const sb = createClient();
   const { data: { user }, error: authError } = await sb.auth.getUser();
   if (authError || !user) return { ok: false, error: 'Your session has expired. Sign in again.' };
-  const { data: profile, error: profileError } = await sb.from('profiles').select('role,recovery_email').eq('id', user.id).maybeSingle();
+  const { data: profile, error: profileError } = await sb.from('profiles').select('role').eq('id', user.id).maybeSingle();
   if (profileError || !profile) return { ok: false, error: 'Could not load your profile.' };
 
-  let emailMessage = '';
-  if (profile.role === 'owner' && email !== (user.email || '').toLowerCase()) {
-    const { error } = await sb.auth.updateUser({ email });
-    if (error) return { ok: false, error: error.message || 'Could not update your login email.' };
-    emailMessage = ' Check your new email address to confirm the change.';
+  const admin = createAdminClient();
+  const { data: saved, error: saveError } = await admin.from('profiles').update({ full_name: fullName, phone: phone || null }).eq('id', user.id).select('id').maybeSingle();
+  if (saveError || !saved) return { ok: false, error: 'Your name and phone could not be saved. Please try again.' };
+
+  let message = 'Profile updated.';
+  if (profile.role !== 'owner') {
+    const { error: emailError } = await admin.from('employee_recovery').upsert({ user_id: user.id, email, updated_by: user.id, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    if (emailError) return { ok: false, error: 'Your name and phone were saved, but the recovery email could not be updated. Please try again.' };
+  } else if (email !== (user.email || '').toLowerCase()) {
+    const { error: authError } = await sb.auth.updateUser({ email });
+    if (authError) return { ok: false, error: 'Your name and phone were saved, but the login email could not be changed: ' + (authError.message || 'please try again.') };
+    message += ' Check your new email address to confirm the login email change.';
   }
 
-  const admin = createAdminClient();
-  const patch: Record<string, string | null> = { full_name: fullName, phone: phone || null };
-  if (profile.role !== 'owner') patch.recovery_email = email;
-  const { error: saveError } = await admin.from('profiles').update(patch).eq('id', user.id);
-  if (saveError) return { ok: false, error: 'Your account details could not be saved. Please try again.' };
-
   revalidatePath('/profile');
-  return { ok: true, message: 'Profile updated.' + emailMessage };
+  return { ok: true, message };
 }

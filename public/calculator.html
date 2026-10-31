@@ -163,7 +163,6 @@ body.embedded .field:has(> [data-q^="customer."]){display:none}
 body.embedded .stickybar{bottom:0}
 #embedbar{display:flex;gap:6px;padding:8px 4px;overflow-x:auto;background:var(--bg);position:sticky;top:0;z-index:20}
 #embedbar button{border:1px solid var(--line);border-radius:99px;padding:6px 14px;background:var(--card);cursor:pointer;font-weight:600;white-space:nowrap}
-
 /* Focused premium refresh: only the embedded Products & Pricing and Quote Calculator workspaces. */
 body.embedded{background:var(--bg)}
 body.embedded #embedbar{position:sticky;top:0;z-index:30;display:flex;gap:8px;padding:12px 4px 14px;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);border-bottom:1px solid var(--line)}
@@ -216,7 +215,6 @@ body.embedded .stickybar{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur
  body.embedded .item>.ib{padding:13px}
  body.embedded .listrow{grid-template-columns:1fr 1fr}
 }
-
 </style><script>try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}addEventListener('storage',function(e){if(e.key==='theme'){var v=e.newValue;if(v==='dark'||v==='light')document.documentElement.setAttribute('data-theme',v);else document.documentElement.removeAttribute('data-theme')}})</script></head><body><div id="app"></div>
 <script>/* PrintQuote pricing engine — pure, deterministic, no DOM, no hard-coded prices.
    Everything it needs comes from the `cfg` object (settings + catalogs). */
@@ -681,8 +679,7 @@ function deepFreeze(o) { if (o && typeof o === 'object' && !Object.isFrozen(o)) 
 return { r2, num, has, roundTo, upsOnSheet, sheetCalc, calcLine, calcQuote, hasPerm, discountPolicy, PERMS,
   formatQuoteNumber, nextSeq, diffObjects, deepFreeze, METHODS, BASES, FIN_METHODS, UNIT_MM };
 });
-</script>
-<script>/* ===== PrintQuote app — core: state, data layer, permissions, helpers ===== */
+</script><script>/* ===== PrintQuote app — core: state, data layer, permissions, helpers ===== */
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nf = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -946,13 +943,13 @@ document.addEventListener('click', ev => {
 document.addEventListener('input', ev => {
   const t = ev.target;
   if (t.id === 'qsearch') { State.qFilter.text = t.value; const l = $('#qlist'); if (l) l.innerHTML = quoteListHTML(); }
-  else if (t.dataset && (t.dataset.i || t.dataset.q || t.dataset.calc)) onEditorInput && onEditorInput(t, ev);
+  else if (t.dataset && (t.dataset.i || t.dataset.q || t.dataset.calc) && !(t.tagName === 'SELECT' || (t.tagName === 'INPUT' && ['checkbox', 'radio'].includes(t.type)))) onEditorInput && onEditorInput(t, ev);
   else if (t.dataset && t.dataset.w !== undefined) onWizardInput && onWizardInput(t, ev);
 });
 document.addEventListener('change', ev => {
   const t = ev.target;
   if (t.id === 'qstatus') { State.qFilter.status = t.value; const l = $('#qlist'); if (l) l.innerHTML = quoteListHTML(); }
-  else if (t.dataset && (t.dataset.i || t.dataset.q || t.dataset.calc)) onEditorInput && onEditorInput(t, ev);
+  else if (t.dataset && (t.dataset.i || t.dataset.q || t.dataset.calc) && (t.tagName === 'SELECT' || (t.tagName === 'INPUT' && ['checkbox', 'radio'].includes(t.type)))) onEditorInput && onEditorInput(t, ev);
   else if (t.dataset && t.dataset.w !== undefined) onWizardInput && onWizardInput(t, ev, true);
   else if (t.dataset && t.dataset.cfg !== undefined) onSettingsChange && onSettingsChange(t, ev);
 });
@@ -1009,7 +1006,7 @@ function recalc(it) {
     const m = it.materialId && cfg.materials[it.materialId]; if (m) parts.push(m.name);
     if (p.profile === 'paper') { parts.push(PQ.num(it.sides) === 2 ? 'double-sided' : 'single-sided'); parts.push(it.colour === 'bw' ? 'B&W' : 'full colour'); if (PQ.num(it.pages) > 1) parts.push(it.pages + ' pages'); }
     if (p.profile === 'dtf') { if (it.garmentColour) parts.push(it.garmentColour); (it.prints || []).forEach(x => parts.push(`${x.label || 'Print'} ${x.w}×${x.h}cm${PQ.num(x.count) > 1 ? ' ×' + x.count : ''}`)); }
-    const fin = (it.finishing || []).map(s => (cfg.finishing[s.id] || {}).name).filter(Boolean); if (fin.length) parts.push('Finishing: ' + fin.join(', '));
+    const fin = (Array.isArray(it.finishing) ? it.finishing : []).filter(s => s && typeof s.id === 'string').map(s => (cfg.finishing[s.id] || {}).name).filter(Boolean); if (fin.length) parts.push('Finishing: ' + fin.join(', '));
     it.specText = parts.join(' · ');
   }
 }
@@ -1053,10 +1050,11 @@ function itemFieldsHTML(it) {
     });
     h += `<datalist id="poslist">${POSITIONS.map(x => `<option value="${x}">`).join('')}</datalist><button class="btn sm" type="button" data-act="pr-add" data-key="${k}">+ Add print position</button>`;
   }
-  const allowed = (p.allowedFinishing || []).map(id => cfg.finishing[id]).filter(f => f && (f.active !== false || (it.finishing || []).some(s => s.id === f.id)));
+  const selections = (Array.isArray(it.finishing) ? it.finishing : []).filter(s => s && typeof s.id === 'string');
+  const allowed = (p.allowedFinishing || []).map(id => cfg.finishing[id]).filter(f => f && (f.active !== false || selections.some(s => s.id === f.id)));
   if (allowed.length) {
     h += `<div class="lbl" style="margin:14px 0 4px">Finishing & extras</div><div>${allowed.map(f => {
-      const sel = (it.finishing || []).find(s => s.id === f.id);
+      const sel = selections.find(s => s.id === f.id);
       return `<div class="fin"><input type="checkbox" ${sel ? 'checked' : ''} data-i="${k}" data-f="finOn" data-fin="${e(f.id)}" id="fin-${k}-${e(f.id)}"><label for="fin-${k}-${e(f.id)}">${e(f.name)}</label>${f.askQty ? `<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:12px">${e(f.qtyLabel || 'Qty')}</span><input type="number" min="0" step="1" data-i="${k}" data-f="finQty" data-fin="${e(f.id)}" value="${e(sel ? sel.qty : f.defaultQty || 1)}" ${sel ? '' : 'disabled'}></span>` : '<span></span>'}</div>`;
     }).join('')}</div>`;
   }
@@ -1237,7 +1235,7 @@ function onEditorInput(t) {
       case 'ovOn': { it.override = v ? { price: it.calc.calculatedPrice, reason: '' } : null; const b = $('#ov-' + it.key); if (b) { b.style.display = v ? '' : 'none'; const pi = $('[data-f="ovPrice"]', b); if (pi && v) pi.value = it.calc.calculatedPrice; } break; }
       case 'ovPrice': if (it.override) it.override.price = v; break; case 'ovReason': if (it.override) it.override.reason = v; break;
       case 'finOn': { const id = t.dataset.fin; it.finishing = (it.finishing || []).filter(s => s.id !== id); if (v) it.finishing.push({ id, qty: finDefaultQty(id) }); const qi = $(`[data-i="${it.key}"][data-f="finQty"][data-fin="${id}"]`); if (qi) { qi.disabled = !v; if (v) qi.value = finDefaultQty(id); } break; }
-      case 'finQty': { const s = (it.finishing || []).find(x => x.id === t.dataset.fin); if (s) s.qty = v; break; }
+      case 'finQty': { const s = (Array.isArray(it.finishing) ? it.finishing : []).find(x => x && x.id === t.dataset.fin); if (s) s.qty = v; break; }
       case 'prLabel': case 'prW': case 'prH': case 'prCount': { const pr = it.prints[+t.dataset.pr]; pr[{ prLabel: 'label', prW: 'w', prH: 'h', prCount: 'count' }[f]] = f === 'prLabel' ? v : v; break; }
       case 'prPreset': { const s = PRINT_SIZES.find(x => x[0] === v); if (s) { const pr = it.prints[+t.dataset.pr]; pr.w = s[1]; pr.h = s[2]; rerenderFields(it); } break; }
       default: it[f] = v;
@@ -1461,6 +1459,9 @@ function onWizardInput() {}
   const ORIGIN = window.location.origin;
   const post = (type, payload) => window.parent.postMessage({ source: 'printops-calc', type, payload }, ORIGIN);
   let cur = null;
+  let quoteSession = null;
+  let quoteDirty = false;
+  const calculatorSessions = Object.create(null);
 
   window.addEventListener('message', ev => {
     if (ev.origin !== ORIGIN) return;
@@ -1480,6 +1481,10 @@ function onWizardInput() {}
   }
 
   function init(p) {
+    quoteSession = null;
+    quoteDirty = false;
+    Object.keys(calculatorSessions).forEach(k => delete calculatorSessions[k]);
+    State.dirty = false;
     State.mode = 'embedded'; State.me = { id: p.userId, name: p.userName, isOwner: true, canEdit: true, canData: true };
     p.settings.demo = false; State.cfg.settings = p.settings;
     ['products', 'materials', 'machines', 'labour', 'finishing', 'categories'].forEach(k => { State.cfg[k] = p[k] || {}; });
@@ -1502,7 +1507,8 @@ function onWizardInput() {}
         Q.items = (q.items || []).map(r => itemFromDb(r, true)); Q.items.forEach(recalc);
       }
       State.ed = { kind: 'quote', Q, isNew: !Q.id };
-      if (Q.copiedFrom) State.dirty = true;
+      if (Q.copiedFrom) State.dirty = quoteDirty = true;
+      quoteSession = State.ed;
     }
     State.view = p.start === 'calc' ? 'calc' : 'editor'; State.params = p.start === 'calc' ? { profile: 'dtf' } : {};
     buildBar(); render(true);
@@ -1515,8 +1521,18 @@ function onWizardInput() {}
     document.body.insertBefore(bar, $('#app'));
     bar.addEventListener('click', e => {
       const b = e.target.closest('[data-bar]'); if (!b) return; const v = b.dataset.bar;
-      State.ed = v === 'quote' ? State.ed : null;
-      if (v === 'quote') { State.view = 'editor'; State.params = {}; render(true); } else { State.ed = null; State.view = 'calc'; State.params = { profile: v }; render(true); }
+      if (State.view === 'editor' && State.ed && State.ed.kind === 'quote') { quoteSession = State.ed; quoteDirty = State.dirty; }
+      if (State.view === 'calc') calculatorSessions[State.params.profile] = { ed: State.ed, params: State.params };
+      if (v === 'quote') {
+        State.ed = quoteSession;
+        State.view = 'editor'; State.params = {};
+        State.dirty = quoteDirty;
+      } else {
+        const saved = calculatorSessions[v];
+        State.ed = saved ? saved.ed : null;
+        State.view = 'calc'; State.params = saved ? saved.params : { profile: v };
+      }
+      render(true);
     });
   }
 

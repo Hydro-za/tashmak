@@ -3,9 +3,9 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { friendlyError } from '@/lib/labels';
 import { buildSpec } from '@/lib/spec';
-import { sendJobAssignedEmails, sendJobCompletedEmails, sendPasswordResetEmail } from '@/lib/email';
+import { sendJobAssignedEmails, sendJobCompletedEmails } from '@/lib/email';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { createHash, randomInt } from 'node:crypto';
+import { requestPasswordReset as requestSharedPasswordReset, completePasswordReset as completeSharedPasswordReset } from '@/lib/password-reset-actions';
 
 type R = { ok: boolean; error?: string; noop?: boolean; data?: any };
 const ok = (data?: any, noop?: boolean): R => ({ ok: true, data, noop });
@@ -81,9 +81,13 @@ export async function assignJob(jobId: string, stage: string, userIds: string[])
     const [{data: job},{data: customer},{data: employees}] = await Promise.all([
       sb.from('jobs').select('number,title,customer_name,customer_id,instructions').eq('id',jobId).maybeSingle(),
       sb.from('jobs').select('customer_id').eq('id',jobId).maybeSingle().then(async x=>x.data?.customer_id?sb.from('customers').select('name').eq('id',x.data.customer_id).maybeSingle():{data:null}),
-      sb.from('profiles').select('id,full_name,username,recovery_email').in('id',userIds).eq('active',true)
+      sb.from('profiles').select('id,full_name,username').in('id',userIds).eq('active',true)
     ]);
-    if (job && employees?.length) await sendJobAssignedEmails(employees.filter((e:any)=>e.recovery_email).map((e:any)=>({email:e.recovery_email,name:e.full_name,employeeId:e.username})),{jobNumber:job.number,jobTitle:job.title||'Production job',customerName:job.customer_name||customer?.name||'Customer',description:job.instructions||'Please review the job details in Tashmak System.',assignedBy:'Tashmak System',jobUrl:(process.env.NEXT_PUBLIC_APP_URL||'https://tashmak-system.vercel.app')+'/jobs/'+jobId});
+    if (job && employees?.length) {
+      const { data: recoveryRows } = await createAdminClient().from('employee_recovery').select('user_id,email').in('user_id',employees.map((e:any)=>e.id));
+      const recoveryByUser = new Map<string,string>((recoveryRows || []).map((r:any)=>[r.user_id,r.email] as [string,string]));
+      await sendJobAssignedEmails(employees.filter((e:any)=>recoveryByUser.has(e.id)).map((e:any)=>({email:recoveryByUser.get(e.id),name:e.full_name,employeeId:e.username})),{jobNumber:job.number,jobTitle:job.title||'Production job',customerName:job.customer_name||customer?.name||'Customer',description:job.instructions||'Please review the job details in Tashmak System.',assignedBy:'Tashmak System',jobUrl:(process.env.NEXT_PUBLIC_APP_URL||'https://tashmak-system.vercel.app')+'/jobs/'+jobId});
+    }
   }
   revalidatePath('/jobs/' + jobId); return r;
 }
@@ -152,99 +156,8 @@ export async function createEmployee(v: { username: string; fullName: string; ro
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return {ok:false,error:'Enter a valid employee email address.'};
   const r = await rpc('create_employee_multi', { p_username: v.username, p_full_name: v.fullName, p_role_ids: v.roleIds, p_password: v.password, p_recovery_email: email, p_phone: null }); revalidatePath('/employees'); return r;
 }
-function passwordResetCodeHash(email: string, code: string) {
-  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!secret) throw new Error('Password reset security configuration is missing.');
-  return createHash('sha256').update(email + ':' + code + ':' + secret).digest('hex');
-}
-
-export async function requestPasswordReset(identifier: string): Promise<R> {
-  const supplied = (identifier || '').trim().toLowerCase();
-  if (!supplied) return { ok: false, error: 'Enter your username or registered email address.' };
-  try {
-    const sb = createAdminClient();
-    const isEmail = supplied.includes('@') && supplied.indexOf('@') > 0 && supplied.indexOf('.', supplied.indexOf('@') + 2) > supplied.indexOf('@') + 1 && !supplied.includes(' ');
-    let address = supplied;
-    let profile: any = null;
-    if (isEmail) {
-      const { data: employee, error: employeeError } = await sb.from('profiles').select('id,full_name,recovery_email,role').ilike('recovery_email', address).eq('active', true).is('deleted_at', null).maybeSingle();
-      if (employeeError) throw employeeError;
-      profile = employee;
-      if (!profile) {
-        for (let page = 1; page <= 20 && !profile; page++) {
-          const { data, error } = await sb.auth.admin.listUsers({ page, perPage: 1000 });
-          if (error) throw error;
-          const matched = data.users.find((u: any) => (u.email || '').toLowerCase() === address);
-          if (matched) {
-            const { data: p, error: profileError } = await sb.from('profiles').select('id,full_name,recovery_email,role').eq('id', matched.id).eq('active', true).is('deleted_at', null).maybeSingle();
-            if (profileError) throw profileError;
-            profile = p;
-          }
-          if (data.users.length < 1000) break;
-        }
-      }
-    } else {
-      const { data: matchedProfile, error: profileError } = await sb.from('profiles').select('id,full_name,recovery_email,role').eq('username', supplied).eq('active', true).is('deleted_at', null).maybeSingle();
-      if (profileError) throw profileError;
-      profile = matchedProfile;
-      if (profile?.recovery_email) address = String(profile.recovery_email).trim().toLowerCase();
-      else if (profile?.role === 'owner') {
-        const { data: ownerUser, error: ownerError } = await sb.auth.admin.getUserById(profile.id);
-        if (ownerError) throw ownerError;
-        address = (ownerUser.user?.email || '').toLowerCase();
-      } else return ok();
-      if (!(address.includes('@') && address.indexOf('@') > 0 && address.indexOf('.', address.indexOf('@') + 2) > address.indexOf('@') + 1 && !address.includes(' '))) return ok();
-    }
-    if (profile) {
-      const since = new Date(Date.now() - 60 * 1000).toISOString();
-      const { data: recentCode, error: recentError } = await sb.from('password_reset_codes').select('id').eq('email', address).gte('created_at', since).limit(1).maybeSingle();
-      if (recentError) throw recentError;
-      if (recentCode) return ok();
-      const { error: cleanupError } = await sb.from('password_reset_codes').delete().lt('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
-      if (cleanupError) throw cleanupError;
-      const { data: userData, error: userError } = await sb.auth.admin.getUserById(profile.id);
-      if (userError) throw userError;
-      if (userData?.user) {
-        const code = String(randomInt(1000, 10000));
-        const codeHash = passwordResetCodeHash(address, code);
-        const { error: consumeOldError } = await sb.from('password_reset_codes').update({ consumed_at: new Date().toISOString() }).eq('email', address).is('consumed_at', null);
-        if (consumeOldError) throw consumeOldError;
-        const { error: insertError } = await sb.from('password_reset_codes').insert({ email: address, user_id: profile.id, code_hash: codeHash, expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString() });
-        if (insertError) throw insertError;
-        try { await sendPasswordResetEmail(address, profile.full_name || 'there', code); }
-        catch (sendError) { await sb.from('password_reset_codes').update({ consumed_at: new Date().toISOString() }).eq('email', address).eq('code_hash', codeHash); throw sendError; }
-      }
-    }
-    return ok();
-  } catch (e) {
-    console.error('Password reset request failed', e);
-    return { ok: false, error: 'Could not send the reset email. Please try again in a few minutes.' };
-  }
-}
-export async function completePasswordReset(email: string, code: string, password: string): Promise<R> {
-  const address = (email || '').trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) return { ok: false, error: 'Enter a valid email address.' };
-  if (!/^\d{4}$/.test(code || '')) return { ok: false, error: 'Enter the four-digit code from your email.' };
-  if (typeof password !== 'string' || password.length < 8 || password.length > 128) return { ok: false, error: 'Password must be between 8 and 128 characters.' };
-
-  try {
-    const sb = createAdminClient();
-    const { data: userId, error: consumeError } = await sb.rpc('consume_password_reset_code', {
-      p_email: address,
-      p_code_hash: passwordResetCodeHash(address, code),
-    });
-    if (consumeError) throw consumeError;
-    if (!userId) return { ok: false, error: 'That code is invalid or expired. Request a new code and try again.' };
-
-    const { error: updateError } = await sb.auth.admin.updateUserById(userId, { password });
-    if (updateError) throw updateError;
-    await sb.from('profiles').update({ must_change_password: false }).eq('id', userId);
-    return ok();
-  } catch (e) {
-    console.error('Password reset completion failed', e);
-    return { ok: false, error: 'Could not change the password. Please request a new code and try again.' };
-  }
-}
+export async function requestPasswordReset(identifier: string): Promise<R> { return requestSharedPasswordReset(identifier); }
+export async function completePasswordReset(email: string, code: string, password: string): Promise<R> { return completeSharedPasswordReset(email, code, password); }
 export async function resetEmployeePassword(userId: string, pw: string): Promise<R> { return rpc('reset_employee_password', { p_user: userId, p_password: pw }); }
 export async function setEmployeeActive(userId: string, active: boolean): Promise<R> { const r = await rpc('set_employee_active', { p_user: userId, p_active: active }); revalidatePath('/employees'); return r; }
 export async function updateEmployee(userId: string, fullName: string, roleIds: string[], phone: string, email:string): Promise<R> {

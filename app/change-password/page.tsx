@@ -41,7 +41,7 @@ export default function ChangePassword() {
       <a className="btn primary" href="/login" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>Back to sign in</a>
     </> : <>
       <h1 style={{ fontSize: 22 }}>Reset your password</h1>
-      <p className="muted">If the account matches, a four-digit code has been sent to its registered recovery email. If you requested the code using your username, enter the recovery email linked to that account below. The code expires after 10 minutes and can only be used once.</p>
+      <p className="muted">If the account matches, a four-digit code has been sent to its registered recovery email. If you requested the code using your username, enter the recovery email linked to that account below. Requests are limited to one every 60 seconds; check your spam folder and use the newest code. Codes expire after 10 minutes and can only be used once.</p>
       <form onSubmit={submit} className="grid" style={{ gap: 12 }}>
         <div className="field"><label htmlFor="reset-email">Registered recovery email</label><input id="reset-email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required /></div>
         <div className="field"><label htmlFor="reset-code">Four-digit verification code</label><input id="reset-code" inputMode="numeric" autoComplete="one-time-code" maxLength={4} pattern="[0-9]{4}" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 4))} required /></div>

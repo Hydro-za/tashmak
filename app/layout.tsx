@@ -5,7 +5,7 @@ import ToastHost from '@/components/ToastHost';
 export const metadata: Metadata = {
   title: { default: 'Tashmak Design & Print', template: '%s · Tashmak' },
   description: 'Quotes, jobs and production for Tashmak Design & Print',
-  icons: { icon: '/brand/icon.svg', apple: '/brand/icon.svg', shortcut: '/brand/icon.svg' },
+  icons: { icon: '/icon.png', shortcut: '/icon.png', apple: '/apple-icon.png' },
   applicationName: 'Tashmak', appleWebApp: { capable: true, title: 'Tashmak', statusBarStyle: 'default' }, formatDetection: { telephone: false }
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: [{ media: '(prefers-color-scheme: light)', color: '#2563eb' }, { media: '(prefers-color-scheme: dark)', color: '#0d1214' }] };
