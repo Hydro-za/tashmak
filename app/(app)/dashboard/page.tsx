@@ -32,7 +32,6 @@ export default async function Dashboard() {
     <AutoRefresh seconds={60} />
     <Top title="Dashboard" sub={fmtDate(t)}>
       {me.isOwner && <Link href="/quotes/new" className="btn primary">+ NEW QUOTE</Link>}
-      {me.can('jobs.manage') && <Link href="/jobs/new" className="btn">+ NEW JOB</Link>}
       <Link href="/jobs" className="btn">ALL JOBS</Link>
     </Top>
 
