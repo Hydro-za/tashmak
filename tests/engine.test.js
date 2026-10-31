@@ -162,4 +162,23 @@ N.quotes = { prefix: 'INV', yearFormat: 'YY', separator: '/', length: 6, startNu
 ok(PQ.roundTo(12.34, { step: 0 }) === 12.34 && PQ.roundTo(12.5, { step: 1, mode: 'nearest' }) === 13, 'roundTo');
 cfg = mk(); delete cfg.materials.mat_130; ok(!PQ.calcLine(line('p_flyer', { qty: 10 }), cfg).ok, 'deleted material surfaces an error rather than silent R0');
 
+// 18. Design fee: internal cost changes profit only; separate charge is a visible revenue line.
+cfg = mk();
+cfg.settings.pricing.rounding = { step: 0, mode: 'nearest' };
+const designBaseLine = { w: 2, h: 1, unit: 'm', finishing: [] };
+const designBase = PQ.calcLine(line('p_banner', designBaseLine), cfg);
+const designInternal = PQ.calcLine(line('p_banner', { ...designBaseLine, designFee: 250, designFeeMode: 'internal' }), cfg);
+ok(designBase.ok && designInternal.ok, 'internal design fee calculations are valid');
+near(designInternal.productionCost, designBase.productionCost + 250, 'internal design fee increases production cost');
+near(designInternal.sellingPrice, designBase.sellingPrice, 'internal design fee does not increase customer price');
+near(designInternal.grossProfit, designBase.grossProfit - 250, 'internal design fee reduces gross profit');
+const designSeparate = PQ.calcLine(line('p_banner', { ...designBaseLine, designFee: 250, designFeeMode: 'separate' }), cfg);
+ok(designSeparate.ok, 'separate design fee calculation is valid');
+near(designSeparate.productionCost, designBase.productionCost, 'separate design fee is not a production cost');
+near(designSeparate.sellingPrice, designBase.sellingPrice + 250, 'separate design fee adds to customer price');
+near(designSeparate.designFeeCharge, 250, 'separate fee amount is stored for its own quote row');
+near(designSeparate.productSubtotal + designSeparate.designFeeCharge, designSeparate.finalSubtotal, 'product and fee rows reconcile to line total');
+const designDiscount = PQ.calcLine(line('p_banner', { ...designBaseLine, designFee: 250, designFeeMode: 'separate', discount: { type: 'pct', value: 10 } }), cfg);
+near(designDiscount.discountAmount, designBase.sellingPrice * 0.1, 'product discount does not discount the separate design fee');
+
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

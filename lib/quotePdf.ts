@@ -211,6 +211,7 @@ export async function buildQuotePdf(q: any, business: any): Promise<Blob> {
 
   items.forEach((it: any, index: number) => {
     const calc = (it.item && it.item.calc) || {};
+    const designFee = Number(calc.designFeeCharge || 0);
     const lines: { text: string; style: string; size: number; color: number[] }[] = [];
     const addLine = (value: any, style: string, size: number, color: number[]) => {
       wrap(value, 254, size, style).forEach((part: string) => lines.push({ text: part, style, size, color }));
@@ -256,13 +257,28 @@ export async function buildQuotePdf(q: any, business: any): Promise<Blob> {
         const discount = Number(calc.discountAmount || 0);
         txt(discount > 0 ? '-' + money(discount) : '-', 483, y + 14, { align: 'right' });
         doc.setFont('helvetica', 'bold');
-        txt(money(it.line_total), R - 6, y + 14, { align: 'right' });
+        const productTotal = Number.isFinite(Number(calc.productSubtotal)) ? Number(calc.productSubtotal) : Number(it.line_total || 0) - designFee;
+        txt(money(productTotal), R - 6, y + 14, { align: 'right' });
       }
 
       y += rowHeight;
       offset += chunk.length;
       firstPart = false;
       if (offset < lines.length) addPage(true);
+    }
+    if (designFee > 0) {
+      if (y + 25 > CONTENT_BOTTOM) addPage(true);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.2);
+      setMuted();
+      txt('Design fee (separate customer charge)', M + 25, y + 13);
+      setInk();
+      txt('-', 352, y + 13, { align: 'right' });
+      txt(money(designFee), 420, y + 13, { align: 'right' });
+      txt('-', 483, y + 13, { align: 'right' });
+      doc.setFont('helvetica', 'bold');
+      txt(money(designFee), R - 6, y + 13, { align: 'right' });
+      y += 22;
     }
     rule(M, y - 3, R);
     setInk();

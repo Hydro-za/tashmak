@@ -87,6 +87,7 @@ function calcLine(line, cfg) {
   const sides = Math.min(2, Math.max(1, Math.round(num(line.sides, num(prod.defaultSides, 1)))));
   const pages = Math.max(1, Math.floor(num(line.pages, num(prod.defaultPages, 1))));
   if (has(line.customCost) && num(line.customCost) < 0) err('Custom cost cannot be negative');
+  if (has(line.designFee) && num(line.designFee) < 0) err('Design fee cannot be negative');
   if (has(line.extraMinutes) && num(line.extraMinutes) < 0) err('Extra labour minutes cannot be negative');
   if (has(line.markupOverride)) {
     const mu = num(line.markupOverride);
@@ -294,6 +295,9 @@ function calcLine(line, cfg) {
     add('other', o.label || 'Other cost', fmtN(q) + ' × ' + money(o.amount), num(o.amount) * q);
   });
   if (has(line.customCost) && num(line.customCost) > 0) add('custom', line.customLabel || 'Custom cost', 'entered on quote', num(line.customCost));
+  const designFeeAmount = Math.max(0, num(line.designFee));
+  const designFeeMode = line.designFeeMode === 'separate' ? 'separate' : 'internal';
+  if (designFeeAmount > 0) add(designFeeMode === 'separate' ? 'design_fee' : 'design_internal', designFeeMode === 'separate' ? 'Design fee (customer charge)' : 'Design fee (internal cost)', designFeeMode === 'separate' ? 'separate quote line' : 'internal design cost', designFeeAmount);
 
   // ---- 8. wastage
   const wpct = has(line.wastagePct) ? num(line.wastagePct) : has(prod.wastagePct) ? num(prod.wastagePct) : num(P.defaultWastagePct, 0);
@@ -313,7 +317,14 @@ function calcLine(line, cfg) {
   const groups = {};
   res.lines.forEach(l => { groups[l.group] = r2((groups[l.group] || 0) + l.amount); });
   res.groups = groups;
-  const cost = r2(res.lines.reduce((a, l) => a + l.amount, 0));
+  const designFeeCharge = r2(groups.design_fee || 0);
+  const internalDesignCost = r2(groups.design_internal || 0);
+  const cost = r2(res.lines.filter(l => l.group !== 'design_fee').reduce((a, l) => a + l.amount, 0));
+  const pricedCost = r2(cost - internalDesignCost);
+  res.designFeeMode = designFeeMode;
+  res.designFeeAmount = designFeeAmount;
+  res.designFeeCharge = designFeeCharge;
+  res.productCost = pricedCost;
   res.productionCost = cost;
 
   // ---- markup → selling price
@@ -323,8 +334,8 @@ function calcLine(line, cfg) {
   let sell;
   if (baseSell !== null) {
     const extras = (groups.finishing || 0) + (groups.custom || 0);
-    sell = baseSell + applyMk(extras);
-  } else sell = applyMk(cost);
+    sell = baseSell + applyMk(extras) + designFeeCharge;
+  } else sell = applyMk(pricedCost) + designFeeCharge;
   sell = r2(sell);
   res.sellingBeforeMin = sell;
 
@@ -344,17 +355,19 @@ function calcLine(line, cfg) {
   }
   res.sellingPrice = finalSell;
 
-  // ---- line discount
+  // Keep a separately charged design fee distinct and outside product-line discounts.
+  const productSell = r2(finalSell - designFeeCharge);
   let disc = 0;
   const d = line.discount;
   if (d && has(d.value) && num(d.value) !== 0) {
     if (num(d.value) < 0) err('Discount cannot be negative');
-    else if (d.type === 'pct') { if (num(d.value) > 100) err('Discount cannot exceed 100%'); else disc = finalSell * num(d.value) / 100; }
-    else { if (num(d.value) > finalSell + 1e-9) err('Discount cannot exceed the line price'); else disc = num(d.value); }
+    else if (d.type === 'pct') { if (num(d.value) > 100) err('Discount cannot exceed 100%'); else disc = productSell * num(d.value) / 100; }
+    else { if (num(d.value) > productSell + 1e-9) err('Discount cannot exceed the product line price'); else disc = num(d.value); }
   }
   res.discountAmount = r2(disc);
-  res.finalSubtotal = r2(finalSell - disc);
-  res.unitPrice = qty > 0 ? r2(finalSell / qty) : 0;
+  res.productSubtotal = r2(productSell - disc);
+  res.finalSubtotal = r2(res.productSubtotal + designFeeCharge);
+  res.unitPrice = qty > 0 ? r2(productSell / qty) : 0;
   res.unitCost = qty > 0 ? r2(cost / qty) : 0;
   res.grossProfit = r2(res.finalSubtotal - cost);
   res.marginPct = res.finalSubtotal > 0 ? r2(res.grossProfit / res.finalSubtotal * 100) : 0;

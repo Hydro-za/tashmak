@@ -305,6 +305,7 @@ function calcLine(line, cfg) {
   const sides = Math.min(2, Math.max(1, Math.round(num(line.sides, num(prod.defaultSides, 1)))));
   const pages = Math.max(1, Math.floor(num(line.pages, num(prod.defaultPages, 1))));
   if (has(line.customCost) && num(line.customCost) < 0) err('Custom cost cannot be negative');
+  if (has(line.designFee) && num(line.designFee) < 0) err('Design fee cannot be negative');
   if (has(line.extraMinutes) && num(line.extraMinutes) < 0) err('Extra labour minutes cannot be negative');
   if (has(line.markupOverride)) {
     const mu = num(line.markupOverride);
@@ -511,6 +512,9 @@ function calcLine(line, cfg) {
     add('other', o.label || 'Other cost', fmtN(q) + ' × ' + money(o.amount), num(o.amount) * q);
   });
   if (has(line.customCost) && num(line.customCost) > 0) add('custom', line.customLabel || 'Custom cost', 'entered on quote', num(line.customCost));
+  const designFeeAmount = Math.max(0, num(line.designFee));
+  const designFeeMode = line.designFeeMode === 'separate' ? 'separate' : 'internal';
+  if (designFeeAmount > 0) add(designFeeMode === 'separate' ? 'design_fee' : 'design_internal', designFeeMode === 'separate' ? 'Design fee (customer charge)' : 'Design fee (internal cost)', designFeeMode === 'separate' ? 'separate quote line' : 'internal design cost', designFeeAmount);
 
   // ---- 8. wastage
   const wpct = has(line.wastagePct) ? num(line.wastagePct) : has(prod.wastagePct) ? num(prod.wastagePct) : num(P.defaultWastagePct, 0);
@@ -530,7 +534,14 @@ function calcLine(line, cfg) {
   const groups = {};
   res.lines.forEach(l => { groups[l.group] = r2((groups[l.group] || 0) + l.amount); });
   res.groups = groups;
-  const cost = r2(res.lines.reduce((a, l) => a + l.amount, 0));
+  const designFeeCharge = r2(groups.design_fee || 0);
+  const internalDesignCost = r2(groups.design_internal || 0);
+  const cost = r2(res.lines.filter(l => l.group !== 'design_fee').reduce((a, l) => a + l.amount, 0));
+  const pricedCost = r2(cost - internalDesignCost);
+  res.designFeeMode = designFeeMode;
+  res.designFeeAmount = designFeeAmount;
+  res.designFeeCharge = designFeeCharge;
+  res.productCost = pricedCost;
   res.productionCost = cost;
 
   // ---- markup → selling price
@@ -540,8 +551,8 @@ function calcLine(line, cfg) {
   let sell;
   if (baseSell !== null) {
     const extras = (groups.finishing || 0) + (groups.custom || 0);
-    sell = baseSell + applyMk(extras);
-  } else sell = applyMk(cost);
+    sell = baseSell + applyMk(extras) + designFeeCharge;
+  } else sell = applyMk(pricedCost) + designFeeCharge;
   sell = r2(sell);
   res.sellingBeforeMin = sell;
 
@@ -561,17 +572,19 @@ function calcLine(line, cfg) {
   }
   res.sellingPrice = finalSell;
 
-  // ---- line discount
+  // Keep a separately charged design fee distinct and outside product-line discounts.
+  const productSell = r2(finalSell - designFeeCharge);
   let disc = 0;
   const d = line.discount;
   if (d && has(d.value) && num(d.value) !== 0) {
     if (num(d.value) < 0) err('Discount cannot be negative');
-    else if (d.type === 'pct') { if (num(d.value) > 100) err('Discount cannot exceed 100%'); else disc = finalSell * num(d.value) / 100; }
-    else { if (num(d.value) > finalSell + 1e-9) err('Discount cannot exceed the line price'); else disc = num(d.value); }
+    else if (d.type === 'pct') { if (num(d.value) > 100) err('Discount cannot exceed 100%'); else disc = productSell * num(d.value) / 100; }
+    else { if (num(d.value) > productSell + 1e-9) err('Discount cannot exceed the product line price'); else disc = num(d.value); }
   }
   res.discountAmount = r2(disc);
-  res.finalSubtotal = r2(finalSell - disc);
-  res.unitPrice = qty > 0 ? r2(finalSell / qty) : 0;
+  res.productSubtotal = r2(productSell - disc);
+  res.finalSubtotal = r2(res.productSubtotal + designFeeCharge);
+  res.unitPrice = qty > 0 ? r2(productSell / qty) : 0;
   res.unitCost = qty > 0 ? r2(cost / qty) : 0;
   res.grossProfit = r2(res.finalSubtotal - cost);
   res.marginPct = res.finalSubtotal > 0 ? r2(res.grossProfit / res.finalSubtotal * 100) : 0;
@@ -989,7 +1002,7 @@ async function duplicateQuote(id) {
 const PAPER_SIZES = [['A6', 105, 148], ['A5', 148, 210], ['A4', 210, 297], ['A3', 297, 420], ['DL', 99, 210], ['Business card', 90, 55], ['A2', 420, 594], ['A1', 594, 841]];
 const PRINT_SIZES = [['A6', 10.5, 14.8], ['A5', 14.8, 21], ['A4', 21, 29.7], ['A3', 29.7, 42], ['Chest 10×10', 10, 10], ['Pocket 8×8', 8, 8]];
 const POSITIONS = ['Front', 'Back', 'Left chest', 'Right chest', 'Left sleeve', 'Right sleeve', 'Neck', 'Other'];
-const GROUPS = [['base', 'Base price'], ['material', 'Materials'], ['print', 'Ink / printing'], ['machine', 'Machine cost'], ['labour', 'Labour'], ['finishing', 'Finishing'], ['packaging', 'Packaging'], ['wastage', 'Wastage'], ['other', 'Other costs'], ['custom', 'Custom cost']];
+const GROUPS = [['base', 'Base price'], ['material', 'Materials'], ['print', 'Ink / printing'], ['machine', 'Machine cost'], ['labour', 'Labour'], ['finishing', 'Finishing'], ['packaging', 'Packaging'], ['wastage', 'Wastage'], ['other', 'Other costs'], ['custom', 'Custom cost'], ['design_internal', 'Design fee (internal cost)'], ['design_fee', 'Design fee (customer charge)']];
 const clone = o => JSON.parse(JSON.stringify(o));
 const activeProducts = () => Object.values(State.cfg.products).filter(p => p.active !== false).sort((a, b) => a.name.localeCompare(b.name));
 const primaryMaterialId = p => { const c = (p.components || []).find(c => c.primary && c.materialId) || (p.components || []).find(c => c.materialId); return c ? c.materialId : ''; };
@@ -1014,7 +1027,7 @@ function newItem(prodId) {
   const p = State.cfg.products[prodId]; if (!p) return null;
   const it = { key: uid('i'), productId: prodId, desc: '', qty: p.defaultQty || 1, unit: p.unit || 'mm', w: p.defaultW || '', h: p.defaultH || '', sides: p.defaultSides || 1, pages: p.defaultPages || 1, colour: 'colour',
     materialId: primaryMaterialId(p), prints: clone(p.defaultPrints || []), garmentColour: '', finishing: (p.defaultFinishing || []).map(id => ({ id, qty: finDefaultQty(id) })),
-    extraMinutes: '', labourId: '', customLabel: '', customCost: '', markupOverride: '', discount: { type: 'pct', value: '' }, notes: '', override: null };
+    extraMinutes: '', labourId: '', customLabel: '', customCost: '', designFee: '', designFeeMode: 'internal', markupOverride: '', discount: { type: 'pct', value: '' }, notes: '', override: null };
   recalc(it); return it;
 }
 const fld = (label, inner, help, cls) => `<div class="field ${cls || ''}"><label>${label}</label>${inner}${help ? `<div class="help">${help}</div>` : ''}</div>`;
@@ -1060,6 +1073,7 @@ function itemFieldsHTML(it) {
   }
   h += '<div class="grid g3" style="margin-top:14px">';
   h += fld('Custom cost (R, total)', `<input type="number" min="0" step="any" inputmode="decimal" ${A('customCost')} value="${e(it.customCost)}">`, 'Supplier / outsourced cost added to production cost') + fld('Custom cost label', `<input ${A('customLabel')} value="${e(it.customLabel)}" placeholder="e.g. Supplier mugs">`);
+  h += fld('Design fee (R)', `<input type="number" min="0" step="any" inputmode="decimal" ${A('designFee')} value="${e(it.designFee)}">`, 'Choose whether this fee is billed separately or kept internal') + fld('Design fee treatment', `<select ${A('designFeeMode')}>${opt('internal', 'Internal cost only', it.designFeeMode !== 'separate')}${opt('separate', 'Separate customer charge', it.designFeeMode === 'separate')}</select>`, it.designFeeMode === 'separate' ? 'Shown as its own customer quote line.' : 'Included in production cost and profit only.');
   if (can('overrideMarkup')) h += fld('Markup override %', `<input type="number" min="0" step="any" ${A('markupOverride')} value="${e(it.markupOverride)}" placeholder="default">`, 'Leave blank to use the default');
   if (can('overrideMarkup')) h += fld('Extra labour (minutes)', `<input type="number" min="0" step="any" ${A('extraMinutes')} value="${e(it.extraMinutes)}">`) + fld('Labour type', `<select ${A('labourId')}><option value="">Product default</option>${Object.values(cfg.labour).map(l => opt(l.id, l.name, it.labourId === l.id)).join('')}</select>`);
   if (can('applyDiscount')) h += fld('Line discount', `<div style="display:flex;gap:6px"><select ${A('discType')} style="width:84px"><option value="pct" ${it.discount.type !== 'fixed' ? 'selected' : ''}>%</option><option value="fixed" ${it.discount.type === 'fixed' ? 'selected' : ''}>R</option></select><input type="number" min="0" step="any" ${A('discVal')} value="${e(it.discount.value)}"></div>`);
@@ -1076,6 +1090,7 @@ function calcDetailsHTML(it) {
   const c = it.calc, qty = PQ.num(it.qty) || 1, showC = can('viewCosts');
   let h = `<div class="rowline"><span>Unit price</span><b>${money(c.unitPrice)}</b></div><div class="rowline"><span>Quantity</span><span>${e(it.qty)}</span></div>`;
   if (c.discountAmount > 0) h += `<div class="rowline sub"><span>Line discount</span><span>-${money(c.discountAmount)}</span></div>`;
+  if (c.designFeeAmount > 0) h += `<div class="rowline sub"><span>Design fee ${c.designFeeMode === 'separate' ? '(separate customer charge)' : '(internal cost only)'}</span><span>${money(c.designFeeAmount)}</span></div>`;
   h += `<div class="rowline tot"><span>Line total</span><span>${money(c.finalSubtotal)}</span></div>`;
   if (c.minApplied) h += `<div class="muted" style="font-size:12px">Minimum charge of ${money(c.minPrice)} applied.</div>`;
   if (c.overrideApplied) h += `<div class="alert warn" style="margin-top:8px">Manual price override (calculated price was ${money(c.calculatedPrice)}).</div>`;
@@ -1086,7 +1101,7 @@ function calcDetailsHTML(it) {
   }).join('');
   h += `<details class="calc"><summary>Calculation details</summary><div class="tblwrap"><table class="tbl" style="margin-top:8px"><thead><tr><th>Cost item</th><th>How</th><th class="r">Per unit</th><th class="r">Total</th></tr></thead><tbody>${rows}
     <tr><td colspan="2"><b>Production cost</b></td><td class="r"><b>${money(c.productionCost / qty)}</b></td><td class="r"><b>${money(c.productionCost)}</b></td></tr>
-    <tr><td colspan="2">${c.markupMode === 'margin' ? 'Margin' : 'Markup'} ${pctf(c.markupPct)} <span class="muted">(${e(c.markupSource)})</span></td><td class="r">${money((c.sellingBeforeMin - c.productionCost) / qty)}</td><td class="r">${money(c.sellingBeforeMin - c.productionCost)}</td></tr>
+    <tr><td colspan="2">${c.markupMode === 'margin' ? 'Margin' : 'Markup'} ${pctf(c.markupPct)} <span class="muted">(${e(c.markupSource)})</span></td><td class="r">${money((c.sellingBeforeMin - (c.productCost ?? c.productionCost)) / qty)}</td><td class="r">${money(c.sellingBeforeMin - (c.productCost ?? c.productionCost))}</td></tr>
     <tr><td colspan="2"><b>Selling price</b> ${c.minApplied ? '<span class="muted">(after minimum charge)</span>' : ''}${c.calculatedPrice !== c.sellingBeforeMin && !c.minApplied ? '<span class="muted">(after rounding)</span>' : ''}</td><td class="r"><b>${money(c.calculatedPrice / qty)}</b></td><td class="r"><b>${money(c.calculatedPrice)}</b></td></tr>
     ${c.overrideApplied ? `<tr><td colspan="3">Manual override price</td><td class="r">${money(c.sellingPrice)}</td></tr>` : ''}
     ${c.discountAmount > 0 ? `<tr><td colspan="3">Discount</td><td class="r">-${money(c.discountAmount)}</td></tr>` : ''}
@@ -1213,7 +1228,7 @@ function itemsOf() { const ed = State.ed; return ed.kind === 'calc' ? [ed.item] 
 
 function changeProduct(it, pid) {
   const n = newItem(pid); if (!n) return;
-  n.key = it.key; n.desc = it.desc; n.notes = it.notes; n.qty = it.qty || n.qty; n.discount = it.discount; n.customCost = it.customCost; n.customLabel = it.customLabel; n.closed = it.closed;
+  n.key = it.key; n.desc = it.desc; n.notes = it.notes; n.qty = it.qty || n.qty; n.discount = it.discount; n.customCost = it.customCost; n.customLabel = it.customLabel; n.designFee = it.designFee; n.designFeeMode = it.designFeeMode; n.closed = it.closed;
   Object.keys(it).forEach(k => delete it[k]); Object.assign(it, n); recalc(it); rerenderItem(it); if (State.ed.kind === 'calc') refreshCalcPanel();
 }
 function onEditorInput(t) {
@@ -1231,6 +1246,7 @@ function onEditorInput(t) {
     switch (f) {
       case 'unit': { const o = PQ.UNIT_MM[it.unit] || 1, n = PQ.UNIT_MM[v] || 1; ['w', 'h'].forEach(k => { if (PQ.has(it[k])) it[k] = Math.round(PQ.num(it[k]) * o / n * 1e4) / 1e4; }); it.unit = v; rerenderFields(it); break; }
       case 'sizePreset': { const s = PAPER_SIZES.find(x => x[0] === v); if (s) { it.unit = 'mm'; it.w = s[1]; it.h = s[2]; rerenderFields(it); } break; }
+      case 'designFee': it.designFee = v; break; case 'designFeeMode': it.designFeeMode = v; break;
       case 'discType': it.discount.type = v; break; case 'discVal': it.discount.value = v; break;
       case 'ovOn': { it.override = v ? { price: it.calc.calculatedPrice, reason: '' } : null; const b = $('#ov-' + it.key); if (b) { b.style.display = v ? '' : 'none'; const pi = $('[data-f="ovPrice"]', b); if (pi && v) pi.value = it.calc.calculatedPrice; } break; }
       case 'ovPrice': if (it.override) it.override.price = v; break; case 'ovReason': if (it.override) it.override.reason = v; break;
@@ -1320,7 +1336,7 @@ function calcPanelHTML(it, profile) {
   let h = `<h2>${profile === 'dtf' ? 'DTF result' : profile === 'paper' ? 'Paper result' : 'Large-format result'}</h2><div class="grid g2" style="margin-bottom:12px">${m}</div>`;
   if (!c.ok) h += c.errors.map(x => `<div class="alert bad">${e(x)}</div>`).join('');
   if (showC) {
-    h += GROUPS.filter(([k]) => (c.groups || {})[k]).map(([k, l]) => `<div class="rowline sub"><span>${l}</span><span>${g(k)}</span></div>`).join('');
+    h += GROUPS.filter(([k]) => k !== 'design_fee' && (c.groups || {})[k]).map(([k, l]) => `<div class="rowline sub"><span>${l}</span><span>${g(k)}</span></div>`).join('');
     h += `<div class="rowline"><span><b>Production cost</b></span><b>${money(c.productionCost)}</b></div><div class="rowline sub"><span>${c.markupMode === 'margin' ? 'Margin' : 'Markup'} ${pctf(c.markupPct)}</span><span>${money(c.sellingBeforeMin - c.productionCost)}</span></div>`;
     if (can('viewProfit')) h += `<div class="rowline sub"><span>Profit</span><span>${money(c.grossProfit)}${can('viewMargin') ? ` (${pctf(c.marginPct)})` : ''}</span></div>`;
   }
@@ -1340,7 +1356,7 @@ function afterEditorRender() {}
 function quoteVatLabel(q) { const t = q.totals || {}; return t.vatEnabled ? (t.vatMode === 'inclusive' ? 'All prices include VAT' : 'All prices exclude VAT; VAT is added in the totals') : 'VAT not charged'; }
 function quoteDocHTML(q) {
   const S = State.cfg.settings, b = S.business || {}, t = q.totals || {}, inc = t.vatMode === 'inclusive';
-  const rows = (q.items || []).map((it, i) => { const c = it.calc || {}; return `<tr><td>${i + 1}</td><td><b>${e(it.productName)}</b>${it.desc ? `<div>${e(it.desc)}</div>` : ''}<div class="small">${e(it.specText || '')}${it.notes ? '\n' + e(it.notes) : ''}</div></td><td class="r">${e(it.qty)}</td><td class="r">${money(c.unitPrice)}</td><td class="r">${c.discountAmount > 0 ? '-' + money(c.discountAmount) : '—'}</td><td class="r">${money(c.finalSubtotal)}</td></tr>`; }).join('');
+  const rows = (q.items || []).map((it, i) => { const c = it.calc || {}; const productTotal = Number.isFinite(Number(c.productSubtotal)) ? Number(c.productSubtotal) : Number(c.finalSubtotal || it.line_total || 0); const fee = Number(c.designFeeCharge || 0); return `<tr><td>${i + 1}</td><td><b>${e(it.productName)}</b>${it.desc ? `<div>${e(it.desc)}</div>` : ''}<div class="small">${e(it.specText || '')}${it.notes ? '\n' + e(it.notes) : ''}</div></td><td class="r">${e(it.qty)}</td><td class="r">${money(c.unitPrice)}</td><td class="r">${c.discountAmount > 0 ? '-' + money(c.discountAmount) : '—'}</td><td class="r">${money(productTotal)}</td></tr>` + (fee > 0 ? `<tr><td></td><td colspan="4">Design fee (separate customer charge)</td><td class="r">${money(fee)}</td></tr>` : ''); }).join('');
   return `<div class="qdoc" id="qdoc"><div class="hdr"><div>${b.logo ? `<img class="logo" src="${e(b.logo)}" alt="">` : ''}<div><b>${e(b.name)}</b></div><div class="small">${e(b.address)}\n${e(b.phone)}${b.email ? ' · ' + e(b.email) : ''}${b.website ? '\n' + e(b.website) : ''}${b.regNo ? '\nReg: ' + e(b.regNo) : ''}${b.vatNo ? '\nVAT No: ' + e(b.vatNo) : ''}</div></div>
    <div style="text-align:right"><h1>QUOTATION</h1><div><b>${e(q.number)}</b></div><div class="small">Date: ${fmtDate(q.date)}\nValid until: ${fmtDate(q.expiry)}${q.ref ? '\nReference: ' + e(q.ref) : ''}${q.staffName ? '\nPrepared by: ' + e(q.staffName) : ''}</div></div></div>
    <div class="cols"><div><div class="small"><b>Quote for</b></div><div><b>${e(q.customer.name)}</b></div>${q.customer.company ? `<div>${e(q.customer.company)}</div>` : ''}<div class="small">${e(q.customer.phone)}${q.customer.email ? '\n' + e(q.customer.email) : ''}</div></div></div>
