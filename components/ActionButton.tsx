@@ -1,5 +1,6 @@
 'use client';
 import { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { toast } from './ToastHost';
 
@@ -79,7 +80,7 @@ export default function ActionButton({ action, args = [], label, pendingLabel, c
   const title = reconfirming ? (reconfirm || 'Please provide a reason') : askNote || 'Confirm action';
   return <>
     <button type="button" className={className} onClick={begin} disabled={pending || disabled}>{pending ? (pendingLabel || 'Working…') : label}</button>
-    {open && <div className="overlay" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget && !pending) setOpen(false); }}>
+    {open && typeof document !== 'undefined' && createPortal(<div className="overlay" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget && !pending) setOpen(false); }}>
       <section className="modal" role="dialog" aria-modal="true" aria-labelledby="action-dialog-title">
         <header className="mh"><b id="action-dialog-title">{title}</b><button type="button" className="btn ghost sm" onClick={() => setOpen(false)} disabled={pending} aria-label="Close">✕</button></header>
         <div className="mb">
@@ -95,6 +96,6 @@ export default function ActionButton({ action, args = [], label, pendingLabel, c
           <button type="button" className="btn primary" onClick={submitDialog} disabled={pending}>{pending ? 'Working…' : 'Confirm'}</button>
         </footer>
       </section>
-    </div>}
+    </div>, document.body)}
   </>;
 }
