@@ -21,7 +21,10 @@ export default async function Dashboard() {
   const active = all.filter((j: any) => !FINAL_JOB.includes(j.status));
   const dueToday = active.filter((j: any) => j.due_date === t);
   const overdue = active.filter((j: any) => overdueDays(j.due_date, j.status) > 0);
-  const production = active.filter((j: any) => ['design', 'design_review', 'in_production', 'rework', 'qc'].includes(j.status));
+  const production = active.filter((j: any) => ['queued', 'design', 'design_review', 'in_production', 'rework', 'qc'].includes(j.status));
+  const awaitingQc = active.filter((j: any) => j.status === 'qc');
+  const readyForHandoff = all.filter((j: any) => ['ready_collection', 'ready_delivery'].includes(j.status));
+  const readyForInvoice = all.filter((j: any) => j.status === 'ready_invoice');
   const attention = [...new Map([...overdue, ...dueToday, ...active.filter((j: any) => j.status === 'qc')].map(j => [j.id, j])).values()].sort(sortJobs);
   const stat = (label: string, value: number, href: string, danger = false) => <Link href={href} className="stat" style={{ textDecoration: 'none', borderColor: danger && value ? 'var(--bad)' : undefined }}><div className="k">{label}</div><div className="v" style={{ color: danger && value ? 'var(--bad)' : undefined }}>{value}</div></Link>;
 
@@ -38,7 +41,10 @@ export default async function Dashboard() {
     <div className="stats">
       {stat('Due today', dueToday.length, '/jobs?due=today')}
       {stat('Overdue', overdue.length, '/jobs?due=overdue', true)}
-      {stat('Active production', production.length, '/jobs')}
+      {stat('Active work', production.length, '/jobs?status=active')}
+      {stat('Awaiting QC', awaitingQc.length, '/jobs?status=qc')}
+      {stat('Ready for handoff', readyForHandoff.length, '/jobs?status=ready_handoff')}
+      {stat('Ready for invoice', readyForInvoice.length, '/jobs?status=ready_invoice')}
     </div>
 
     <div className="card">
