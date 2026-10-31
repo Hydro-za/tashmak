@@ -16,7 +16,6 @@ import { SuppliedForm } from '@/components/JobForms';
 import { jobAction, archiveRecord } from '@/lib/actions';
 import { JOB_STATUS, fmtDate } from '@/lib/labels';
 import JobInvoicePanel from '@/components/JobInvoicePanel';
-import JobProgressActions from '@/components/JobProgressActions';
 
 export const dynamic = 'force-dynamic';
 export default async function JobPage({ params }: { params: { id: string } }) {
@@ -46,7 +45,6 @@ export default async function JobPage({ params }: { params: { id: string } }) {
       <Link href="/jobs" className="btn">← Jobs</Link>{quote && me.isOwner && <Link href={'/quotes/' + quote.id + '/duplicate'} className="btn">Create repeat job</Link>}
     </Top>
     {cust?.notes && <div className="alert info" style={{ whiteSpace: 'pre-wrap' }}><b>Customer note:</b> {cust.notes}</div>}
-    {canManage && <JobProgressActions job={job} canDesign={!!job.design_required} canProduction hasArtwork={b.files.some((f: any) => ['artwork', 'design', 'print_ready', 'dtf_artwork'].includes(f.kind))} hasFinal={b.files.some((f: any) => f.is_final)} canCompleteUnstartedDesign />}
     {canManage && <div className="card job-progress-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
       <b>Next steps</b>
       {s === 'design_review' && <>{A('APPROVE DESIGN', 'design_approve', 'btn primary', { successText: 'Design approved' })}{A('Send back for changes', 'design_reject', 'btn danger', { askNote: 'What needs to change?', noteRequired: true })}</>}
