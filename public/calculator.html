@@ -1090,7 +1090,8 @@ function calcDetailsHTML(it) {
   const c = it.calc, qty = PQ.num(it.qty) || 1, showC = can('viewCosts');
   let h = `<div class="rowline"><span>Unit price</span><b>${money(c.unitPrice)}</b></div><div class="rowline"><span>Quantity</span><span>${e(it.qty)}</span></div>`;
   if (c.discountAmount > 0) h += `<div class="rowline sub"><span>Line discount</span><span>-${money(c.discountAmount)}</span></div>`;
-  h += `<div class="rowline sub"><span>Design fee ${c.designFeeMode === 'separate' ? '(separate customer charge)' : '(internal cost only)'}</span><span>${c.designFeeAmount > 0 ? money(c.designFeeAmount) : '—'}</span></div><div class="rowline tot"><span>Line total</span><span>${money(c.finalSubtotal)}</span></div>`;
+  if (c.designFeeAmount > 0) h += `<div class="rowline sub"><span>Design fee ${c.designFeeMode === 'separate' ? '(separate customer charge)' : '(internal cost only)'}</span><span>${money(c.designFeeAmount)}</span></div>`;
+  h += `<div class="rowline tot"><span>Line total</span><span>${money(c.finalSubtotal)}</span></div>`;
   if (c.minApplied) h += `<div class="muted" style="font-size:12px">Minimum charge of ${money(c.minPrice)} applied.</div>`;
   if (c.overrideApplied) h += `<div class="alert warn" style="margin-top:8px">Manual price override (calculated price was ${money(c.calculatedPrice)}).</div>`;
   if (!showC) return h;
