@@ -10,7 +10,7 @@ export default async function Reports({ searchParams }: { searchParams: { from?:
   const from = searchParams.from || d.toISOString().slice(0, 10), to = searchParams.to || t;
   const [{ data: jobs }, names] = await Promise.all([sb.from('jobs').select('*, job_items(product_name,category_name,qty_ordered), job_assignments(user_id,stage,active)').is('archived_at', null).limit(2000), staffNames(sb)]);
   const all = jobs || []; const inRange = all.filter((j: any) => j.created_at.slice(0, 10) >= from && j.created_at.slice(0, 10) <= to);
-  const completed = all.filter((j: any) => j.completed_at && j.completed_at.slice(0, 10) >= from && j.completed_at.slice(0, 10) <= to);
+  const completed = all.filter((j: any) => j.status === 'job_done' && j.completed_at && j.completed_at.slice(0, 10) >= from && j.completed_at.slice(0, 10) <= to);
   const days = completed.length ? completed.reduce((a: number, j: any) => a + (new Date(j.completed_at).getTime() - new Date(j.created_at).getTime()) / 86400000, 0) / completed.length : 0;
   const tally = (fn: (j: any) => string[]) => { const m: Record<string, number> = {}; inRange.forEach((j: any) => fn(j).forEach(k => { m[k] = (m[k] || 0) + 1; })); return Object.entries(m).sort((a, b) => b[1] - a[1]); };
   const byStatus = tally(j => [JOB_STATUS[j.status]?.label || j.status]);
