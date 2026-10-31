@@ -115,7 +115,7 @@ export default function JobInvoicePanel({ snapshot, completion, jobStatus }: { s
             <thead><tr><th>Product / description</th><th className="r">Quantity</th><th className="r">Unit price</th><th className="r">Line total</th></tr></thead>
             <tbody>
               {products.map((line: any, index: number) => <tr key={line.id || index}>
-                <td><b>{line.product_name || 'Product'}</b>{(line.description || line.category_name) && <div className="muted">{[line.description, line.category_name].filter(Boolean).join(' · ')}</div>}</td>
+                <td><b>{line.product_name || 'Product'}</b>{(line.description || line.category_name) && <div className="muted">{[line.description, line.profile, line.item?.specText, line.item?.notes, line.category_name].filter(Boolean).join(' · ')}</div>}</td>
                 <td className="r">{line.quantity == null ? '—' : Number(line.quantity).toLocaleString('en-ZA')}</td>
                 <td className="r">{money(line.unit_price)}</td>
                 <td className="r"><b>{money(line.line_total)}</b></td>
