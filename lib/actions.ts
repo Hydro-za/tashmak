@@ -170,31 +170,22 @@ export async function saveRole(id: string | null, name: string, description: str
 export async function deleteRole(id: string): Promise<R> { const r = await rpc('delete_role', { p_id: id }); revalidatePath('/roles'); revalidatePath('/employees'); return r; }
 export async function createOwner(v: { email: string; username: string; fullName: string; password: string }): Promise<R> { const r = await rpc('create_owner', { p_email: v.email, p_username: v.username, p_full_name: v.fullName, p_password: v.password }); revalidatePath('/owners'); return r; }
 
-export async function completeJobAccountingEntry(jobId: string): Promise<R> {
+export async function completeJobAccountingEntry(jobId: string, handoffConfirmed: boolean, invoiceSentConfirmed: boolean): Promise<R> {
   const me = await requireOwner();
+  if (handoffConfirmed !== true) return fail(new Error('handoff_confirmation_required'));
+  if (invoiceSentConfirmed !== true) return fail(new Error('invoice_confirmation_required'));
   try {
-    const { data: snapshot, error: snapshotError } = await me.sb.rpc('invoice_job_snapshot', { p_job_id: jobId });
-    if (snapshotError) return fail(snapshotError);
-    if (!snapshot) return fail(new Error('job_not_found'));
-
-    const { data: job, error: jobError } = await me.sb.from('jobs').select('status,archived_at').eq('id', jobId).maybeSingle();
-    if (jobError) return fail(jobError);
-    if (!job || job.archived_at || !['ready_invoice', 'collected', 'delivered'].includes(job.status)) return fail(new Error('job_not_ready_for_accounting'));
-    if (!snapshot.quote_id || !snapshot.items_valid || snapshot.sales_amount == null || snapshot.vat_amount == null || snapshot.invoice_total == null) {
-      return fail(new Error('accounting_figures_need_review'));
-    }
-
-    const { error: saveError } = await me.sb.from('job_accounting_completions').upsert({
-      job_id: jobId,
-      completed_by: me.user.id,
-      completed_at: new Date().toISOString(),
-      source_snapshot: snapshot
-    }, { onConflict: 'job_id' });
-    if (saveError) return fail(saveError);
-
+    const { data, error } = await me.sb.rpc('complete_job_accounting_entry', {
+      p_job_id: jobId,
+      p_confirm_handoff: handoffConfirmed,
+      p_confirm_invoice_sent: invoiceSentConfirmed
+    });
+    if (error) return fail(error);
     revalidatePath('/jobs/' + jobId);
+    revalidatePath('/jobs');
+    revalidatePath('/completed');
     revalidatePath('/dashboard');
-    return ok({ completed: true });
+    return ok({ status: data?.status, completed_at: data?.completed_at });
   } catch (error) {
     return fail(error);
   }
