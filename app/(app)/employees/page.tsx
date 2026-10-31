@@ -8,7 +8,7 @@ export default async function Employees({ searchParams }: { searchParams: { tab?
   const { sb } = await requireOwner();
   const tab = ['roles', 'owners'].includes(searchParams.tab || '') ? searchParams.tab! : 'employees';
   const [{ data: profiles }, { data: load }, { data: roles }, { data: permissionRows }, { data: rolePerms }, { data: owners }] = await Promise.all([
-    sb.from('profiles').select('*,roles(name),profile_roles(role_id,roles(name))').neq('role', 'owner').order('full_name'),
+    sb.from('profiles').select('*,roles(name),profile_roles(role_id,roles(name))').or('role.is.null,role.neq.owner').order('full_name'),
     sb.rpc('employee_workload'),
     sb.from('roles').select('id,name,description,is_owner,is_system').order('name'),
     sb.rpc('valid_permissions'),
