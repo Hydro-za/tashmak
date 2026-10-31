@@ -1,7 +1,7 @@
 export const JOB_STATUS: Record<string, { label: string; tone: string }> = {
   queued: { label: 'Queued', tone: 'draft' }, design: { label: 'Design', tone: 'sent' }, design_review: { label: 'Design review', tone: 'expired' },
   in_production: { label: 'In production', tone: 'sent' }, qc: { label: 'QC', tone: 'expired' }, rework: { label: 'Rework', tone: 'rejected' },
-  completed: { label: 'Completed', tone: 'accepted' }, ready_collection: { label: 'Ready for collection', tone: 'accepted' }, ready_delivery: { label: 'Ready for delivery', tone: 'accepted' },
+  completed: { label: 'Production complete', tone: 'accepted' }, job_done: { label: 'Job completed', tone: 'accepted' }, ready_collection: { label: 'Ready for collection', tone: 'accepted' }, ready_delivery: { label: 'Ready for delivery', tone: 'accepted' },
   collected: { label: 'Collected', tone: 'converted' }, delivered: { label: 'Delivered', tone: 'converted' }, ready_invoice: { label: 'Ready for invoice', tone: 'converted' }, cancelled: { label: 'Cancelled', tone: 'rejected' }
 };
 export const QUOTE_STATUS: Record<string, { label: string; tone: string }> = {
@@ -9,7 +9,7 @@ export const QUOTE_STATUS: Record<string, { label: string; tone: string }> = {
   declined: { label: 'Declined', tone: 'rejected' }, converted: { label: 'Converted to Job', tone: 'converted' }, cancelled: { label: 'Cancelled', tone: 'rejected' }
 };
 export const PRIORITIES = ['low', 'normal', 'high', 'urgent'] as const;
-export const FINAL_JOB = ['completed', 'ready_collection', 'ready_delivery', 'collected', 'delivered', 'ready_invoice', 'cancelled'];
+export const FINAL_JOB = ['job_done', 'cancelled'];
 export const QUEUE: { key: string; label: string; statuses: string[] }[] = [
   { key: 'waiting', label: 'Waiting', statuses: ['queued'] },
   { key: 'design', label: 'Design', statuses: ['design', 'design_review'] },
@@ -32,7 +32,7 @@ const ERR: Record<string, string> = {
   forbidden: 'You do not have permission to do that.', not_authenticated: 'Your session has expired — please sign in again.', quote_locked: 'This quote is accepted and can no longer be edited.',
   version_conflict: 'Someone else changed this just now. Reload and try again.', invalid_transition: 'That step is not available for the job\'s current status — refresh to see the latest.',
   due_date_in_past: 'The due date cannot be in the past.', designer_required: 'Choose a designer when design is required.', production_employee_required: 'Choose at least one production employee.',
-  quote_not_accepted: 'The quote must be accepted first.', note_required: 'A note is required.', reason_required: 'A reason is required.', confirm_required: 'Confirmation is required because production has already started.',
+  quote_not_accepted: 'The quote must be accepted first.', note_required: 'A note is required.', reason_required: 'A reason is required.', confirm_required: 'Confirmation is required because production has already started.', handoff_confirmation_required: 'Confirm the job has been handed over before completing it.', invoice_confirmation_required: 'Confirm the invoice has been entered in Sage and sent before completing the job.', completion_confirmation_required: 'Confirm both the handoff and the sent invoice before completing the job.',
   username_taken: 'That username is already in use.', invalid_username: 'Username must be 3–32 characters: letters, numbers, dot, dash or underscore.', password_too_short: 'Password must be at least 8 characters.',
   customer_required: 'Choose a customer.', quote_needs_items: 'Add at least one item.', invalid_quantities: 'Those quantities are not valid.', completed_exceeds_ordered: 'Completed quantity cannot exceed the ordered quantity.',
   job_archived: 'This job is archived.', job_not_found: 'This job could not be found. Reload and try again.', job_not_ready_for_accounting: 'This job is no longer ready for accounting. Refresh and check its status.', accounting_figures_need_review: 'The saved quote figures need review before the accounting entry can be completed.', last_owner: 'At least one active owner is required.', one_designer_only: 'Only one designer can be assigned.', invalid_employee_for_stage: 'That employee cannot be assigned to this stage.'
@@ -48,22 +48,30 @@ export function friendlyError(e: any): string {
   return 'Could not complete that: ' + msg.slice(0, 160);
 }
 
-/* ---- simplified job status shown to everyone: Pending / In Progress / Awaiting Quality Check / Completed ---- */
-export type SimpleKey = 'pending' | 'in_progress' | 'awaiting_qc' | 'completed' | 'cancelled';
+/* ---- concise status labels shared by jobs, staff queues and reports ---- */
+export type SimpleKey = 'pending' | 'in_progress' | 'awaiting_qc' | 'awaiting_handoff' | 'awaiting_invoice' | 'completed' | 'cancelled';
 export const SIMPLE: Record<SimpleKey, { label: string; tone: string }> = {
-  pending: { label: 'Pending', tone: 'draft' }, in_progress: { label: 'In Progress', tone: 'sent' }, awaiting_qc: { label: 'Awaiting Quality Check', tone: 'expired' },
-  completed: { label: 'Completed', tone: 'accepted' }, cancelled: { label: 'Cancelled', tone: 'rejected' }
+  pending: { label: 'Pending', tone: 'draft' },
+  in_progress: { label: 'In progress', tone: 'sent' },
+  awaiting_qc: { label: 'Awaiting quality check', tone: 'expired' },
+  awaiting_handoff: { label: 'Awaiting handoff', tone: 'converted' },
+  awaiting_invoice: { label: 'Awaiting invoice', tone: 'converted' },
+  completed: { label: 'Job completed', tone: 'accepted' },
+  cancelled: { label: 'Cancelled', tone: 'rejected' }
 };
 export function simpleStatus(j: { status: string; design_started_at?: string | null }): SimpleKey {
   const s = j.status;
   if (s === 'cancelled') return 'cancelled';
+  if (s === 'job_done') return 'completed';
   if (s === 'queued') return 'pending';
   if (s === 'design') return j.design_started_at ? 'in_progress' : 'pending';
   if (s === 'design_review' || s === 'in_production' || s === 'rework') return 'in_progress';
   if (s === 'qc') return 'awaiting_qc';
-  return 'completed';
+  if (['completed', 'ready_collection', 'ready_delivery'].includes(s)) return 'awaiting_handoff';
+  if (['collected', 'delivered', 'ready_invoice'].includes(s)) return 'awaiting_invoice';
+  return 'in_progress';
 }
-export const isCompletedJob = (j: { status: string }) => simpleStatus(j) === 'completed' || j.status === 'cancelled';
+export const isCompletedJob = (j: { status: string }) => j.status === 'job_done';
 export const QC_LABEL: Record<string, { label: string; tone: string }> = { not_checked: { label: 'Not Checked', tone: 'draft' }, passed: { label: 'Passed', tone: 'accepted' }, not_passed: { label: 'Not Passed', tone: 'rejected' } };
 /** 'overdue' once past due; 'soon' when due today, tomorrow or the day after. Finished jobs never flag. */
 export function dueState(due: string | null, status: string): 'overdue' | 'soon' | null {

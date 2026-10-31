@@ -24,9 +24,9 @@ export default async function JobPage({ params }: { params: { id: string } }) {
     me.isOwner && job.quote_id ? sb.from('quotes').select('id,number').eq('id', job.quote_id).maybeSingle() : Promise.resolve({ data: null })]);
   const live = staff.filter(e => e.active && !e.deleted); const designers = live.filter(e => e.can_design); const producers = live.filter(e => e.can_produce);
   const ids = (stage: string) => assignments.filter((a: any) => a.stage === stage).map((a: any) => a.user_id);
-  const s = job.status; const final = ['completed', 'ready_collection', 'ready_delivery', 'collected', 'delivered', 'ready_invoice', 'cancelled'].includes(s);
+  const s = job.status; const final = ['job_done', 'cancelled'].includes(s); const reopenable = ['completed', 'ready_collection', 'ready_delivery', 'collected', 'delivered', 'ready_invoice', 'job_done', 'cancelled'].includes(s);
   const title = job.title || items.map((i: any) => i.product_name).slice(0, 2).join(', ') || job.number;
-  const invoiceEligible = me.isOwner && ['collected', 'delivered', 'ready_invoice'].includes(s);
+  const invoiceEligible = me.isOwner && ['collected', 'delivered', 'ready_invoice', 'job_done'].includes(s);
   let invoiceSnapshot: any = null; let accountingCompletion: any = null;
   if (invoiceEligible) {
     const [snapshotResult, completionResult] = await Promise.all([
@@ -42,7 +42,7 @@ export default async function JobPage({ params }: { params: { id: string } }) {
   const A = (label: string, action: string, cls = 'btn', extra: any = {}) => <ActionButton key={action + label} className={cls} label={label} action={jobAction} args={[job.id, action]} {...extra} />;
   return (<>
     <AutoRefresh seconds={45} />
-    <Top title={title} sub={<><b>{job.number}</b> · <JobStatus job={job} /> <span className="muted">({(JOB_STATUS[s] || { label: s }).label})</span> {hasQc && <QcBadge status={job.qc_status} />} <PrioBadge p={job.priority} /> {!final && <DueFlag due={job.due_date} status={s} />} · {cust ? <Link href={'/customers/' + job.customer_id}>{job.customer_name}</Link> : job.customer_name}{quote ? <> · <Link href={'/quotes/' + quote.id}>Quote {quote.number}</Link></> : null}</>}>
+    <Top title={title} sub={<><b>{job.number}</b> · <JobStatus job={job} /> {s !== 'job_done' && <span className="muted">({(JOB_STATUS[s] || { label: s }).label})</span>} {hasQc && <QcBadge status={job.qc_status} />} <PrioBadge p={job.priority} /> {!final && <DueFlag due={job.due_date} status={s} />} · {cust ? <Link href={'/customers/' + job.customer_id}>{job.customer_name}</Link> : job.customer_name}{quote ? <> · <Link href={'/quotes/' + quote.id}>Quote {quote.number}</Link></> : null}</>}>
       <Link href="/jobs" className="btn">← Jobs</Link>{quote && me.isOwner && <Link href={'/quotes/' + quote.id + '/duplicate'} className="btn">Create repeat job</Link>}
     </Top>
     {cust?.notes && <div className="alert info" style={{ whiteSpace: 'pre-wrap' }}><b>Customer note:</b> {cust.notes}</div>}
@@ -57,13 +57,13 @@ export default async function JobPage({ params }: { params: { id: string } }) {
       {s === 'ready_invoice' && <span className="badge b-converted">Ready for invoice</span>}
       {s === 'cancelled' && <span className="muted">Cancelled{job.cancel_reason ? ': ' + job.cancel_reason : ''}</span>}
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        {final && A('Reopen job', 'reopen_queued', 'btn', { askNote: 'Reason for reopening (required)', noteRequired: true, successText: 'Job reopened' })}
-        {final && job.design_required && A('Reopen to design', 'reopen_design', 'btn sm', { askNote: 'Reason (required)', noteRequired: true })}
+        {reopenable && A('Reopen job', 'reopen_queued', 'btn', { askNote: 'Reason for reopening (required)', noteRequired: true, successText: 'Job reopened' })}
+        {reopenable && job.design_required && A('Reopen to design', 'reopen_design', 'btn sm', { askNote: 'Reason (required)', noteRequired: true })}
         {!final && s !== 'cancelled' && A('Cancel job', 'cancel', 'btn danger sm', { askNote: 'Why is this job being cancelled?', noteRequired: true })}
-        {me.isOwner && ['ready_invoice', 'cancelled'].includes(s) && <ActionButton className="btn ghost sm" label={job.archived_at ? 'Restore' : 'Archive'} action={archiveRecord} args={['job', job.id, !job.archived_at]} confirmText={job.archived_at ? undefined : 'Archive this job? It stays under archived records.'} />}
+        {me.isOwner && ['ready_invoice', 'cancelled', 'job_done'].includes(s) && <ActionButton className="btn ghost sm" label={job.archived_at ? 'Restore' : 'Archive'} action={archiveRecord} args={['job', job.id, !job.archived_at]} confirmText={job.archived_at ? undefined : 'Archive this job? It stays under archived records.'} />}
       </span>
     </div>}
-    {invoiceEligible && <JobInvoicePanel snapshot={invoiceSnapshot} completion={accountingCompletion} />}
+    {invoiceEligible && <JobInvoicePanel snapshot={invoiceSnapshot} completion={accountingCompletion} jobStatus={s} />}
     <div className="split"><div>
       <div className="card"><h2>Work order</h2>
         <div className="grid g3" style={{ marginBottom: 12 }}>
