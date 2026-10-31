@@ -171,21 +171,15 @@ export async function deleteRole(id: string): Promise<R> { const r = await rpc('
 export async function createOwner(v: { email: string; username: string; fullName: string; password: string }): Promise<R> { const r = await rpc('create_owner', { p_email: v.email, p_username: v.username, p_full_name: v.fullName, p_password: v.password }); revalidatePath('/owners'); return r; }
 
 export async function completeJobAccountingEntry(jobId: string, handoffConfirmed: boolean, invoiceSentConfirmed: boolean): Promise<R> {
-  const me = await requireOwner();
+  await requireOwner();
   if (handoffConfirmed !== true) return fail(new Error('handoff_confirmation_required'));
   if (invoiceSentConfirmed !== true) return fail(new Error('invoice_confirmation_required'));
   try {
-    const { data, error } = await me.sb.rpc('complete_job_accounting_entry', {
-      p_job_id: jobId,
-      p_confirm_handoff: handoffConfirmed,
-      p_confirm_invoice_sent: invoiceSentConfirmed
-    });
-    if (error) return fail(error);
-    revalidatePath('/jobs/' + jobId);
+    const result = await jobAction(jobId, 'complete_job', 'confirm_handoff_and_invoice_sent');
     revalidatePath('/jobs');
     revalidatePath('/completed');
     revalidatePath('/dashboard');
-    return ok({ status: data?.status, completed_at: data?.completed_at });
+    return result;
   } catch (error) {
     return fail(error);
   }
