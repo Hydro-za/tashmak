@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { completePasswordReset } from '@/lib/actions';
+import { completePasswordReset } from '@/lib/password-reset-actions';
 import Logo from '../../components/Logo';
 import ThemeToggle from '../../components/ThemeToggle';
 import PasswordInput from '../../components/PasswordInput';
