@@ -27,7 +27,7 @@ export async function requestPasswordReset(identifier: string): Promise<Result> 
       if (!profile) {
         const { data: users, error: usersError } = await sb.auth.admin.listUsers({ page: 1, perPage: 1000 });
         if (usersError) throw usersError;
-        const match = users.find((u: any) => (u.email || '').toLowerCase() === supplied);
+        const match = users.users.find((u: any) => (u.email || '').toLowerCase() === supplied);
         if (match) {
           const { data, error: pError } = await sb.from('profiles').select('id,full_name,recovery_email,role')
             .eq('id', match.id).eq('active', true).is('deleted_at', null).maybeSingle();
