@@ -37,11 +37,11 @@ export default function DashboardInvoices({ rows }: { rows: any[] }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <div>
           <h2 id="dashboard-invoices-heading" style={{ marginBottom: 4 }}>
-            Accounting entries to complete <span className="muted" style={{ fontWeight: 400 }}>({ready.length})</span>
+            Ready for invoice <span className="muted" style={{ fontWeight: 400 }}>({ready.length})</span>
           </h2>
-          <p className="muted" style={{ margin: 0 }}>Use these saved figures for manual entry into Sage, then mark each invoice done.</p>
+          <p className="muted" style={{ margin: 0 }}>Use these figures for manual entry into Sage, then mark each invoice done.</p>
         </div>
-        <Link href="/invoices" className="btn sm">Manage invoices</Link>
+        <Link href="/jobs?status=ready_invoice" className="btn sm">View invoice jobs</Link>
       </div>
 
       {ready.length ? (
@@ -74,7 +74,7 @@ export default function DashboardInvoices({ rows }: { rows: any[] }) {
               </div>
             </article>
           ))}
-          {ready.length > 8 && <p className="muted">Showing 8 of {ready.length} invoices. <Link href="/invoices">View all invoices</Link></p>}
+          {ready.length > 8 && <p className="muted">Showing 8 of {ready.length} invoices. <Link href="/jobs?status=ready_invoice">View invoice jobs</Link></p>}
         </div>
       ) : <p className="muted" style={{ marginBottom: 0, marginTop: 12 }}>No accounting entries are waiting to be completed.</p>}
     </section>
