@@ -17,10 +17,10 @@ export default async function EmployeePage({ params }: { params: { id: string } 
     sb.from('job_activity').select('*').eq('user_id', e.id).order('created_at', { ascending: false }).limit(40), staffNames(sb), sb.from('roles').select('id,name').eq('is_owner', false).order('name'), sb.from('profile_roles').select('role_id').eq('user_id', e.id)]);
   const assignedRoleNames = (assignedRoles || []).map((x: any) => (roles || []).find((r: any) => r.id === x.role_id)?.name).filter(Boolean);
   const jobs = (asg || []).map((a: any) => ({ ...a.jobs, stage: a.stage })).filter((j: any) => j.id);
-  const active = jobs.filter((j: any) => !FINAL_JOB.includes(j.status)); const done = jobs.filter((j: any) => FINAL_JOB.includes(j.status));
+  const active = jobs.filter((j: any) => !FINAL_JOB.includes(j.status)); const done = jobs.filter((j: any) => j.status === 'job_done'); const cancelled = jobs.filter((j: any) => j.status === 'cancelled');
   const row = (j: any) => <div className="linkrow" key={j.id + j.stage}><Link href={'/jobs/' + j.id}><b>{j.number}</b> · {j.customer_name} <Overdue due={j.due_date} status={j.status} /></Link><span><PrioBadge p={j.priority} /> <StatusBadge status={j.status} /> {fmtDate(j.due_date)}</span></div>;
   return (<><Top title={e.full_name} sub={(assignedRoleNames.join(', ') || e.role) + ' · ' + e.username}><Link href="/employees" className="btn">← Employees</Link></Top><EmployeeAdmin e={e} roles={roles || []} assignedRoleIds={(assignedRoles || []).map((x: any) => x.role_id)} />
     <div className="card"><h2>Assigned jobs ({active.length})</h2>{active.map(row)}{!active.length && <p className="muted">Nothing active.</p>}</div>
-    <div className="card"><h2>Completed jobs ({done.length})</h2>{done.map(row)}{!done.length && <p className="muted">None yet.</p>}</div>
+    <div className="card"><h2>Completed jobs ({done.length})</h2>{done.map(row)}{!done.length && <p className="muted">None yet.</p>}</div><div className="card"><h2>Cancelled jobs ({cancelled.length})</h2>{cancelled.map(row)}{!cancelled.length && <p className="muted">None.</p>}</div>
     <div className="card"><h2>Recent activity</h2><Timeline events={act || []} names={names} /></div></>);
 }
