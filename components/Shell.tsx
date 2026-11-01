@@ -32,14 +32,29 @@ function navFor(isOwner: boolean, perms: string[]): Item[] {
 }
 
 export default function Shell({ name, roleName, isOwner, perms, unread, children }: ShellProps) {
-  const path = usePathname(); const router = useRouter(); const [more, setMore] = useState(false);
+  const path = usePathname(); const router = useRouter(); const [menuOpen, setMenuOpen] = useState(false);
   const items = navFor(isOwner, perms);
   const on = (h: string) => path === h || path.startsWith(h + '/');
-  useEffect(() => setMore(false), [path]);
+  useEffect(() => setMenuOpen(false), [path]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setMenuOpen(false); };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [menuOpen]);
   async function signOut() { await createClient().auth.signOut(); window.location.href = '/login'; }
-  const primary = items.slice(0, items.length > 5 ? 4 : items.length); const rest = items.length > 5 ? items.slice(4) : [];
+  const primary = isOwner
+    ? ['/dashboard', '/jobs', '/quotes', '/products'].map(href => items.find(item => item.href === href)).filter((item): item is Item => !!item)
+    : items.slice(0, Math.min(4, items.length));
+  const primaryHrefs = new Set(primary.map(item => item.href));
+  const rest = items.filter(item => !primaryHrefs.has(item.href));
   const viewAll = isOwner || perms.includes('jobs.view_all');
   const canSearch = isOwner || perms.some(p => ['jobs.view_all', 'customers.view', 'employees.view'].includes(p));
+  const navGroups = [
+    { title: 'Work', links: rest.filter(i => ['/customers', '/my-jobs', '/completed', '/notifications'].includes(i.href)) },
+    { title: 'Manage', links: rest.filter(i => ['/products', '/employees', '/reports', '/settings'].includes(i.href)) },
+    { title: 'Account', links: rest.filter(i => ['/profile'].includes(i.href)) }
+  ].filter(group => group.links.length);
   return (
     <div className="app">
       <aside className="side glass-surface">
@@ -48,16 +63,23 @@ export default function Shell({ name, roleName, isOwner, perms, unread, children
         <div className="who">{name}<br /><b>{roleName}</b><div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center' }}><ThemeToggle /><button className="btn sm" onClick={signOut}>Sign out</button></div></div>
       </aside>
       <main className="main">
-        <div className="hdr glass-surface"><span className="mobilemark"><LogoMark size={32} /></span>{canSearch ? <GlobalSearch jobBase={viewAll ? '/jobs' : '/my-jobs'} /> : <b style={{ flex: 1 }}>{name}</b>}
+        <div className="hdr glass-surface">
+          <button type="button" className="mobile-nav-toggle" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-expanded={menuOpen} aria-controls="mobile-navigation" onClick={() => setMenuOpen(open => !open)}><NavIcon name="menu" /></button>
+          <span className="mobilemark"><LogoMark size={32} /></span>{canSearch ? <GlobalSearch jobBase={viewAll ? '/jobs' : '/my-jobs'} /> : <b style={{ flex: 1 }}>{name}</b>}
           <span className="mobiletheme"><ThemeToggle /></span>
           <NotificationBell initialUnread={unread} jobBase={viewAll ? '/jobs' : '/my-jobs'} canQuotes={isOwner} /></div>
         {children}
       </main>
       <nav className="bottom glass-surface">
         {primary.map(i => <button key={i.href} className={on(i.href) ? 'on' : ''} onClick={() => router.push(i.href)}><NavIcon name={i.icon} /><span>{i.label.split(' ')[0]}</span></button>)}
-        {rest.length > 0 && <button className={more ? 'on' : ''} onClick={() => setMore(!more)}><NavIcon name="more" /><span>More</span></button>}
       </nav>
-      {more && <div className="sheet">{rest.map(i => <Link key={i.href} href={i.href}><NavIcon name={i.icon} /> {i.label}</Link>)}<Link href="/profile">Profile</Link><a href="#" onClick={e => { e.preventDefault(); signOut(); }}>Sign out</a></div>}
+      {menuOpen && <nav id="mobile-navigation" className="mobile-nav-panel" aria-label="Workspace navigation">
+        {navGroups.map(group => <section className="mobile-nav-group" key={group.title}>
+          <h2>{group.title}</h2>
+          <div>{group.links.map(i => <Link key={i.href} href={i.href} className={on(i.href) ? 'on' : ''}><NavIcon name={i.icon} /><span>{i.label}</span></Link>)}</div>
+        </section>)}
+        <button type="button" className="mobile-nav-signout" onClick={signOut}>Sign out</button>
+      </nav>}
     </div>
   );
 }

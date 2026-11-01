@@ -12,6 +12,7 @@ const P: Record<string, string> = {
   completed: 'M22 11.1V12a10 10 0 1 1-5.9-9.1M22 4L12 14l-3-3',
   notifications: 'M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0',
   profile: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+  menu: 'M4 7h16M4 12h16M4 17h16',
   more: 'M5 12h.01M12 12h.01M19 12h.01'
 };
 export default function NavIcon({ name }: { name: string }) { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d={P[name] || P.more} /></svg>; }
