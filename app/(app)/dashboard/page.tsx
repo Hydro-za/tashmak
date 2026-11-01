@@ -56,7 +56,7 @@ export default async function Dashboard() {
     {me.can('employees.view') && <div className="card">
       <h2>Team workload</h2>
       {(workload || []).length ? <div className="tblwrap"><table className="tbl"><thead><tr><th>Employee</th><th className="r">Active jobs</th></tr></thead><tbody>
-        {(workload || []).map((w: any) => <tr key={w.user_id}><td><Link href={'/employees/' + w.user_id}><b>{w.full_name}</b></Link></td><td className="r">{w.active_jobs}</td></tr>)}
+        {(workload || []).map((w: any) => <tr key={w.user_id}><td data-label="Employee"><Link href={'/employees/' + w.user_id}><b>{w.full_name}</b></Link></td><td className="r" data-label="Active jobs">{w.active_jobs}</td></tr>)}
       </tbody></table></div> : <p className="muted">No team workload to show.</p>}
     </div>}
   </div>;
