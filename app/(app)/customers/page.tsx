@@ -13,6 +13,6 @@ export default async function Customers({ searchParams }: { searchParams: { q?: 
     <form className="card" style={{ display: 'flex', gap: 8 }}><input name="q" defaultValue={searchParams.q || ''} placeholder="Search name, company, phone, email" style={{ flex: 1 }} /><button className="btn">Search</button></form>
     <div className="chips"><Link className={!searchParams.archived ? 'on' : ''} href="/customers">Active</Link><Link className={searchParams.archived ? 'on' : ''} href="/customers?archived=1">Archived</Link></div>
     {!rows.length ? <Empty text="No customers found." action={<Link className="btn primary" href="/customers/new">Add a customer</Link>} /> :
-      <div className="card"><div className="tblwrap"><table className="tbl"><thead><tr><th>Name</th><th>Company</th><th>Phone</th><th>Email</th></tr></thead><tbody>{rows.map((c: any) => <tr key={c.id}><td><Link href={'/customers/' + c.id}><b>{c.name}</b></Link></td><td>{c.company}</td><td>{c.phone}</td><td>{c.email}</td></tr>)}</tbody></table></div></div>}
+      <div className="card"><div className="tblwrap"><table className="tbl"><thead><tr><th>Name</th><th>Company</th><th>Phone</th><th>Email</th></tr></thead><tbody>{rows.map((c: any) => <tr key={c.id}><td data-label="Name"><Link href={'/customers/' + c.id}><b>{c.name}</b></Link></td><td data-label="Company">{c.company}</td><td data-label="Phone">{c.phone}</td><td data-label="Email">{c.email}</td></tr>)}</tbody></table></div></div>}
   </div>);
 }
