@@ -2,11 +2,19 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 export async function GET(request: NextRequest) {
-  const url = request.nextUrl.clone();
-  const code = url.searchParams.get('code');
-  const next = url.searchParams.get('next') || '/change-password';
-  const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/change-password';
-  const response = NextResponse.redirect(new URL(safeNext, request.url));
+  const code = request.nextUrl.searchParams.get('code');
+  const next = request.nextUrl.searchParams.get('next') || '/change-password';
+  const fallback = new URL('/change-password', request.url);
+  let destination = fallback;
+
+  // Validate both the input form and the resolved origin. URL parsing treats
+  // backslashes as path separators, so checking only for a leading "//" is not safe.
+  if (next.startsWith('/') && !next.startsWith('//') && !next.includes('\\')) {
+    const candidate = new URL(next, request.url);
+    if (candidate.origin === request.nextUrl.origin) destination = candidate;
+  }
+
+  const response = NextResponse.redirect(destination);
 
   if (code) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
