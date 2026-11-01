@@ -15,12 +15,15 @@ const init = (extra) => ({ userId: 'u1', userName: 'Damian', settings: JSON.pars
 (async () => {
   await sleep(100);
   ok(out.some(m => m.type === 'ready'), 'calculator tells the host it is ready');
-  host('init', init({ mode: 'new', start: 'editor' })); await sleep(50);
+  const initialPayload = init({ mode: 'new', start: 'editor', __hostInitId: 1 });
+  host('init', initialPayload); await sleep(50);
   ok(!!$('#addprod') && !!$('#embedbar'), 'quote builder renders inside the embed with its tab bar');
   ok(w.document.body.classList.contains('embedded'), 'embedded mode on (sidebar/customer card hidden by css)');
   const add = pid => { $('#addprod').value = pid; $('[data-act="item-add"]').dispatchEvent(new w.MouseEvent('click', { bubbles: true })); };
   add('p_banner'); add('p_dtf_tee'); add('p_cards');
   ok(ev('State.ed.Q.items.length') === 3 && ev('State.ed.Q.items.every(i=>i.calc.ok)'), 'three different product types calculate (large-format, DTF, paper)');
+  host('init', initialPayload); await sleep(20);
+  ok(ev('State.ed.Q.items.length') === 3, 'repeated host initialization acknowledges without clearing the quote');
   const firstKey = ev('State.ed.Q.items[0].key');
   const productSelect = $(`[data-i="${firstKey}"][data-f="productId"]`);
   let inputCalls = 0; const originalInput = w.onEditorInput;
