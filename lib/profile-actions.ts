@@ -13,7 +13,7 @@ export async function updateMyProfile(input: { fullName: string; email: string; 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: 'Enter a valid email address.' };
   if (phone.length > 40) return { ok: false, error: 'Phone number is too long.' };
 
-  const sb = createClient();
+  const sb = await createClient();
   const { data: { user }, error: authError } = await sb.auth.getUser();
   if (authError || !user) return { ok: false, error: 'Your session has expired. Sign in again.' };
   const { data: profile, error: profileError } = await sb.from('profiles').select('role').eq('id', user.id).maybeSingle();

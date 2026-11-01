@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { requirePerm } from '@/lib/session';
 import { Top, Empty } from '@/components/ui';
 export const dynamic = 'force-dynamic';
-export default async function Customers({ searchParams }: { searchParams: { q?: string; archived?: string } }) {
+export default async function Customers({ searchParams: searchParamsPromise }: { searchParams: Promise<{ q?: string; archived?: string }> }) {
+  const searchParams = await searchParamsPromise;
   const me = await requirePerm('customers.view', 'customers.manage'); const sb = me.sb;
   let query = sb.from('customers').select('id,name,company,phone,email,archived_at').order('name').limit(500);
   query = searchParams.archived ? query.not('archived_at', 'is', null) : query.is('archived_at', null);

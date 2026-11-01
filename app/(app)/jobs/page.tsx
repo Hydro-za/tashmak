@@ -11,7 +11,8 @@ function readiness(job: any) {
   if (job.status === 'ready_collection') return 'Ready for collection';
   return null;
 }
-export default async function Jobs({ searchParams }: { searchParams: SearchParams }) {
+export default async function Jobs({ searchParams: searchParamsPromise }: { searchParams: Promise<SearchParams> }) {
+  const searchParams = await searchParamsPromise;
  const me=await requirePerm('jobs.view_all'); const archived=searchParams.archived==='1';
  let query=me.sb.from('jobs').select('*').order('created_at',{ascending:false}).limit(600);
  query=archived?query.not('archived_at','is',null):query.is('archived_at',null);

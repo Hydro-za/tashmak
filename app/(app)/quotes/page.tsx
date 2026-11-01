@@ -4,7 +4,8 @@ import { Top, StatusBadge, Empty } from '@/components/ui';
 import { QUOTE_STATUS, money, fmtDate } from '@/lib/labels';
 
 export const dynamic = 'force-dynamic';
-export default async function Quotes({ searchParams }: { searchParams: { q?: string; status?: string; archived?: string } }) {
+export default async function Quotes({ searchParams: searchParamsPromise }: { searchParams: Promise<{ q?: string; status?: string; archived?: string }> }) {
+  const searchParams = await searchParamsPromise;
   const { sb } = await requireOwner();
   let query = sb.from('quotes').select('id,number,status,quote_date,valid_until,total,archived_at,customers(name,company),job_id').order('created_at', { ascending: false }).limit(300);
   if (searchParams.status && QUOTE_STATUS[searchParams.status]) query = query.eq('status', searchParams.status);

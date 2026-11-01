@@ -4,7 +4,8 @@ import { Top } from '@/components/ui';
 import { staffNames } from '@/lib/jobs';
 import { FINAL_JOB, JOB_STATUS, overdueDays, fmtDate, todaySA } from '@/lib/labels';
 export const dynamic = 'force-dynamic';
-export default async function Reports({ searchParams }: { searchParams: { from?: string; to?: string } }) {
+export default async function Reports({ searchParams: searchParamsPromise }: { searchParams: Promise<{ from?: string; to?: string }> }) {
+  const searchParams = await searchParamsPromise;
   const me = await requirePerm('reports.view'); const sb = me.sb;
   const t = todaySA(); const d = new Date(t + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - 30);
   const from = searchParams.from || d.toISOString().slice(0, 10), to = searchParams.to || t;

@@ -6,7 +6,7 @@ export type Perm = 'jobs.view_all' | 'jobs.manage' | 'jobs.work_design' | 'jobs.
 
 /** One auth + profile + permission lookup per request (layout and page share it). */
 export const getMe = cache(async () => {
-  const sb = createClient();
+  const sb = await createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return null;
   const [{ data: profile }, { data: pm }] = await Promise.all([sb.from('profiles').select('*').eq('id', user.id).maybeSingle(), sb.rpc('my_permissions')]);

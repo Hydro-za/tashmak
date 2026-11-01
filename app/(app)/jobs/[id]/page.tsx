@@ -15,7 +15,8 @@ import { JOB_STATUS, fmtDate } from '@/lib/labels';
 import JobInvoicePanel from '@/components/JobInvoicePanel';
 
 export const dynamic = 'force-dynamic';
-export default async function JobPage({ params }: { params: { id: string } }) {
+export default async function JobPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = await paramsPromise;
   const me = await requirePerm('jobs.view_all'); const sb = me.sb; const canManage = me.can('jobs.manage');
   const b = await loadJobBundle(sb, params.id); if (!b) notFound();
   const { job, items, assignments, names } = b;

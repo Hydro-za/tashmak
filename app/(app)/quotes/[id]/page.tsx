@@ -10,7 +10,8 @@ import { setQuoteStatus, archiveRecord } from '@/lib/actions';
 import { money, fmtDate, fmtDateTime } from '@/lib/labels';
 
 export const dynamic = 'force-dynamic';
-export default async function QuotePage({ params }: { params: { id: string } }) {
+export default async function QuotePage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = await paramsPromise;
   const { sb } = await requireOwner();
   const q = await loadQuote(sb, params.id); if (!q) notFound();
   const [{ data: ss }, { data: act }, { data: dir }, { data: job }] = await Promise.all([

@@ -4,7 +4,8 @@ import { Top, Empty } from '@/components/ui';
 import RoleManager from '@/components/RoleManager';
 import OwnerManager from '@/components/OwnerManager';
 export const dynamic = 'force-dynamic';
-export default async function Employees({ searchParams }: { searchParams: { tab?: string } }) {
+export default async function Employees({ searchParams: searchParamsPromise }: { searchParams: Promise<{ tab?: string }> }) {
+  const searchParams = await searchParamsPromise;
   const { sb } = await requireOwner();
   const tab = ['roles', 'owners'].includes(searchParams.tab || '') ? searchParams.tab! : 'employees';
   const [directoryResult, workloadResult, rolesResult, permissionsResult, rolePermissionsResult, ownersResult] = await Promise.all([

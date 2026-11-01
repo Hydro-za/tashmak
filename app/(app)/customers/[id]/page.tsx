@@ -7,7 +7,8 @@ import ActionButton from '@/components/ActionButton';
 import { archiveRecord } from '@/lib/actions';
 import { money, fmtDate } from '@/lib/labels';
 export const dynamic = 'force-dynamic';
-export default async function CustomerPage({ params, searchParams }: { params: { id: string }; searchParams: { edit?: string } }) {
+export default async function CustomerPage({ params: paramsPromise, searchParams: searchParamsPromise }: { params: Promise<{ id: string }>; searchParams: Promise<{ edit?: string }> }) {
+  const [params, searchParams] = await Promise.all([paramsPromise, searchParamsPromise]);
   const me = await requirePerm('customers.view', 'customers.manage'); const sb = me.sb; const canEdit = me.can('customers.manage');
   const { data: c } = await sb.from('customers').select('*').eq('id', params.id).maybeSingle(); if (!c) notFound();
   const [{ data: quotes }, { data: jobs }] = await Promise.all([

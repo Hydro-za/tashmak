@@ -13,7 +13,7 @@ const ok = (data?: any, noop?: boolean): R => ({ ok: true, data, noop });
 const fail = (e: any): R => ({ ok: false, error: friendlyError(e) });
 async function rpc(fn: string, args: any): Promise<R> {
   try {
-    const sb = createClient();
+    const sb = await createClient();
     const { data, error } = await sb.rpc(fn, args);
     if (error) return fail(error);
     return ok(data, !!(data && data.noop));
@@ -32,7 +32,7 @@ export async function archiveRecord(kind: 'quote' | 'job' | 'customer', id: stri
 
 export async function startJob(input: { quoteId: string; dueDate: string | null; priority: string; designRequired: boolean; designApproval: boolean; designerId: string | null; productionIds: string[]; instructions: string; qc: Record<string, boolean> }): Promise<R> {
   try {
-    const sb = createClient();
+    const sb = await createClient();
     const [{ data: qi, error: e1 }, { data: mats }, { data: fins }] = await Promise.all([
       sb.from('quote_items').select('*').eq('quote_id', input.quoteId).order('position'),
       sb.from('materials').select('id,name,data'), sb.from('finishing_options').select('id,name,data')]);
@@ -70,7 +70,7 @@ async function notifyJobCompleted(jobId: string, completedBy: string) {
 export async function jobAction(jobId: string, action: string, note?: string | null): Promise<R> {
   const r = await rpc('job_action', { p_job: jobId, p_action: action, p_note: note || null });
   if (r.ok && !r.noop && action === 'production_complete' && r.data?.status === 'completed') {
-    try { const sb = createClient(); const { data: { user } } = await sb.auth.getUser(); if (user?.id) await notifyJobCompleted(jobId, user.id); }
+    try { const sb = await createClient(); const { data: { user } } = await sb.auth.getUser(); if (user?.id) await notifyJobCompleted(jobId, user.id); }
     catch (e) { console.error('Job completion email failed', e); }
   }
   revalidatePath('/jobs/' + jobId); revalidatePath('/my-jobs'); return r;
@@ -78,7 +78,7 @@ export async function jobAction(jobId: string, action: string, note?: string | n
 export async function assignJob(jobId: string, stage: string, userIds: string[]): Promise<R> {
   const r = await rpc('job_assign', { p_job: jobId, p_stage: stage, p_users: userIds });
   if (r.ok && !r.noop && userIds.length) {
-    const sb = createClient();
+    const sb = await createClient();
     const [{data: job},{data: customer},{data: employees}] = await Promise.all([
       sb.from('jobs').select('number,title,customer_name,customer_id,instructions').eq('id',jobId).maybeSingle(),
       sb.from('jobs').select('customer_id').eq('id',jobId).maybeSingle().then(async x=>x.data?.customer_id?sb.from('customers').select('name').eq('id',x.data.customer_id).maybeSingle():{data:null}),
@@ -103,7 +103,7 @@ export async function addNote(jobId: string, note: string): Promise<R> {
 export async function recordQc(jobId: string, itemId: string | null, result: string, checked: number, rejected: number, notes: string): Promise<R> {
   const r = await rpc('record_qc', { p_job: jobId, p_item: itemId, p_result: result, p_checked: checked, p_rejected: rejected, p_notes: notes || null });
   if (r.ok && r.data?.status === 'completed') {
-    try { const sb = createClient(); const { data: { user } } = await sb.auth.getUser(); if (user?.id) await notifyJobCompleted(jobId, user.id); }
+    try { const sb = await createClient(); const { data: { user } } = await sb.auth.getUser(); if (user?.id) await notifyJobCompleted(jobId, user.id); }
     catch (e) { console.error('Job completion email failed', e); }
   }
   revalidatePath('/jobs/' + jobId); return r;
@@ -143,7 +143,7 @@ export async function saveCustomer(v: { id?: string; name: string; company?: str
   if (v.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim())) return { ok: false, error: 'That email address does not look right.' };
   const row = { name, company: v.company?.trim() || null, phone: v.phone?.trim() || null, email: v.email?.trim() || null, address: v.address?.trim() || null, notes: v.notes?.trim() || null };
   try {
-    const sb = createClient(); let res;
+    const sb = await createClient(); let res;
     if (v.id) res = await sb.from('customers').update(row).eq('id', v.id).select('id').single();
     else { const { data: { user } } = await sb.auth.getUser(); res = await sb.from('customers').insert({ ...row, created_by: user?.id }).select('id').single(); }
     if (res.error) { if (res.error.code === '23505') return { ok: false, error: 'A customer with that name and company already exists.' }; return fail(res.error); }
@@ -210,7 +210,7 @@ export async function saveSystemSetting(key: string, value: any): Promise<R> {
   if (!['business', 'quotes', 'jobs', 'workflow', 'notifications'].includes(key)) return { ok: false, error: 'Unknown setting.' };
   const bad = validateSetting(key, value); if (bad) return { ok: false, error: bad };
   try {
-    const sb = createClient(); const { data: { user } } = await sb.auth.getUser();
+    const sb = await createClient(); const { data: { user } } = await sb.auth.getUser();
     const { error } = await sb.from('system_settings').update({ value, updated_by: user?.id }).eq('key', key);
     if (error) return fail(error); revalidatePath('/settings'); return ok();
   } catch (e) { return fail(e); }
@@ -219,7 +219,7 @@ export async function saveSystemSetting(key: string, value: any): Promise<R> {
 /* ---------- demo catalogue (placeholder pricing, clearly marked) ---------- */
 export async function loadDemoCatalogue(): Promise<R> {
   try {
-    const sb = createClient();
+    const sb = await createClient();
     const { count } = await sb.from('products').select('id', { count: 'exact', head: true });
     if (count && count > 0) return { ok: false, error: 'Products already exist — demo data was not loaded.' };
     const mod: any = await import('@/calculator/seed.js'); const seed = (mod.makeSeed || mod.default?.makeSeed)();
@@ -245,7 +245,7 @@ export async function saveQuoteAction(input: { customerId: string; requestId: st
     for (const [i, it] of items.entries()) {
       if (!it.product_name || !num(it.quantity) || it.quantity <= 0 || !num(it.unit_price) || it.unit_price < 0 || !num(it.line_total) || it.line_total < 0) return { ok: false, error: `Line ${i + 1} has invalid values.` };
     }
-    const sb = createClient(); let copiedFrom: string | null = null;
+    const sb = await createClient(); let copiedFrom: string | null = null;
     if (!q.id && q.copied_from_number) { const { data } = await sb.from('quotes').select('id').eq('number', q.copied_from_number).maybeSingle(); copiedFrom = data?.id || null; }
     const pq: any = { customer_id: input.customerId, quote_date: q.quote_date, valid_until: q.valid_until || '', reference: q.reference, notes: q.notes, terms: q.terms, payment_terms: q.payment_terms,
       discount: q.discount || {}, pricing_snapshot: q.pricing_snapshot || {}, totals: q.totals };
