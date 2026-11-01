@@ -7,13 +7,14 @@ export const metadata: Metadata = {
   description: 'Quotes, jobs and production for Tashmak Design & Print',
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icon.png', sizes: '512x512', type: 'image/png' },
-      { url: '/brand/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/brand/app-icon-64.png', sizes: '64x64', type: 'image/png' }
+      { url: '/brand/favicon.svg?v=20261101-full-mark', sizes: 'any', type: 'image/svg+xml' },
+      { url: '/favicon.ico?v=20261101-full-mark', sizes: 'any', type: 'image/x-icon' },
+      { url: '/icon.png?v=20261101-full-mark', sizes: '512x512', type: 'image/png' },
+      { url: '/brand/icon-192.png?v=20261101-full-mark', sizes: '192x192', type: 'image/png' },
+      { url: '/brand/app-icon-64.png?v=20261101-full-mark', sizes: '64x64', type: 'image/png' }
     ],
-    shortcut: '/favicon.ico',
-    apple: [{ url: '/apple-icon.png', sizes: '180x180', type: 'image/png' }]
+    shortcut: '/favicon.ico?v=20261101-full-mark',
+    apple: [{ url: '/apple-icon.png?v=20261101-full-mark', sizes: '180x180', type: 'image/png' }]
   },
   applicationName: 'Tashmak', appleWebApp: { capable: true, title: 'Tashmak', statusBarStyle: 'default' }, formatDetection: { telephone: false }
 };
