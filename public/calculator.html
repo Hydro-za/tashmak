@@ -1496,7 +1496,9 @@ function onWizardInput() {}
     return it;
   }
 
+  let initializedId;
   function init(p) {
+    if (p.__hostInitId !== undefined && p.__hostInitId === initializedId) { post('initialized', true); return; }
     quoteSession = null;
     quoteDirty = false;
     Object.keys(calculatorSessions).forEach(k => delete calculatorSessions[k]);
@@ -1527,7 +1529,7 @@ function onWizardInput() {}
       quoteSession = State.ed;
     }
     State.view = p.start === 'calc' ? 'calc' : 'editor'; State.params = p.start === 'calc' ? { profile: 'dtf' } : {};
-    buildBar(); render(true); post('initialized', true);
+    buildBar(); render(true); initializedId = p.__hostInitId; post('initialized', true);
   }
 
   function buildBar() {

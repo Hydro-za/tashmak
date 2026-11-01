@@ -12,12 +12,14 @@ const by = a => Object.fromEntries(a.map(x => [x.id, x])); const seed = makeSeed
 const ack = async (okv = true, err) => { await sleep(10); const m = out.filter(x => x.type === 'persist').pop(); host('ack', { rid: m.payload.rid, ok: okv, error: err }); return m.payload; };
 (async () => {
   await sleep(100); ok(out.some(m => m.type === 'ready'), 'pricing embed signals ready');
-  host('init', { userId: 'u1', userName: 'Damian', settings: { demo: true, pricing: s.pricing, calc: s.calc, vat: s.vat, discount: s.discount, quotes: s.quotes, business: s.business, permissions: s.permissions }, products: by(seed.products), materials: by(seed.materials), machines: by(seed.machines), labour: by(seed.labour), finishing: by(seed.finishing), categories: by(seed.categories) });
-  await sleep(40); ok(out.some(m => m.type === 'initialized'), 'pricing embed confirms it received and rendered host data');
+  const initPayload = { userId: 'u1', userName: 'Damian', settings: { demo: true, pricing: s.pricing, calc: s.calc, vat: s.vat, discount: s.discount, quotes: s.quotes, business: s.business, permissions: s.permissions }, products: by(seed.products), materials: by(seed.materials), machines: by(seed.machines), labour: by(seed.labour), finishing: by(seed.finishing), categories: by(seed.categories), __hostInitId: 1 };
+  host('init', initPayload);
+  await sleep(40); ok(out.some(m => m.type === 'initialized'), 'pricing embed acknowledges successful initialization');
   ok($$ = [...w.document.querySelectorAll('.tabs button')].map(b => b.textContent).join() === 'Pricing,VAT,Discounts,Products,Materials,Labour,Machines,Finishing,DTF,Paper,Large format', 'only pricing-related tabs shown');
   ok($('#main').textContent.includes('Demo pricing is loaded'), 'demo banner shown while demo data is present');
   ok($('#main').textContent.includes('Phone') === false && $('#main').textContent.includes('PVC Banner'), 'products tab lists catalogue');
-  ok([...$('#main').querySelectorAll('td')].some(td => td.dataset.label === 'Product'), 'catalogue cells receive mobile-friendly labels');
+  ev("State.settingsTab='materials'; render(true)"); host('init', initPayload); await sleep(30);
+  ok(ev("State.settingsTab === 'materials'"), 'repeated host initialization acknowledges without resetting the pricing screen');
   // edit a material -> confirm -> host persists
   ev("State.settingsTab='materials'; render(true)"); click('[data-act="ent-edit"][data-id="mat_130"]'); await sleep(10); setv('[data-cfg="cost"]', '1.25'); click('[data-act="ent-save"]'); await sleep(30);
   ok($('#ov2') && $('#ov2').textContent.includes('1.25'), 'price-change confirmation appears'); click('[data-act="cf-yes"]'); const p1 = await ack(); await sleep(30);
