@@ -1527,7 +1527,7 @@ function onWizardInput() {}
       quoteSession = State.ed;
     }
     State.view = p.start === 'calc' ? 'calc' : 'editor'; State.params = p.start === 'calc' ? { profile: 'dtf' } : {};
-    buildBar(); render(true);
+    buildBar(); render(true); post('initialized', true);
   }
 
   function buildBar() {
