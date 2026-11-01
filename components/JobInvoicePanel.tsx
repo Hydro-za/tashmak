@@ -115,10 +115,10 @@ export default function JobInvoicePanel({ snapshot, completion, jobStatus }: { s
             <thead><tr><th>Product / description</th><th className="r">Quantity</th><th className="r">Unit price</th><th className="r">Line total</th></tr></thead>
             <tbody>
               {products.map((line: any, index: number) => <tr key={line.id || index}>
-                <td><b>{line.product_name || 'Product'}</b>{(line.description || line.category_name) && <div className="muted">{[line.description, line.profile, line.item?.specText, line.item?.notes, line.category_name].filter(Boolean).join(' · ')}</div>}</td>
-                <td className="r">{line.quantity == null ? '—' : Number(line.quantity).toLocaleString('en-ZA')}</td>
-                <td className="r">{money(line.unit_price)}</td>
-                <td className="r"><b>{money(line.line_total)}</b></td>
+                <td data-label="Product / description"><b>{line.product_name || 'Product'}</b>{(line.description || line.category_name) && <div className="muted">{[line.description, line.profile, line.item?.specText, line.item?.notes, line.category_name].filter(Boolean).join(' · ')}</div>}</td>
+                <td className="r" data-label="Quantity">{line.quantity == null ? '—' : Number(line.quantity).toLocaleString('en-ZA')}</td>
+                <td className="r" data-label="Unit price">{money(line.unit_price)}</td>
+                <td className="r" data-label="Line total"><b>{money(line.line_total)}</b></td>
               </tr>)}
             </tbody>
           </table>
@@ -130,7 +130,7 @@ export default function JobInvoicePanel({ snapshot, completion, jobStatus }: { s
             <thead><tr><th>Accounting field</th><th>Enter in Sage</th></tr></thead>
             <tbody>
               {entries.map(([label, value]) => <tr key={label}>
-                <td>{label}</td><td><b>{value}</b></td>
+                <td data-label="Accounting field">{label}</td><td data-label="Enter in Sage"><b>{value}</b></td>
               </tr>)}
             </tbody>
           </table>

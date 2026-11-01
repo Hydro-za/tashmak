@@ -7,7 +7,8 @@ import { Top } from '@/components/ui';
 import { todaySA } from '@/lib/labels';
 
 export const dynamic = 'force-dynamic';
-export default async function StartJobPage({ params }: { params: { id: string } }) {
+export default async function StartJobPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = await paramsPromise;
   const { sb } = await requireOwner();
   const q = await loadQuote(sb, params.id); if (!q) notFound();
   if (q.job_id) redirect('/jobs/' + q.job_id);

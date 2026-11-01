@@ -6,7 +6,8 @@ import LoadDemo from '@/components/LoadDemo';
 import { Top } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
-export default async function NewQuote({ searchParams }: { searchParams: { customer?: string } }) {
+export default async function NewQuote({ searchParams: searchParamsPromise }: { searchParams: Promise<{ customer?: string }> }) {
+  const searchParams = await searchParamsPromise;
   const { sb, user, profile } = await requireOwner();
   const cfg = await loadCalcConfig(sb);
   const customers = await loadQuoteCustomers(sb);

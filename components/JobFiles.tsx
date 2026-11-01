@@ -18,7 +18,7 @@ export default function JobFiles({ jobId, files, urls, names, canFinal, itemName
             <div className="muted" style={{ fontSize: 12 }}>{KIND[f.kind] || f.kind}{ART.includes(f.kind) ? ` · v${f.version}` : ''}{f.job_item_id && itemNames[f.job_item_id] ? ' · ' + itemNames[f.job_item_id] : ''} · {names[f.uploaded_by] || 'Someone'} · {fmtDateTime(f.created_at)}</div></div>
           {canFinal && ART.includes(f.kind) && !f.is_final && <ActionButton className="btn sm" label="Mark FINAL" action={setFinalFile} args={[jobId, f.id]} successText="Marked as final" reconfirm="Production has already started. Replacing the approved production file will notify production. Why is it being replaced?" confirmText={productionStarted ? 'Production has already started — replace the approved production file?' : undefined} />}
         </div>))}
-      {photos.length > 0 && <><div className="lbl" style={{ margin: '12px 0 6px' }}>Photos</div><div className="thumbs">{photos.map(p => <a key={p.id} href={urls[p.id]} target="_blank" rel="noreferrer"><img src={urls[p.id]} alt={p.file_name} /></a>)}</div></>}
+      {photos.length > 0 && <><div className="lbl" style={{ margin: '12px 0 6px' }}>Photos</div><div className="thumbs">{photos.map(p => <a key={p.id} href={urls[p.id]} target="_blank" rel="noreferrer"><img src={urls[p.id]} alt={p.file_name} width={160} height={120} loading="lazy" decoding="async" /></a>)}</div></>}
     </div>
   );
 }

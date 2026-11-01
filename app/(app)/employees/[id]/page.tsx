@@ -7,7 +7,8 @@ import Timeline from '@/components/Timeline';
 import { staffNames } from '@/lib/jobs';
 import { FINAL_JOB, fmtDate } from '@/lib/labels';
 export const dynamic = 'force-dynamic';
-export default async function EmployeePage({ params }: { params: { id: string } }) {
+export default async function EmployeePage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = await paramsPromise;
   const { sb } = await requireOwner();
   const { data: profile } = await sb.from('profiles').select('*').eq('id', params.id).maybeSingle(); if (!profile || profile.role === 'owner') notFound();
   const { data: recovery, error: recoveryError } = await sb.from('employee_recovery').select('email').eq('user_id', profile.id).maybeSingle();

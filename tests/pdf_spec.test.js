@@ -1,7 +1,7 @@
 // Compiles lib/*.ts on the fly (see package.json "test:logic") and checks PDF + employee-safe spec building.
 const path = require('path'); const dir = process.env.COMPILED || '/tmp/pdft';
 const { buildQuotePdf } = require(path.join(dir, 'quotePdf.js')); const { buildSpec } = require(path.join(dir, 'spec.js'));
-const { overdueDays, friendlyError, money } = require(path.join(dir, 'labels.js'));
+const { overdueDays, friendlyError, money, todaySA } = require(path.join(dir, 'labels.js'));
 let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; console.log('  FAIL:', m); } };
 (async () => {
   const q = { number: 'Q-1001', quote_date: '2026-10-02', valid_until: '2026-10-16', reference: 'PO-77', customers: { name: 'Acme Traders', company: 'Acme (Pty) Ltd', phone: '082 000 0000', email: 'jo@acme.co.za' },
@@ -25,7 +25,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   const paper = buildSpec({ profile: 'paper', qty: 500, w: 90, h: 55, unit: 'mm', materialId: 'm1', sides: 2, colour: 'colour' }, ctx);
   ok(paper.some(r => r.label === 'Print sides' && r.value === 'Double-sided') && !paper.some(r => r.label === 'Garment colour'), 'paper spec has print sides and no garment fields');
   // helpers
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Johannesburg' }); const d2 = new Date(today + 'T12:00:00Z'); d2.setUTCDate(d2.getUTCDate() - 2);
+  const today = todaySA(); const d2 = new Date(today + 'T12:00:00Z'); d2.setUTCDate(d2.getUTCDate() - 2);
   ok(overdueDays(d2.toISOString().slice(0, 10), 'in_production') === 2 && overdueDays(d2.toISOString().slice(0, 10), 'completed') === 0 && overdueDays(today, 'queued') === 0, 'overdue days: 2 / finished = 0 / due today = 0');
   ok(friendlyError(new Error('invalid_transition: x')).includes('not available') && friendlyError({ message: 'permission denied for table jobs' }).includes('permission') && money(1234.5) === 'R1,234.50', 'friendly errors and money format');
   console.log(`\nLogic: ${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

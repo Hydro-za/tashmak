@@ -22,9 +22,14 @@ const sa = (d: any, o: Intl.DateTimeFormatOptions) => new Date(d).toLocaleString
 export const fmtDate = (d: any) => d ? sa(String(d).length === 10 ? d + 'T12:00:00' : d, { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 export const fmtDateTime = (d: any) => d ? sa(d, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
 export const fmtTime = (d: any) => d ? sa(d, { hour: '2-digit', minute: '2-digit' }) : '';
-export const todaySA = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Johannesburg' });
+export const todaySA = () => {
+  const parts = new Intl.DateTimeFormat('en', { timeZone: 'Africa/Johannesburg', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+  const part = (type: string) => parts.find(x => x.type === type)?.value || '';
+  return `${part('year')}-${part('month')}-${part('day')}`;
+};
+const DEADLINE_DONE = ['completed', 'ready_collection', 'ready_delivery', 'collected', 'delivered', 'ready_invoice', ...FINAL_JOB];
 export function overdueDays(due: string | null, status: string) {
-  if (!due || FINAL_JOB.includes(status)) return 0;
+  if (!due || DEADLINE_DONE.includes(status)) return 0;
   const t = todaySA(); if (due >= t) return 0;
   return Math.round((new Date(t + 'T00:00:00Z').getTime() - new Date(due + 'T00:00:00Z').getTime()) / 86400000);
 }
@@ -75,7 +80,7 @@ export const isCompletedJob = (j: { status: string }) => j.status === 'job_done'
 export const QC_LABEL: Record<string, { label: string; tone: string }> = { not_checked: { label: 'Not Checked', tone: 'draft' }, passed: { label: 'Passed', tone: 'accepted' }, not_passed: { label: 'Not Passed', tone: 'rejected' } };
 /** 'overdue' once past due; 'soon' when due today, tomorrow or the day after. Finished jobs never flag. */
 export function dueState(due: string | null, status: string): 'overdue' | 'soon' | null {
-  if (!due || FINAL_JOB.includes(status)) return null;
+  if (!due || DEADLINE_DONE.includes(status)) return null;
   const t = todaySA(); if (due < t) return 'overdue';
   const lim = new Date(t + 'T12:00:00Z'); lim.setUTCDate(lim.getUTCDate() + 2);
   return due <= lim.toISOString().slice(0, 10) ? 'soon' : null;

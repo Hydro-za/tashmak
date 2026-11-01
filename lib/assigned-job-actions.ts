@@ -5,7 +5,7 @@ import { jobAction as runJobAction } from '@/lib/actions';
 
 export async function assignedJobAction(jobId: string, action: string, note?: string | null) {
   if (action === 'design_start' || action === 'production_start') {
-    const sb = createClient();
+    const sb = await createClient();
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return { ok: false, error: 'Please sign in again.' };
     const stage = action === 'design_start' ? 'design' : 'production';

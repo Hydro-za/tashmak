@@ -12,7 +12,8 @@ import JobProgressActions from '@/components/JobProgressActions';
 import { fmtDate, JOB_STATUS } from '@/lib/labels';
 
 export const dynamic = 'force-dynamic';
-export default async function MyJob({ params }: { params: { id: string } }) {
+export default async function MyJob({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = await paramsPromise;
   const me = await requireEmployee(); const sb = me.sb;
   const b = await loadJobBundle(sb, params.id); if (!b) notFound();
   const { job, items, names } = b; const s = job.status;

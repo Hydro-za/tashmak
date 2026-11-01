@@ -4,7 +4,8 @@ import { Top } from '@/components/ui';
 import { staffNames } from '@/lib/jobs';
 import { FINAL_JOB, JOB_STATUS, overdueDays, fmtDate, todaySA } from '@/lib/labels';
 export const dynamic = 'force-dynamic';
-export default async function Reports({ searchParams }: { searchParams: { from?: string; to?: string } }) {
+export default async function Reports({ searchParams: searchParamsPromise }: { searchParams: Promise<{ from?: string; to?: string }> }) {
+  const searchParams = await searchParamsPromise;
   const me = await requirePerm('reports.view'); const sb = me.sb;
   const t = todaySA(); const d = new Date(t + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - 30);
   const from = searchParams.from || d.toISOString().slice(0, 10), to = searchParams.to || t;
@@ -18,7 +19,7 @@ export default async function Reports({ searchParams }: { searchParams: { from?:
   const byCat = tally(j => [...new Set<string>(j.job_items.map((i: any) => i.category_name || 'Other'))]);
   const byEmp = tally(j => [...new Set<string>(j.job_assignments.filter((a: any) => a.active).map((a: any) => names[a.user_id] || 'Unknown'))]);
   const overdue = all.filter((j: any) => overdueDays(j.due_date, j.status) > 0);
-  const table = (title: string, rows: [string, number][]) => <div className="card"><h2>{title}</h2>{rows.length ? <table className="tbl"><tbody>{rows.map(([k, v]) => <tr key={k}><td>{k}</td><td className="r"><b>{v}</b></td></tr>)}</tbody></table> : <p className="muted">No data in this period.</p>}</div>;
+  const table = (title: string, rows: [string, number][]) => <div className="card"><h2>{title}</h2>{rows.length ? <table className="tbl"><tbody>{rows.map(([k, v]) => <tr key={k}><td data-label="Category">{k}</td><td className="r" data-label="Jobs"><b>{v}</b></td></tr>)}</tbody></table> : <p className="muted">No data in this period.</p>}</div>;
   const list = (title: string, rows: any[]) => <div className="card"><h2>{title} ({rows.length})</h2>{rows.slice(0, 15).map((j: any) => <div className="linkrow" key={j.id}><Link href={'/jobs/' + j.id}><b>{j.number}</b> · {j.customer_name}</Link><span>{fmtDate(j.due_date)}</span></div>)}{!rows.length && <p className="muted">None.</p>}</div>;
   return (<><Top title="Reports" sub="Operational reports — no accounting" />
     <form className="card" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'end' }}><div className="field"><label>From</label><input type="date" name="from" defaultValue={from} /></div><div className="field"><label>To</label><input type="date" name="to" defaultValue={to} /></div><button className="btn primary">Update</button></form>
