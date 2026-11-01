@@ -5,10 +5,19 @@ import ToastHost from '@/components/ToastHost';
 export const metadata: Metadata = {
   title: { default: 'Tashmak Design & Print', template: '%s · Tashmak' },
   description: 'Quotes, jobs and production for Tashmak Design & Print',
-  icons: { icon: '/icon.png', shortcut: '/icon.png', apple: '/apple-icon.png' },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', sizes: '512x512', type: 'image/png' },
+      { url: '/brand/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/brand/app-icon-64.png', sizes: '64x64', type: 'image/png' }
+    ],
+    shortcut: '/favicon.ico',
+    apple: [{ url: '/apple-icon.png', sizes: '180x180', type: 'image/png' }]
+  },
   applicationName: 'Tashmak', appleWebApp: { capable: true, title: 'Tashmak', statusBarStyle: 'default' }, formatDetection: { telephone: false }
 };
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: [{ media: '(prefers-color-scheme: light)', color: '#2563eb' }, { media: '(prefers-color-scheme: dark)', color: '#0d1214' }] };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: [{ media: '(prefers-color-scheme: light)', color: '#0f1314' }, { media: '(prefers-color-scheme: dark)', color: '#0f1314' }] };
 
 // Applies the saved theme before first paint (no white flash in dark mode). 'system' = no saved choice.
 const THEME_JS = "try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}";
