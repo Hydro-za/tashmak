@@ -18,7 +18,7 @@ export default async function Quotes({ searchParams }: { searchParams: { q?: str
     <div className="chips">{chip('All', {}, !searchParams.status && !searchParams.archived)}{Object.entries(QUOTE_STATUS).map(([k, v]) => chip(v.label, { status: k }, searchParams.status === k))}{chip('Archived', { archived: '1' }, !!searchParams.archived)}</div>
     {!rows.length ? <Empty text="No quotes found." action={<Link className="btn primary" href="/quotes/new">Create a quote</Link>} /> :
       <div className="card"><div className="tblwrap"><table className="tbl"><thead><tr><th>Quote</th><th>Customer</th><th>Date</th><th>Valid until</th><th>Status</th><th className="r">Total</th></tr></thead><tbody>
-        {rows.map((r: any) => <tr key={r.id} className="click"><td><Link href={'/quotes/' + r.id}><b>{r.number}</b></Link></td><td>{r.customers?.name}{r.customers?.company ? <div className="muted">{r.customers.company}</div> : null}</td><td>{fmtDate(r.quote_date)}</td><td>{fmtDate(r.valid_until)}</td><td><StatusBadge kind="quote" status={r.status} /></td><td className="r">{money(r.total)}</td></tr>)}
+        {rows.map((r: any) => <tr key={r.id} className="click"><td data-label="Quote"><Link href={'/quotes/' + r.id}><b>{r.number}</b></Link></td><td data-label="Customer">{r.customers?.name}{r.customers?.company ? <div className="muted">{r.customers.company}</div> : null}</td><td data-label="Date">{fmtDate(r.quote_date)}</td><td data-label="Valid until">{fmtDate(r.valid_until)}</td><td data-label="Status"><StatusBadge kind="quote" status={r.status} /></td><td className="r" data-label="Total">{money(r.total)}</td></tr>)}
       </tbody></table></div></div>}
   </div>);
 }
