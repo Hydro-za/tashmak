@@ -24,6 +24,7 @@ export default async function Dashboard() {
   const readyForHandoff = all.filter((j: any) => ['ready_collection', 'ready_delivery'].includes(j.status));
   const readyForInvoice = all.filter((j: any) => j.status === 'ready_invoice');
   const attention = [...new Map([...dueToday, ...active.filter((j: any) => j.status === 'qc')].map(j => [j.id, j])).values()].sort(sortJobs);
+  const showTeam = me.can('employees.view');
   const stat = (label: string, value: number, href: string, danger = false) => <Link href={href} className="stat" style={{ textDecoration: 'none', borderColor: danger && value ? 'var(--bad)' : undefined }}><div className="k">{label}</div><div className="v" style={{ color: danger && value ? 'var(--bad)' : undefined }}>{value}</div></Link>;
 
   return <div className="page-dashboard">
@@ -43,21 +44,23 @@ export default async function Dashboard() {
       {stat('Ready for invoice', readyForInvoice.length, '/jobs?status=ready_invoice')}
     </div>
 
-    <div className="card">
-      <h2>Needs attention <span className="muted" style={{ fontWeight: 400 }}>({attention.length})</span></h2>
-      {attention.slice(0, 8).map((j: any) => <div className="linkrow" key={j.id}>
-        <Link href={'/jobs/' + j.id}><b>{j.title || j.number}</b> · {j.customer_name}</Link>
-        <span><PrioBadge p={j.priority} /> {j.status === 'qc' ? 'Awaiting QC' : fmtDate(j.due_date)}</span>
-      </div>)}
-      {!attention.length && <p className="muted">No due today or QC jobs. You’re up to date.</p>}
-      {attention.length > 8 && <p className="muted">Showing 8 of {attention.length}. <Link href="/jobs">View all jobs</Link></p>}
-    </div>
+    <div className={`grid g2 dashboard-panels${showTeam ? '' : ' single'}`}>
+      <div className="card">
+        <h2>Needs attention <span className="muted" style={{ fontWeight: 400 }}>({attention.length})</span></h2>
+        {attention.slice(0, 8).map((j: any) => <div className="linkrow" key={j.id}>
+          <Link href={'/jobs/' + j.id}><b>{j.title || j.number}</b> · {j.customer_name}</Link>
+          <span><PrioBadge p={j.priority} /> {j.status === 'qc' ? 'Awaiting QC' : fmtDate(j.due_date)}</span>
+        </div>)}
+        {!attention.length && <p className="muted">No due today or QC jobs. You’re up to date.</p>}
+        {attention.length > 8 && <p className="muted">Showing 8 of {attention.length}. <Link href="/jobs">View all jobs</Link></p>}
+      </div>
 
-    {me.can('employees.view') && <div className="card">
-      <h2>Team workload</h2>
-      {(workload || []).length ? <div className="tblwrap"><table className="tbl"><thead><tr><th>Employee</th><th className="r">Active jobs</th></tr></thead><tbody>
-        {(workload || []).map((w: any) => <tr key={w.user_id}><td data-label="Employee"><Link href={'/employees/' + w.user_id}><b>{w.full_name}</b></Link></td><td className="r" data-label="Active jobs">{w.active_jobs}</td></tr>)}
-      </tbody></table></div> : <p className="muted">No team workload to show.</p>}
-    </div>}
+      {showTeam && <div className="card">
+        <h2>Team workload</h2>
+        {(workload || []).length ? <div className="tblwrap"><table className="tbl"><thead><tr><th>Employee</th><th className="r">Active jobs</th></tr></thead><tbody>
+          {(workload || []).map((w: any) => <tr key={w.user_id}><td data-label="Employee"><Link href={'/employees/' + w.user_id}><b>{w.full_name}</b></Link></td><td className="r" data-label="Active jobs">{w.active_jobs}</td></tr>)}
+        </tbody></table></div> : <p className="muted">No team workload to show.</p>}
+      </div>}
+    </div>
   </div>;
 }

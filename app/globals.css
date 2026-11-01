@@ -627,3 +627,61 @@ h1,h2,h3,p,a,button,label,td,th,.muted,.badge,.stat .v,.linkrow>*{overflow-wrap:
  .mobile-nav-panel{left:10px;bottom:calc(72px + env(safe-area-inset-bottom,0px));width:min(420px,calc(100vw - 20px))}
  .embed-state{min-height:64px}
 }
+
+/* Dashboard refinement: quieter surfaces, clear grouping, and useful motion. */
+.page-dashboard .stats .stat{
+ background:var(--card);backdrop-filter:none;-webkit-backdrop-filter:none;
+ border-color:var(--line);border-radius:16px;box-shadow:0 3px 14px rgba(0,0,0,.045)
+}
+.page-dashboard .stats .stat:after{display:none}
+.page-dashboard .stats .stat:hover{transform:translateY(-1px);background:var(--glass-heavy);box-shadow:0 6px 18px rgba(0,0,0,.075)}
+.page-dashboard .dashboard-panels{align-items:stretch;gap:16px;margin:16px 0}
+.page-dashboard .dashboard-panels.single{grid-template-columns:minmax(0,1fr)}
+.page-dashboard .dashboard-panels>.card{
+ min-width:0;min-height:0;margin:0;background:var(--card);backdrop-filter:none;-webkit-backdrop-filter:none;
+ border:1px solid var(--line);border-radius:16px;box-shadow:0 3px 14px rgba(0,0,0,.045)
+}
+.page-dashboard .dashboard-panels .linkrow{min-width:0;gap:12px}
+.page-dashboard .dashboard-panels .linkrow>a{min-width:0;overflow-wrap:anywhere}
+.page-dashboard .dashboard-panels .linkrow>span{flex-shrink:0}
+.page-dashboard>.alert{background:var(--info-bg);backdrop-filter:none;-webkit-backdrop-filter:none}
+.page-dashboard>.top,.page-dashboard>.alert,.page-dashboard>.stats,.page-dashboard>.dashboard-panels{animation:td-dashboard-enter .38s cubic-bezier(.2,.75,.25,1) both}
+.page-dashboard>.alert{animation-delay:35ms}.page-dashboard>.stats{animation-delay:70ms}.page-dashboard>.dashboard-panels{animation-delay:105ms}
+@keyframes td-dashboard-enter{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:820px){
+ .main{padding-bottom:calc(118px + env(safe-area-inset-bottom,0px))}
+ .bottom{
+  display:flex;position:fixed;left:50%;right:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  width:min(540px,calc(100vw - 28px));transform:translateX(-50%);padding:6px;
+  border:1px solid var(--glass-border);border-radius:21px;background:var(--glass-heavy);
+  box-shadow:0 12px 34px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.09);
+  backdrop-filter:blur(24px) saturate(150%);-webkit-backdrop-filter:blur(24px) saturate(150%);
+  animation:td-nav-enter .42s cubic-bezier(.2,.75,.25,1) both
+ }
+ .bottom a{
+  position:relative;z-index:0;display:flex;flex:1;min-width:0;min-height:50px;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;padding:5px 2px;border-radius:14px;
+  color:var(--muted);text-decoration:none;font-size:10px;font-weight:600;line-height:1.1;
+  -webkit-tap-highlight-color:transparent
+ }
+ .bottom a:before{
+  content:"";position:absolute;z-index:-1;inset:2px 3px;border-radius:14px;background:var(--accent-soft);
+  opacity:0;transform:scale(.82);transition:opacity .22s ease,transform .32s cubic-bezier(.2,.8,.2,1),border-radius .32s ease
+ }
+ .bottom a.on{color:var(--ink)}
+ .bottom a.on:before{opacity:1;transform:scale(1);border-radius:13px}
+ .bottom a svg{width:19px;height:19px;transition:transform .28s cubic-bezier(.2,.8,.2,1),color .2s ease}
+ .bottom a.on svg{color:var(--accent);transform:translateY(-1px) scale(1.04)}
+ .bottom a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+ .page-dashboard .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .page-dashboard .stats .stat{min-height:80px;padding:13px;border-radius:14px}
+ .page-dashboard .stats .stat .v{font-size:22px}
+ .page-dashboard .dashboard-panels{gap:10px;margin:12px 0}
+ .page-dashboard .dashboard-panels>.card{padding:15px;border-radius:14px}
+}
+@keyframes td-nav-enter{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
+@media(prefers-reduced-motion:reduce){
+ .page-dashboard>.top,.page-dashboard>.alert,.page-dashboard>.stats,.page-dashboard>.dashboard-panels,.bottom{animation:none}
+ .bottom a:before,.bottom a svg{transition:none}
+}

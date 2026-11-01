@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Logo, { LogoMark } from './Logo';
@@ -32,7 +32,7 @@ function navFor(isOwner: boolean, perms: string[]): Item[] {
 }
 
 export default function Shell({ name, roleName, isOwner, perms, unread, children }: ShellProps) {
-  const path = usePathname(); const router = useRouter(); const [menuOpen, setMenuOpen] = useState(false);
+  const path = usePathname(); const [menuOpen, setMenuOpen] = useState(false);
   const items = navFor(isOwner, perms);
   const on = (h: string) => path === h || path.startsWith(h + '/');
   useEffect(() => setMenuOpen(false), [path]);
@@ -44,7 +44,7 @@ export default function Shell({ name, roleName, isOwner, perms, unread, children
   }, [menuOpen]);
   async function signOut() { await createClient().auth.signOut(); window.location.href = '/login'; }
   const primary = isOwner
-    ? ['/dashboard', '/jobs', '/quotes', '/products'].map(href => items.find(item => item.href === href)).filter((item): item is Item => !!item)
+    ? ['/dashboard', '/jobs', '/quotes', '/products', '/customers'].map(href => items.find(item => item.href === href)).filter((item): item is Item => !!item)
     : items.slice(0, Math.min(4, items.length));
   const primaryHrefs = new Set(primary.map(item => item.href));
   const rest = items.filter(item => !primaryHrefs.has(item.href));
@@ -70,8 +70,8 @@ export default function Shell({ name, roleName, isOwner, perms, unread, children
           <NotificationBell initialUnread={unread} jobBase={viewAll ? '/jobs' : '/my-jobs'} canQuotes={isOwner} /></div>
         {children}
       </main>
-      <nav className="bottom glass-surface">
-        {primary.map(i => <button key={i.href} className={on(i.href) ? 'on' : ''} onClick={() => router.push(i.href)}><NavIcon name={i.icon} /><span>{i.label.split(' ')[0]}</span></button>)}
+      <nav className="bottom glass-surface" aria-label="Primary navigation">
+        {primary.map(i => <Link key={i.href} href={i.href} className={on(i.href) ? 'on' : ''} aria-current={on(i.href) ? 'page' : undefined}><NavIcon name={i.icon} /><span>{i.label === 'Products & Pricing' ? 'Products' : i.label.split(' ')[0]}</span></Link>)}
       </nav>
       {menuOpen && <nav id="mobile-navigation" className="mobile-nav-panel" aria-label="Workspace navigation">
         {navGroups.map(group => <section className="mobile-nav-group" key={group.title}>
