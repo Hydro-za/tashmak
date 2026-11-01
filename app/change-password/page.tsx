@@ -38,7 +38,7 @@ export default function ChangePassword() {
     {success ? <>
       <h1 style={{ fontSize: 22 }}>Password updated</h1>
       <p className="muted">Your password has been changed successfully. You can now sign in using your new password.</p>
-      <a className="btn primary" href="/login" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>Back to sign in</a>
+      <a className="btn primary" href="/login?mode=signin" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>Back to sign in</a>
     </> : <>
       <h1 style={{ fontSize: 22 }}>Reset your password</h1>
       <p className="muted">If the account matches, a four-digit code has been sent to its registered recovery email. If you requested the code using your username, enter the recovery email linked to that account below. Requests are limited to one every 60 seconds; check your spam folder and use the newest code. Codes expire after 10 minutes and can only be used once.</p>
@@ -49,7 +49,7 @@ export default function ChangePassword() {
         <div className="field"><label>Repeat new password</label><PasswordInput value={b} onChange={setB} autoComplete="new-password" required /></div>
         {err && <div className="alert bad" role="alert">{err}</div>}
         <button className="btn primary" disabled={busy}>{busy ? 'Verifying…' : 'Verify code and save password'}</button>
-        <a className="btn ghost sm" href="/login" style={{ textAlign: 'center', textDecoration: 'none' }}>Back to sign in</a>
+        <a className="btn ghost sm" href="/login?mode=signin" style={{ textAlign: 'center', textDecoration: 'none' }}>Back to sign in</a>
       </form>
     </>}
   </div></div>;
