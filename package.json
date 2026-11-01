@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node tests/engine.test.js && node tests/calc_embed.test.js && node tests/pricing_embed.test.js && npm run test:logic",
+    "test": "node tests/engine.test.js && node tests/calc_embed.test.js && node tests/pricing_embed.test.js && node tests/security_headers.test.js && npm run test:logic",
     "test:logic": "tsc lib/labels.ts lib/quotePdf.ts lib/spec.ts --outDir .tsout --module commonjs --target es2020 --skipLibCheck --esModuleInterop && node tests/run_pdf_spec.js"
   },
   "dependencies": {
