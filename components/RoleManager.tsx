@@ -5,9 +5,10 @@ const groups:[string,string[]][]=[
  ['Customers',['customers.view','customers.manage']],
  ['Employees',['employees.view','employees.manage','roles.manage']],
  ['Accounting & operations',['salary.view','salary.manage','labour.manage']],
+ ['Stock management',['stock.view','stock.receive','stock.adjust','stock.history']],
  ['Reports & settings',['reports.view','notifications.manage','settings.manage']]
 ];
-const labels:Record<string,string>={'jobs.view_all':'View jobs','jobs.manage':'Manage jobs','jobs.work_design':'Design work','jobs.work_production':'Production work','customers.view':'View customers','customers.manage':'Manage customers','employees.view':'View employees','employees.manage':'Manage employees','roles.manage':'Manage roles','qc.perform':'Quality checks','salary.view':'View salary','salary.manage':'Manage salary','labour.manage':'Manage labour','settings.manage':'Manage settings','notifications.manage':'Manage notifications','reports.view':'View reports'};
+const labels:Record<string,string>={'jobs.view_all':'View jobs','jobs.manage':'Manage jobs','jobs.work_design':'Design work','jobs.work_production':'Production work','customers.view':'View customers','customers.manage':'Manage customers','employees.view':'View employees','employees.manage':'Manage employees','roles.manage':'Manage roles','qc.perform':'Quality checks','salary.view':'View salary','salary.manage':'Manage salary','labour.manage':'Manage labour','settings.manage':'Manage settings','notifications.manage':'Manage notifications','reports.view':'View reports','stock.view':'View stock','stock.receive':'Receive stock','stock.adjust':'Adjust stock','stock.history':'View stock history'};
 const allPermissions=groups.flatMap(([,items])=>items);
 export default function RoleManager({roles,permissions,rolePerms}:{roles:any[];permissions:string[];rolePerms:any[]}){
  const router=useRouter();const [selected,setSelected]=useState<any>(null);const [creating,setCreating]=useState(false);const [name,setName]=useState('');const [description,setDescription]=useState('');const [perms,setPerms]=useState<string[]>([]);const [busy,setBusy]=useState(false);
