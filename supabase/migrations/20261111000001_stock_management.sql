@@ -22,7 +22,7 @@ create table public.stock_items (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create unique index stock_items_material_uq on public.stock_items(material_id) where material_id is not null;
+drop policy if exists materials_r on public.materials;\ncreate policy materials_stock_read on public.materials for select to authenticated using ((select public.is_owner()) or (select public.has_perm('stock.view')) or (select public.has_perm('stock.receive')) or (select public.has_perm('stock.adjust')) or (select public.has_perm('stock.history')));\n\ncreate unique index stock_items_material_uq on public.stock_items(material_id) where material_id is not null;
 create index stock_items_name_idx on public.stock_items(lower(name));
 
 create table public.stock_movements (
@@ -119,3 +119,53 @@ end $$;
 
 revoke all on function public.stock_snapshot(), public.stock_create_item(text,text,numeric,text,text), public.stock_receive(uuid,numeric,text,text), public.stock_adjust(uuid,numeric,text) from public, anon;
 grant execute on function public.stock_snapshot(), public.stock_create_item(text,text,numeric,text,text), public.stock_receive(uuid,numeric,text,text), public.stock_adjust(uuid,numeric,text) to authenticated;
+
+-- Keep estimated material quantities from the quote line on each job item.
+alter table public.job_items add column if not exists stock_usage jsonb not null default '[]'::jsonb
+  check (jsonb_typeof(stock_usage) = 'array');
+
+do $$
+declare fn oid; body text; old_sql text; new_sql text;
+begin
+  select p.oid into fn from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public' and p.proname='start_job' and pg_get_function_identity_arguments(p.oid) like 'p_quote uuid%';
+  if fn is null then raise exception 'start_job function not found'; end if;
+  body := pg_get_functiondef(fn);
+  old_sql := 'insert into public.job_items(job_id, position, quote_item_id, product_name, category_name, profile, qty_ordered, spec, instructions, requires_qc)' || chr(10) ||
+    '    values (jid, pos, (it ->> ''quote_item_id'')::uuid, it ->> ''product_name'', it ->> ''category_name'', it ->> ''profile'', (it ->> ''qty_ordered'')::numeric,' || chr(10) ||
+    '      coalesce(it -> ''spec'', ''[]''::jsonb), it ->> ''instructions'', coalesce((it ->> ''requires_qc'')::boolean, false));';
+  new_sql := 'insert into public.job_items(job_id, position, quote_item_id, product_name, category_name, profile, qty_ordered, spec, instructions, requires_qc, stock_usage)' || chr(10) ||
+    '    values (jid, pos, (it ->> ''quote_item_id'')::uuid, it ->> ''product_name'', it ->> ''category_name'', it ->> ''profile'', (it ->> ''qty_ordered'')::numeric,' || chr(10) ||
+    '      coalesce(it -> ''spec'', ''[]''::jsonb), it ->> ''instructions'', coalesce((it ->> ''requires_qc'')::boolean, false), coalesce(it -> ''stock_usage'', ''[]''::jsonb));';
+  if position(old_sql in body)=0 then raise exception 'Could not locate start_job item insert for safe rewrite'; end if;
+  body := replace(body, old_sql, new_sql);
+  execute body;
+end $$;
+
+-- Deduct quoted material estimates exactly once when a job reaches Completed.
+create or replace function public.stock_deduct_completed_job() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare ji record; usage_row jsonb; material_key text; used numeric; stock public.stock_items%rowtype; ref text;
+begin
+  if new.status <> 'completed' or old.status = 'completed' then return new; end if;
+  for ji in select id, stock_usage from public.job_items where job_id=new.id loop
+    for usage_row in select value from jsonb_array_elements(coalesce(ji.stock_usage,'[]'::jsonb)) loop
+      material_key := usage_row ->> 'materialId';
+      used := coalesce((usage_row ->> 'quantity')::numeric,0);
+      if material_key is null or used <= 0 then continue; end if;
+      ref := 'job:' || new.id::text || ':item:' || ji.id::text || ':material:' || material_key;
+      if exists(select 1 from public.stock_movements where reference=ref and movement_type='consumption') then continue; end if;
+      select * into stock from public.stock_items where material_id=material_key and active for update;
+      if not found then continue; end if;
+      update public.stock_items set quantity=quantity-used,updated_at=now(),updated_by=new.production_completed_by
+        where id=stock.id and quantity >= used returning * into stock;
+      if not found then raise exception 'insufficient_stock:%:required:%:available:%', stock.name, used, stock.quantity; end if;
+      insert into public.stock_movements(stock_item_id,movement_type,quantity_change,quantity_after,reference,note,performed_by)
+        values(stock.id,'consumption',-used,stock.quantity,ref,'Automatically deducted when job ' || new.number || ' was marked completed',coalesce(new.production_completed_by,auth.uid()));
+    end loop;
+  end loop;
+  return new;
+end $$;
+create trigger stock_deduct_when_job_completed after update of status on public.jobs
+  for each row execute function public.stock_deduct_completed_job();
+revoke all on function public.stock_deduct_completed_job() from public, anon, authenticated;
