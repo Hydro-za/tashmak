@@ -162,9 +162,10 @@ begin
       if exists(select 1 from public.stock_movements where reference=ref and movement_type='consumption') then continue; end if;
       select * into stock from public.stock_items where material_id=material_key and active for update;
       if not found then continue; end if;
+      available_qty := stock.quantity; stock_name := stock.name;
       update public.stock_items set quantity=quantity-used,updated_at=now(),updated_by=new.production_completed_by
         where id=stock.id and quantity >= used returning * into stock;
-      if not found then raise exception 'insufficient_stock:%:required:%:available:%', stock.name, used, stock.quantity; end if;
+      if not found then raise exception 'insufficient_stock:%:required:%:available:%', stock_name, used, available_qty; end if;
       insert into public.stock_movements(stock_item_id,movement_type,quantity_change,quantity_after,reference,note,performed_by)
         values(stock.id,'consumption',-used,stock.quantity,ref,'Automatically deducted when job ' || new.number || ' was marked completed',coalesce(new.production_completed_by,auth.uid()));
     end loop;
