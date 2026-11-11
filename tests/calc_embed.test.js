@@ -25,6 +25,14 @@ const init = (extra) => ({ userId: 'u1', userName: 'Damian', settings: JSON.pars
   host('init', initialPayload); await sleep(20);
   ok(ev('State.ed.Q.items.length') === 3, 'repeated host initialization acknowledges without clearing the quote');
   const firstKey = ev('State.ed.Q.items[0].key');
+  const excludeToggle = $(`[data-i="${firstKey}"][data-f="excludeInventory"]`);
+  ok(!!excludeToggle, 'quote line shows the exclude from inventory option');
+  if (excludeToggle) {
+    excludeToggle.checked = true; excludeToggle.dispatchEvent(new w.Event('change', { bubbles: true }));
+    ok(ev(`State.ed.Q.items.find(i=>i.key==='${firstKey}').excludeInventory === true && State.ed.Q.items.find(i=>i.key==='${firstKey}').calc.materialUsage.length === 0`), 'exclude option removes material usage from the quote line');
+    excludeToggle.checked = false; excludeToggle.dispatchEvent(new w.Event('change', { bubbles: true }));
+    ok(ev(`State.ed.Q.items.find(i=>i.key==='${firstKey}').calc.materialUsage.length > 0`), 're-enabling inventory restores calculated material usage');
+  }
   const productSelect = $(`[data-i="${firstKey}"][data-f="productId"]`);
   let inputCalls = 0; const originalInput = w.onEditorInput;
   w.onEditorInput = function (...args) { inputCalls++; return originalInput.apply(this, args); };
