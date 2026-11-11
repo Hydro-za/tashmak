@@ -83,7 +83,7 @@ begin
     raise exception 'forbidden' using errcode = '42501';
   end if;
   select jsonb_build_object(
-    'items', coalesce((select jsonb_agg(to_jsonb(s) order by lower(s.name)) from public.stock_items s where s.active), '[]'::jsonb),
+    'items', case when public.has_perm('stock.view') or public.has_perm('stock.receive') or public.has_perm('stock.adjust') then\n      coalesce((select jsonb_agg(to_jsonb(s) order by lower(s.name)) from public.stock_items s where s.active), '[]'::jsonb) else '[]'::jsonb end,
     'movements', case when public.has_perm('stock.history') then
       coalesce((select jsonb_agg(to_jsonb(recent) order by recent.performed_at desc) from (select m.id,m.stock_item_id,s.name as item_name,m.movement_type,m.quantity_change,m.quantity_after,m.supplier,m.reference,m.note,m.performed_at,p.full_name as performed_by_name from public.stock_movements m join public.stock_items s on s.id=m.stock_item_id join public.profiles p on p.id=m.performed_by order by m.performed_at desc limit 100) recent), '[]'::jsonb)
       else '[]'::jsonb end
