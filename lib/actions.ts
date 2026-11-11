@@ -40,7 +40,7 @@ export async function startJob(input: { quoteId: string; dueDate: string | null;
     const ctx = { materials: Object.fromEntries((mats || []).map((m: any) => [m.id, { ...m.data, name: m.name }])), finishing: Object.fromEntries((fins || []).map((f: any) => [f.id, { ...f.data, name: f.name }])) };
     const items = qi.map((q: any) => ({
       quote_item_id: q.id, product_name: q.product_name, category_name: q.category_name, profile: q.profile, qty_ordered: q.quantity,
-      spec: buildSpec({ ...q.item, profile: q.profile }, ctx), instructions: q.item?.notes || null, requires_qc: !!input.qc[q.id]
+      spec: buildSpec({ ...q.item, profile: q.profile }, ctx), instructions: q.item?.notes || null, requires_qc: !!input.qc[q.id], stock_usage: q.item?.excludeInventory ? [] : (q.item?.calc?.materialUsage || [])
     }));
     const r = await rpc('start_job', { p_quote: input.quoteId, p_due: input.dueDate || null, p_priority: input.priority, p_design_required: input.designRequired, p_design_approval: input.designApproval,
       p_designer: input.designRequired ? input.designerId : null, p_production: input.productionIds, p_items: items, p_instructions: input.instructions || null });
