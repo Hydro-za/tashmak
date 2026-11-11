@@ -65,7 +65,7 @@ function resolveMarkup(line, prod, cat, S) {
 
 function calcLine(line, cfg) {
   const S = cfg.settings || {}, C = S.calc || {}, P = S.pricing || {};
-  const res = { ok: false, errors: [], warnings: [], lines: [], groups: {}, info: {}, productionCost: 0, finalSubtotal: 0, calculatedPrice: 0, sellingPrice: 0 };
+  const res = { ok: false, errors: [], warnings: [], lines: [], groups: {}, info: {}, materialUsage: [], productionCost: 0, finalSubtotal: 0, calculatedPrice: 0, sellingPrice: 0 };
   const err = m => res.errors.push(m), warn = m => res.warnings.push(m);
   const prod = (cfg.products || {})[line.productId];
   if (!prod) { err('Select a product'); return res; }
@@ -199,6 +199,12 @@ function calcLine(line, cfg) {
         if (prod.usePrintList) res.info.filmMetres += usage;
       } else { usage = num(c.qtyPer, 1) * B[c.perBasis || 'item']; u = m.costBasis === 'kg' ? 'kg' : 'units'; }
       const amt = usage * num(m.cost);
+      if (!line.excludeInventory && usage > 0) {
+        const stockQty = usage * (1 + num(m.wastagePct) / 100);
+        const existing = res.materialUsage.find(x => x.materialId === c.materialId);
+        if (existing) existing.quantity = r2(existing.quantity + stockQty);
+        else res.materialUsage.push({ materialId: c.materialId, materialName: m.name, quantity: r2(stockQty), unit: u });
+      }
       add(grp, c.label || m.name, fmtN(usage) + ' ' + u + ' × ' + money(m.cost) + ' (' + m.name + ')', amt);
       if (num(m.wastagePct) > 0) add('wastage', m.name + ' material wastage', num(m.wastagePct) + '% of ' + money(amt), amt * num(m.wastagePct) / 100);
       if (has(m.stock) && num(m.stock) > 0 && usage > num(m.stock)) warn('Low stock: "' + m.name + '" needs ' + fmtN(usage) + ' ' + u + ', ' + m.stock + ' available');
