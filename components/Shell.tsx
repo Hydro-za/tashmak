@@ -18,7 +18,7 @@ function navFor(isOwner: boolean, perms: string[]): Item[] {
   if (can('jobs.view_all')) items.push({ href: '/dashboard', label: 'Dashboard', icon: 'dashboard' }, { href: '/jobs', label: 'Jobs', icon: 'jobs' });
   if (isOwner) items.push({ href: '/quotes', label: 'Quotes', icon: 'quotes' });
   if (can('customers.view', 'customers.manage')) items.push({ href: '/customers', label: 'Customers', icon: 'customers' });
-  if (can('stock.view', 'stock.receive', 'stock.adjust', 'stock.history')) items.push({ href: '/stock', label: 'Stock', icon: 'stock' });
+  if (isOwner) items.push({ href: '/stock', label: 'Stock', icon: 'stock' });
   if (isOwner) items.push({ href: '/products', label: 'Products & Pricing', icon: 'products' });
   if (can('employees.view', 'employees.manage', 'roles.manage')) items.push({ href: '/employees', label: 'Employees', icon: 'employees' });
 
