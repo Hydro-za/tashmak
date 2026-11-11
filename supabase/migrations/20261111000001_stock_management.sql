@@ -133,7 +133,7 @@ do $$
 declare fn oid; body text; old_sql text; new_sql text;
 begin
   select p.oid into fn from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-    where n.nspname='public' and p.proname='start_job' and pg_get_function_identity_arguments(p.oid) like 'p_quote uuid%';
+    where n.nspname='public' and p.proname='start_job' and p.pronargs=9;
   if fn is null then raise exception 'start_job function not found'; end if;
   body := pg_get_functiondef(fn);
   old_sql := 'insert into public.job_items(job_id, position, quote_item_id, product_name, category_name, profile, qty_ordered, spec, instructions, requires_qc)' || chr(10) ||
@@ -150,7 +150,7 @@ end $$;
 -- Deduct quoted material estimates exactly once when a job reaches Completed.
 create or replace function public.stock_deduct_completed_job() returns trigger
 language plpgsql security definer set search_path = '' as $$
-declare ji record; usage_row jsonb; material_key text; used numeric; stock public.stock_items%rowtype; ref text;
+declare ji record; usage_row jsonb; material_key text; used numeric; stock public.stock_items%rowtype; ref text; available_qty numeric; stock_name text;
 begin
   if new.status <> 'completed' or old.status = 'completed' then return new; end if;
   for ji in select id, stock_usage from public.job_items where job_id=new.id loop
