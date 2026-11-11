@@ -18,6 +18,7 @@ function navFor(isOwner: boolean, perms: string[]): Item[] {
   if (can('jobs.view_all')) items.push({ href: '/dashboard', label: 'Dashboard', icon: 'dashboard' }, { href: '/jobs', label: 'Jobs', icon: 'jobs' });
   if (isOwner) items.push({ href: '/quotes', label: 'Quotes', icon: 'quotes' });
   if (can('customers.view', 'customers.manage')) items.push({ href: '/customers', label: 'Customers', icon: 'customers' });
+  if (can('stock.view', 'stock.receive', 'stock.adjust', 'stock.history')) items.push({ href: '/stock', label: 'Stock', icon: 'products' });
   if (isOwner) items.push({ href: '/products', label: 'Products & Pricing', icon: 'products' });
   if (can('employees.view', 'employees.manage', 'roles.manage')) items.push({ href: '/employees', label: 'Employees', icon: 'employees' });
 
@@ -44,15 +45,15 @@ export default function Shell({ name, roleName, isOwner, perms, unread, children
   }, [menuOpen]);
   async function signOut() { await createClient().auth.signOut(); window.location.href = '/login'; }
   const primary = isOwner
-    ? ['/dashboard', '/jobs', '/quotes', '/products', '/customers'].map(href => items.find(item => item.href === href)).filter((item): item is Item => !!item)
-    : items.slice(0, Math.min(4, items.length));
+    ? ['/dashboard', '/jobs', '/quotes', '/products', '/stock'].map(href => items.find(item => item.href === href)).filter((item): item is Item => !!item)
+    : items.filter(item => ['/my-jobs', '/dashboard', '/jobs', '/stock'].includes(item.href)).slice(0, 5);
   const primaryHrefs = new Set(primary.map(item => item.href));
   const rest = items.filter(item => !primaryHrefs.has(item.href));
   const viewAll = isOwner || perms.includes('jobs.view_all');
   const canSearch = isOwner || perms.some(p => ['jobs.view_all', 'customers.view', 'employees.view'].includes(p));
   const navGroups = [
     { title: 'Work', links: rest.filter(i => ['/customers', '/my-jobs', '/completed', '/notifications'].includes(i.href)) },
-    { title: 'Manage', links: rest.filter(i => ['/products', '/employees', '/reports', '/settings'].includes(i.href)) },
+    { title: 'Manage', links: rest.filter(i => ['/products', '/stock', '/employees', '/reports', '/settings'].includes(i.href)) },
     { title: 'Account', links: rest.filter(i => ['/profile'].includes(i.href)) }
   ].filter(group => group.links.length);
   return (
