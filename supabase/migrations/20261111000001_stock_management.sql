@@ -1,4 +1,12 @@
 -- Stock management: raw-material inventory, audited movements and granular role permissions.
+-- Extend the canonical permission catalogue so custom roles can receive stock access.
+create or replace function public.valid_permissions() returns text[]
+language sql immutable set search_path = '' as $
+  select array['jobs.view_all','jobs.manage','jobs.work_design','jobs.work_production','customers.view','customers.manage',
+    'employees.view','employees.manage','roles.manage','qc.perform','salary.view','salary.manage','labour.manage',
+    'settings.manage','notifications.manage','reports.view','stock.view','stock.receive','stock.adjust','stock.history']
+$;
+
 alter table public.role_permissions drop constraint if exists role_permissions_permission_check;
 alter table public.role_permissions add constraint role_permissions_permission_check
   check (permission = any (array[
@@ -146,10 +154,10 @@ begin
     where n.nspname='public' and p.proname='start_job' and p.pronargs=9;
   if fn is null then raise exception 'start_job function not found'; end if;
   body := pg_get_functiondef(fn);
-  old_sql := 'insert into public.job_items(job_id, position, quote_item_id, product_name, category_name, profile, qty_ordered, spec, instructions, requires_qc)' || chr(10) ||
+  old_sql := '    insert into public.job_items(job_id, position, quote_item_id, product_name, category_name, profile, qty_ordered, spec, instructions, requires_qc)' || chr(10) ||
     '    values (jid, pos, (it ->> ''quote_item_id'')::uuid, it ->> ''product_name'', it ->> ''category_name'', it ->> ''profile'', (it ->> ''qty_ordered'')::numeric,' || chr(10) ||
     '      coalesce(it -> ''spec'', ''[]''::jsonb), it ->> ''instructions'', coalesce((it ->> ''requires_qc'')::boolean, false));';
-  new_sql := 'insert into public.job_items(job_id, position, quote_item_id, product_name, category_name, profile, qty_ordered, spec, instructions, requires_qc, stock_usage)' || chr(10) ||
+  new_sql := '    insert into public.job_items(job_id, position, quote_item_id, product_name, category_name, profile, qty_ordered, spec, instructions, requires_qc, stock_usage)' || chr(10) ||
     '    values (jid, pos, (it ->> ''quote_item_id'')::uuid, it ->> ''product_name'', it ->> ''category_name'', it ->> ''profile'', (it ->> ''qty_ordered'')::numeric,' || chr(10) ||
     '      coalesce(it -> ''spec'', ''[]''::jsonb), it ->> ''instructions'', coalesce((it ->> ''requires_qc'')::boolean, false), coalesce(it -> ''stock_usage'', ''[]''::jsonb));';
   if position(old_sql in body)=0 then raise exception 'Could not locate start_job item insert for safe rewrite'; end if;
