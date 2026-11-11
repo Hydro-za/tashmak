@@ -81,6 +81,7 @@ function itemFieldsHTML(it) {
     const ov = it.override;
     h += `<div style="margin-top:12px"><label class="chk"><input type="checkbox" ${A('ovOn')} ${ov ? 'checked' : ''}> Manual price override</label><div class="grid g2" id="ov-${k}" style="margin-top:8px;${ov ? '' : 'display:none'}">${fld('Override price for the whole line (R)', `<input type="number" min="0" step="any" ${A('ovPrice')} value="${e(ov ? ov.price : '')}">`) + fld('Reason (optional)', `<input ${A('ovReason')} value="${e(ov ? ov.reason || '' : '')}">`)}</div></div>`;
   }
+  h += `<div style="margin-top:12px"><label class="chk"><input type="checkbox" ${A('excludeInventory')} ${it.excludeInventory ? 'checked' : ''}> Exclude from inventory</label><div class="help">This quote line will still be priced normally, but its materials will not be deducted when the job is completed.</div></div>`;
   h += `<div style="margin-top:12px">${fld('Notes', `<input ${A('notes')} value="${e(it.notes)}" placeholder="Internal / customer notes for this line">`)}</div>`;
   return h;
 }
