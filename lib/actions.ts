@@ -40,7 +40,7 @@ export async function startJob(input: { quoteId: string; dueDate: string | null;
     const ctx = { materials: Object.fromEntries((mats || []).map((m: any) => [m.id, { ...m.data, name: m.name }])), finishing: Object.fromEntries((fins || []).map((f: any) => [f.id, { ...f.data, name: f.name }])) };
     const items = qi.map((q: any) => ({
       quote_item_id: q.id, product_name: q.product_name, category_name: q.category_name, profile: q.profile, qty_ordered: q.quantity,
-      spec: buildSpec({ ...q.item, profile: q.profile }, ctx), instructions: q.item?.notes || null, requires_qc: !!input.qc[q.id]
+      spec: buildSpec({ ...q.item, profile: q.profile }, ctx), instructions: q.item?.notes || null, requires_qc: !!input.qc[q.id], stock_usage: q.item?.excludeInventory ? [] : (q.item?.calc?.materialUsage || [])
     }));
     const r = await rpc('start_job', { p_quote: input.quoteId, p_due: input.dueDate || null, p_priority: input.priority, p_design_required: input.designRequired, p_design_approval: input.designApproval,
       p_designer: input.designRequired ? input.designerId : null, p_production: input.productionIds, p_items: items, p_instructions: input.instructions || null });
@@ -254,4 +254,28 @@ export async function saveQuoteAction(input: { customerId: string; requestId: st
     if (error) return fail(error);
     revalidatePath('/quotes'); revalidatePath('/customers'); return ok(data);
   } catch (e) { return fail(e); }
+}
+
+
+/* ---------- stock management ---------- */
+export async function createStockItem(materialId: string, unit: string, minimum: number, supplier?: string, notes?: string): Promise<R> {
+  if (!materialId || !unit.trim()) return { ok: false, error: 'Choose a catalogue material and stock unit.' };
+  const r = await rpc('stock_create_item', { p_material_id: materialId, p_unit: unit.trim(), p_minimum: minimum, p_supplier: supplier || null, p_notes: notes || null });
+  revalidatePath('/stock'); return r;
+}
+export async function receiveStock(itemId: string, quantity: number, supplier?: string, note?: string): Promise<R> {
+  if (!(quantity > 0)) return { ok: false, error: 'Enter a quantity greater than zero.' };
+  const r = await rpc('stock_receive', { p_item: itemId, p_quantity: quantity, p_supplier: supplier || null, p_note: note || null });
+  revalidatePath('/stock'); return r;
+}
+export async function adjustStock(itemId: string, quantity: number, note: string): Promise<R> {
+  if (quantity < 0 || !note.trim()) return { ok: false, error: 'Enter a valid quantity and an adjustment reason.' };
+  const r = await rpc('stock_adjust', { p_item: itemId, p_new_quantity: quantity, p_note: note.trim() });
+  revalidatePath('/stock'); return r;
+}
+
+export async function useStock(itemId: string, quantity: number, note: string): Promise<R> {
+  if (!(quantity > 0) || !note.trim()) return { ok: false, error: 'Enter a quantity and reason for use.' };
+  const r = await rpc('stock_use', { p_item: itemId, p_quantity: quantity, p_note: note.trim() });
+  revalidatePath('/stock'); return r;
 }
