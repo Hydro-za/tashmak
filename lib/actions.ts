@@ -273,3 +273,9 @@ export async function adjustStock(itemId: string, quantity: number, note: string
   const r = await rpc('stock_adjust', { p_item: itemId, p_new_quantity: quantity, p_note: note.trim() });
   revalidatePath('/stock'); return r;
 }
+
+export async function useStock(itemId: string, quantity: number, note: string): Promise<R> {
+  if (!(quantity > 0) || !note.trim()) return { ok: false, error: 'Enter a quantity and reason for use.' };
+  const r = await rpc('stock_use', { p_item: itemId, p_quantity: quantity, p_note: note.trim() });
+  revalidatePath('/stock'); return r;
+}
