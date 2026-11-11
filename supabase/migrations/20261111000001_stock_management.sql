@@ -165,12 +165,12 @@ begin
   execute body;
 end $$;
 
--- Deduct quoted material estimates exactly once when a job reaches Completed.
+-- Deduct quoted material estimates exactly once when a job reaches job_done (Completed).
 create or replace function public.stock_deduct_completed_job() returns trigger
 language plpgsql security definer set search_path = '' as $$
 declare ji record; usage_row jsonb; material_key text; used numeric; stock public.stock_items%rowtype; ref text; available_qty numeric; stock_name text;
 begin
-  if new.status <> 'completed' or old.status = 'completed' then return new; end if;
+  if new.status <> 'job_done' or old.status = 'job_done' then return new; end if;
   for ji in select id, stock_usage from public.job_items where job_id=new.id loop
     for usage_row in select value from jsonb_array_elements(coalesce(ji.stock_usage,'[]'::jsonb)) loop
       material_key := usage_row ->> 'materialId';
