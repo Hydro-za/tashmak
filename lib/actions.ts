@@ -255,3 +255,21 @@ export async function saveQuoteAction(input: { customerId: string; requestId: st
     revalidatePath('/quotes'); revalidatePath('/customers'); return ok(data);
   } catch (e) { return fail(e); }
 }
+
+
+/* ---------- stock management ---------- */
+export async function createStockItem(name: string, unit: string, minimum: number, supplier?: string, notes?: string): Promise<R> {
+  if (!name.trim() || !unit.trim()) return { ok: false, error: 'Enter a material name and unit.' };
+  const r = await rpc('stock_create_item', { p_name: name.trim(), p_unit: unit.trim(), p_minimum: minimum, p_supplier: supplier || null, p_notes: notes || null });
+  revalidatePath('/stock'); return r;
+}
+export async function receiveStock(itemId: string, quantity: number, supplier?: string, note?: string): Promise<R> {
+  if (!(quantity > 0)) return { ok: false, error: 'Enter a quantity greater than zero.' };
+  const r = await rpc('stock_receive', { p_item: itemId, p_quantity: quantity, p_supplier: supplier || null, p_note: note || null });
+  revalidatePath('/stock'); return r;
+}
+export async function adjustStock(itemId: string, quantity: number, note: string): Promise<R> {
+  if (quantity < 0 || !note.trim()) return { ok: false, error: 'Enter a valid quantity and an adjustment reason.' };
+  const r = await rpc('stock_adjust', { p_item: itemId, p_new_quantity: quantity, p_note: note.trim() });
+  revalidatePath('/stock'); return r;
+}
