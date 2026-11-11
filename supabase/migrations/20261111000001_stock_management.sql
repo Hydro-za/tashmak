@@ -174,3 +174,21 @@ end $$;
 create trigger stock_deduct_when_job_completed after update of status on public.jobs
   for each row execute function public.stock_deduct_completed_job();
 revoke all on function public.stock_deduct_completed_job() from public, anon, authenticated;
+
+
+create or replace function public.stock_use(p_item uuid, p_quantity numeric, p_note text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare me uuid := auth.uid(); item public.stock_items%rowtype;
+begin
+  if me is null or not public.has_perm('stock.adjust') then raise exception 'forbidden' using errcode='42501'; end if;
+  if p_quantity is null or p_quantity <= 0 or length(trim(coalesce(p_note,''))) < 3 then raise exception 'usage_requires_positive_quantity_and_note'; end if;
+  select * into item from public.stock_items where id=p_item and active for update;
+  if not found then raise exception 'stock_item_not_found'; end if;
+  if item.quantity < p_quantity then raise exception 'insufficient_stock:%:available:%:requested:%', item.name, item.quantity, p_quantity; end if;
+  update public.stock_items set quantity=quantity-p_quantity,updated_by=me,updated_at=now() where id=p_item returning * into item;
+  insert into public.stock_movements(stock_item_id,movement_type,quantity_change,quantity_after,note,performed_by)
+    values(p_item,'consumption',-p_quantity,item.quantity,trim(p_note),me);
+  return to_jsonb(item);
+end $$;
+revoke all on function public.stock_use(uuid,numeric,text) from public, anon;
+grant execute on function public.stock_use(uuid,numeric,text) to authenticated;
