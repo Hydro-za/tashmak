@@ -64,11 +64,7 @@ language sql stable security definer set search_path = '' as $$
       from public.profile_roles x join public.roles r on r.id=x.role_id where x.user_id=pr.id
    ),r.name,pr.role) end,
    'permissions',case when pr.role='owner' then
-     (select coalesce(jsonb_agg(x),'[]'::jsonb) from unnest(array[
-       'jobs.view_all','jobs.manage','jobs.work_design','jobs.work_production','customers.view','customers.manage',
-       'employees.view','employees.manage','roles.manage','qc.perform','salary.view','salary.manage','labour.manage',
-       'settings.manage','notifications.manage','reports.view','stock.view','stock.receive','stock.adjust','stock.history'
-     ]) x)
+     (select coalesce(jsonb_agg(x),'[]'::jsonb) from unnest(public.valid_permissions()) x)
    else (select coalesce(jsonb_agg(distinct rp.permission),'[]'::jsonb)
      from public.role_permissions rp
      where rp.role_id in (
