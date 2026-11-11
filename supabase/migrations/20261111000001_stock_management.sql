@@ -22,7 +22,10 @@ create table public.stock_items (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-drop policy if exists materials_r on public.materials;\ncreate policy materials_stock_read on public.materials for select to authenticated using ((select public.is_owner()) or (select public.has_perm('stock.view')) or (select public.has_perm('stock.receive')) or (select public.has_perm('stock.adjust')) or (select public.has_perm('stock.history')));\n\ncreate unique index stock_items_material_uq on public.stock_items(material_id) where material_id is not null;
+drop policy if exists materials_r on public.materials;
+create policy materials_stock_read on public.materials for select to authenticated using ((select public.is_owner()) or (select public.has_perm('stock.view')) or (select public.has_perm('stock.receive')) or (select public.has_perm('stock.adjust')) or (select public.has_perm('stock.history')));
+
+create unique index stock_items_material_uq on public.stock_items(material_id) where material_id is not null;
 create index stock_items_name_idx on public.stock_items(lower(name));
 
 create table public.stock_movements (
@@ -74,15 +77,17 @@ begin
   return result;
 end $$;
 
-create or replace function public.stock_create_item(p_name text, p_unit text, p_minimum numeric default 0, p_supplier text default null, p_notes text default null) returns jsonb
+create or replace function public.stock_create_item(p_material_id text, p_unit text, p_minimum numeric default 0, p_supplier text default null, p_notes text default null) returns jsonb
 language plpgsql security definer set search_path = '' as $$
-declare me uuid := auth.uid(); item public.stock_items%rowtype;
+declare me uuid := auth.uid(); item public.stock_items%rowtype; material public.materials%rowtype;
 begin
   if me is null or not public.has_perm('stock.adjust') then raise exception 'forbidden' using errcode='42501'; end if;
-  if length(trim(coalesce(p_name,''))) not between 1 and 120 or length(trim(coalesce(p_unit,''))) not between 1 and 24 then raise exception 'invalid_stock_item'; end if;
+  if length(trim(coalesce(p_unit,''))) not between 1 and 24 then raise exception 'invalid_stock_item'; end if;
   if coalesce(p_minimum,0) < 0 then raise exception 'invalid_minimum'; end if;
-  insert into public.stock_items(name,unit,minimum_quantity,supplier,notes,created_by,updated_by)
-    values(trim(p_name),trim(p_unit),coalesce(p_minimum,0),nullif(trim(p_supplier),''),nullif(trim(p_notes),''),me,me)
+  select * into material from public.materials where id=p_material_id and active;
+  if not found then raise exception 'material_not_found'; end if;
+  insert into public.stock_items(material_id,name,unit,minimum_quantity,supplier,notes,created_by,updated_by)
+    values(material.id,material.name,trim(p_unit),coalesce(p_minimum,0),nullif(trim(p_supplier),''),nullif(trim(p_notes),''),me,me)
     returning * into item;
   return to_jsonb(item);
 end $$;
