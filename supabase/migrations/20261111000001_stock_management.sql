@@ -49,16 +49,26 @@ revoke all on sequence public.stock_movements_id_seq from anon, authenticated;
 
 create or replace function public.my_permissions() returns jsonb
 language sql stable security definer set search_path = '' as $$
-  select coalesce((select jsonb_build_object('kind', pr.role, 'role_name', coalesce(r.name, pr.role),
-      'permissions', case when pr.role = 'owner' then
-        (select coalesce(jsonb_agg(x), '[]'::jsonb) from unnest(array[
-          'jobs.view_all','jobs.manage','jobs.work_design','jobs.work_production','customers.view','customers.manage',
-          'employees.view','employees.manage','roles.manage','qc.perform','salary.view','salary.manage','labour.manage',
-          'settings.manage','notifications.manage','reports.view','stock.view','stock.receive','stock.adjust','stock.history'
-        ]) x)
-        else (select coalesce(jsonb_agg(rp.permission), '[]'::jsonb) from public.role_permissions rp where rp.role_id = pr.role_id) end)
-    from public.profiles pr left join public.roles r on r.id = pr.role_id
-    where pr.id = (select auth.uid()) and pr.active and pr.deleted_at is null), 'null'::jsonb)
+ select coalesce((select jsonb_build_object(
+   'kind',pr.role,
+   'role_name',case when pr.role='owner' then 'owner' else coalesce((
+      select string_agg(r.name, ', ' order by r.name)
+      from public.profile_roles x join public.roles r on r.id=x.role_id where x.user_id=pr.id
+   ),r.name,pr.role) end,
+   'permissions',case when pr.role='owner' then
+     (select coalesce(jsonb_agg(x),'[]'::jsonb) from unnest(array[
+       'jobs.view_all','jobs.manage','jobs.work_design','jobs.work_production','customers.view','customers.manage',
+       'employees.view','employees.manage','roles.manage','qc.perform','salary.view','salary.manage','labour.manage',
+       'settings.manage','notifications.manage','reports.view','stock.view','stock.receive','stock.adjust','stock.history'
+     ]) x)
+   else (select coalesce(jsonb_agg(distinct rp.permission),'[]'::jsonb)
+     from public.role_permissions rp
+     where rp.role_id in (
+       select x.role_id from public.profile_roles x where x.user_id=pr.id
+       union all select pr.role_id where not exists(select 1 from public.profile_roles x where x.user_id=pr.id)
+     )) end
+ ) from public.profiles pr left join public.roles r on r.id=pr.role_id
+ where pr.id=(select auth.uid()) and pr.active and pr.deleted_at is null),'null'::jsonb)
 $$;
 
 create or replace function public.stock_snapshot() returns jsonb
