@@ -173,6 +173,7 @@ begin
       select * into stock from public.stock_items where material_id=material_key and active for update;
       if not found then continue; end if;
       available_qty := stock.quantity; stock_name := stock.name;
+      if stock.unit <> coalesce(usage_row ->> 'unit', stock.unit) then raise exception 'stock_unit_mismatch:%:inventory:%:calculation:%', stock.name, stock.unit, usage_row ->> 'unit'; end if;
       update public.stock_items set quantity=quantity-used,updated_at=now(),updated_by=coalesce(auth.uid(),new.production_completed_by)
         where id=stock.id and quantity >= used returning * into stock;
       if not found then raise exception 'insufficient_stock:%:required:%:available:%', stock_name, used, available_qty; end if;
