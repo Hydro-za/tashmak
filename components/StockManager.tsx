@@ -4,14 +4,14 @@ import {useRouter} from 'next/navigation';
 import {createStockItem,receiveStock,adjustStock} from '@/lib/actions';
 import {toast} from '@/components/ToastHost';
 
-type Item={id:string;name:string;unit:string;quantity:number;minimum_quantity:number;supplier?:string|null;notes?:string|null};
+type Item={id:string;material_id:string|null;name:string;unit:string;quantity:number;minimum_quantity:number;supplier?:string|null;notes?:string|null};
 type Material={id:string;name:string;data:any};
 type Movement={id:number;item_name:string;movement_type:string;quantity_change:number;quantity_after:number;note?:string|null;supplier?:string|null;performed_at:string;performed_by_name:string};
 export default function StockManager({items:initial,movements,materials,perms}:{items:Item[];movements:Movement[];materials:Material[];perms:string[]}){
  const router=useRouter();const [items,setItems]=useState(initial||[]);const [mode,setMode]=useState<'new'|'receive'|'adjust'|null>(null);const [selected,setSelected]=useState('');const [selectedMaterial,setSelectedMaterial]=useState('');const [unit,setUnit]=useState('sheets');const [minimum,setMinimum]=useState('0');const [supplier,setSupplier]=useState('');const [quantity,setQuantity]=useState('');const [note,setNote]=useState('');const [busy,setBusy]=useState(false);
  const canReceive=perms.includes('stock.receive'),canAdjust=perms.includes('stock.adjust'),canHistory=perms.includes('stock.history');
  const low=items.filter(i=>Number(i.quantity)<=Number(i.minimum_quantity));
- async function run(fn:()=>Promise<any>){setBusy(true);const r=await fn();setBusy(false);if(!r.ok){toast(r.error||'Could not save stock change','bad');return;}toast('Stock updated');setMode(null);setName('');setQuantity('');setNote('');setSupplier('');router.refresh();}
+ async function run(fn:()=>Promise<any>){setBusy(true);const r=await fn();setBusy(false);if(!r.ok){toast(r.error||'Could not save stock change','bad');return;}toast('Stock updated');setMode(null);setQuantity('');setNote('');setSupplier('');router.refresh();}
  async function submit(){if(mode==='new')return run(()=>createStockItem(selectedMaterial,unit,Number(minimum),supplier,note));if(mode==='receive')return run(()=>receiveStock(selected,Number(quantity),supplier,note));if(mode==='adjust')return run(()=>adjustStock(selected,Number(quantity),note));}
  const start=(m:'new'|'receive'|'adjust',id='')=>{setSelected(id);setMode(m);if(m==='new'){setSelectedMaterial(materials.find(x=>!items.some(i=>i.material_id===x.id))?.id||'');setUnit('sheets');}setQuantity(m==='adjust'?String(items.find(x=>x.id===id)?.quantity??0):'');setNote('');setSupplier('');};
  return <div className="grid" style={{gap:16}}>
