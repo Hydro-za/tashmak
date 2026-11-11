@@ -7,9 +7,9 @@ import {toast} from '@/components/ToastHost';
 type Item={id:string;material_id:string|null;name:string;unit:string;quantity:number;minimum_quantity:number;supplier?:string|null;notes?:string|null};
 type Material={id:string;name:string;data:any};
 type Movement={id:number;item_name:string;movement_type:string;quantity_change:number;quantity_after:number;note?:string|null;supplier?:string|null;performed_at:string;performed_by_name:string};
-export default function StockManager({items:initial,movements,materials,perms}:{items:Item[];movements:Movement[];materials:Material[];perms:string[]}){
+export default function StockManager({items:initial,movements,materials}:{items:Item[];movements:Movement[];materials:Material[]}){
  const router=useRouter();const items=initial||[];const [mode,setMode]=useState<'new'|'receive'|'adjust'|'use'|null>(null);const [selected,setSelected]=useState('');const [selectedMaterial,setSelectedMaterial]=useState('');const [unit,setUnit]=useState('sheets');const [minimum,setMinimum]=useState('0');const [supplier,setSupplier]=useState('');const [quantity,setQuantity]=useState('');const [note,setNote]=useState('');const [busy,setBusy]=useState(false);
- const canReceive=perms.includes('stock.receive'),canAdjust=perms.includes('stock.adjust'),canHistory=perms.includes('stock.history'),canSeeItems=perms.some(p=>['stock.view','stock.receive','stock.adjust'].includes(p));
+ const canReceive=true,canAdjust=true,canHistory=true,canSeeItems=true;
  const low=items.filter(i=>Number(i.quantity)<=Number(i.minimum_quantity));
  async function run(fn:()=>Promise<any>){setBusy(true);const r=await fn();setBusy(false);if(!r.ok){toast(r.error||'Could not save stock change','bad');return;}toast('Stock updated');setMode(null);setQuantity('');setNote('');setSupplier('');router.refresh();}
  async function submit(){if(mode==='new')return run(()=>createStockItem(selectedMaterial,unit,Number(minimum),supplier,note));if(mode==='receive')return run(()=>receiveStock(selected,Number(quantity),supplier,note));if(mode==='adjust')return run(()=>adjustStock(selected,Number(quantity),note));if(mode==='use')return run(()=>useStock(selected,Number(quantity),note));}
