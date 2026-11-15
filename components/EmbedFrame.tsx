@@ -58,7 +58,12 @@ export default function EmbedFrame({ src, getInit, onMessage, minHeight = 600, t
   }, [attempt, minHeight]);
   return <div className="embed-shell" aria-busy={status === 'loading'}>
     <iframe key={attempt} ref={ref} src={src} title={title} className="calcframe" style={{ height: h }} onLoad={() => sendInit.current()} />
-    {status === 'loading' && <div className="embed-state" role="status">Loading {title.toLowerCase()}…</div>}
+    {status === 'loading' && <div className="embed-loading-state" role="status" aria-label={`Loading ${title.toLowerCase()}`}>
+      <div className="embed-skeleton-top"><div className="skel embed-skeleton-title" /><div className="skel embed-skeleton-action" /></div>
+      <div className="embed-skeleton-tabs">{[0,1,2,3].map(i=><div key={i} className="skel embed-skeleton-tab" />)}</div>
+      <div className="embed-skeleton-stats">{[0,1,2].map(i=><div key={i} className="skel embed-skeleton-stat"><div className="skel embed-skeleton-line short" /><div className="skel embed-skeleton-value" /></div>)}</div>
+      <div className="embed-skeleton-columns"><div className="embed-skeleton-main"><div className="skel embed-skeleton-section" /><div className="skel embed-skeleton-row" /><div className="skel embed-skeleton-row" /><div className="skel embed-skeleton-row" /></div><div className="embed-skeleton-side"><div className="skel embed-skeleton-section" /><div className="skel embed-skeleton-block" /><div className="skel embed-skeleton-block small" /></div></div>
+    </div>}
     {status === 'error' && <div className="embed-state embed-state-error" role="alert"><span>Could not load {title.toLowerCase()}.</span><button type="button" className="btn" onClick={() => { setStatus('loading'); setAttempt(value => value + 1); }}>Try again</button></div>}
   </div>;
 }
