@@ -11,6 +11,6 @@ export default async function StockPage(){
   me.sb.from('materials').select('id,name,data').eq('active',true).order('name')
  ]);
  if(error)throw new Error('Could not load stock: '+error.message);
- if(materialsError)throw new Error('Could not load materials: '+materialsError.message);
- return <><Top title="Stock management" sub="Track raw materials, incoming stock and stock movements."/><StockManager items={data?.items||[]} movements={data?.movements||[]} materials={materials||[]}/></>;
+ if(materialsError)throw new Error('Could not load materials: '+materialsError.message);\n if(productsError)throw new Error('Could not load product links: '+productsError.message);
+ return <><Top title="Stock management" sub="Track raw materials, incoming stock and stock movements."/><StockManager items={data?.items||[]} movements={data?.movements||[]} materials={materials||[]} products={products||[]}/></>;
 }
