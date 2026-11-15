@@ -1055,3 +1055,16 @@ input[type=checkbox]{accent-color:var(--accent)}
  .tabs{max-width:100%}
  input[type=text],input[type=number],input[type=date],input[type=email],input[type=tel],input[type=search],input:not([type]),select,textarea{min-height:42px}
 }
+
+
+/* Focused add-material dialog */
+.stock-modal-backdrop{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:20px;background:rgba(12,18,28,.52);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.stock-modal-card{width:min(100%,620px);max-height:min(88dvh,760px);overflow:auto;padding:0 22px 20px;box-shadow:0 24px 80px rgba(0,0,0,.24);border:1px solid var(--line)}
+.stock-modal-card .stock-form-heading{position:sticky;top:0;z-index:1;background:var(--card);padding:20px 0 16px}
+.stock-modal-card .stock-form-heading>div{min-width:0}
+.stock-modal-card .stock-form-heading .stock-eyebrow{display:block}
+.stock-modal-card .stock-cancel{width:36px;height:36px;flex:none;font-size:17px}
+.stock-modal-card .stock-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.stock-modal-card .stock-form-actions{position:sticky;bottom:-20px;background:var(--card);padding:14px 0 0}
+.stock-form-inline{margin:0}
+@media(max-width:640px){.stock-modal-backdrop{align-items:end;padding:0}.stock-modal-card{width:100%;max-height:90dvh;border-radius:18px 18px 0 0;padding:0 16px 16px}.stock-modal-card .stock-form-heading{padding:17px 0 14px}.stock-modal-card .stock-form-grid{grid-template-columns:1fr}.stock-modal-card .stock-form-actions{bottom:-16px}}
