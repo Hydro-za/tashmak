@@ -27,6 +27,7 @@
     const previousTab = State.settingsTab;
     State.mode = 'embedded'; State.me = { id: p.userId, name: p.userName, isOwner: true, canEdit: true, canData: true };
     State.cfg.settings = p.settings;
+    State.cfg.stockByMaterial = p.stockByMaterial || {};
     ['products', 'materials', 'machines', 'labour', 'finishing', 'categories'].forEach(k => { State.cfg[k] = p[k] || {}; });
     State.loaded.settings = true; State.embedded = true; State.audit = []; document.body.classList.add('embedded');
     State.view = 'settings'; State.settingsTab = repeated ? (previousTab || 'products') : 'products';
