@@ -189,6 +189,23 @@ export async function saveJobInvoice(jobId: string, invoiceNumber: string, verif
 export async function markJobInvoiceSent(invoiceId: string): Promise<R> { const r = await rpc('mark_job_invoice_sent', { p_invoice_id: invoiceId }); revalidatePath('/invoices'); revalidatePath('/dashboard'); revalidatePath('/jobs'); return r; }
 export async function cancelJobInvoice(invoiceId: string, reason: string): Promise<R> { const r = await rpc('cancel_job_invoice', { p_invoice_id: invoiceId, p_reason: reason }); revalidatePath('/invoices'); revalidatePath('/dashboard'); return r; }
 
+/* ---------- supplier purchase orders ---------- */
+export async function createPurchaseOrder(input: { supplier: string; expectedDate: string; notes: string; items: { stockItemId: string; quantity: number; unitCost: number }[] }): Promise<R> {
+  if (!input.supplier.trim()) return { ok: false, error: 'Enter a supplier name.' };
+  if (!input.items.length || input.items.some(i => !i.stockItemId || !(i.quantity > 0) || i.unitCost < 0 || !Number.isFinite(i.quantity) || !Number.isFinite(i.unitCost))) return { ok: false, error: 'Add valid material quantities and costs.' };
+  const r = await rpc('purchase_order_create', { p_supplier: input.supplier.trim(), p_expected_date: input.expectedDate || null, p_notes: input.notes || null, p_items: input.items.map(i => ({ stock_item_id: i.stockItemId, quantity: i.quantity, unit_cost: i.unitCost })) });
+  revalidatePath('/purchase-orders'); return r;
+}
+export async function setPurchaseOrderStatus(id: string, status: 'ordered' | 'cancelled'): Promise<R> {
+  const r = await rpc('purchase_order_set_status', { p_order: id, p_status: status });
+  revalidatePath('/purchase-orders'); return r;
+}
+export async function receivePurchaseOrder(id: string, lines: { itemId: string; quantity: number }[]): Promise<R> {
+  if (!lines.length || lines.some(x => !x.itemId || !(x.quantity > 0) || !Number.isFinite(x.quantity))) return { ok: false, error: 'Enter valid received quantities.' };
+  const r = await rpc('purchase_order_receive', { p_order: id, p_lines: lines.map(x => ({ item_id: x.itemId, quantity: x.quantity })) });
+  revalidatePath('/purchase-orders'); revalidatePath('/stock'); revalidatePath('/dashboard'); return r;
+}
+
 /* ---------- settings ---------- */
 const PRIOS = ['low', 'normal', 'high', 'urgent'];
 function validateSetting(key: string, v: any): string | null {
