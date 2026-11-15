@@ -9,7 +9,7 @@ export default async function StockPage(){
  const [{data,error},{data:materials,error:materialsError},{data:products,error:productsError}]=await Promise.all([
   me.sb.rpc('stock_snapshot'),
   me.sb.from('materials').select('id,name,data').eq('active',true).order('name'),
-  me.sb.from('products').select('id,name,data').eq('active',true).order('name')
+  me.sb.from('products').select('id,name,data').order('name')
  ]);
  if(error)throw new Error('Could not load stock: '+error.message);
  if(materialsError)throw new Error('Could not load materials: '+materialsError.message);
