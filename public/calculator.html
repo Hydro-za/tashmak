@@ -1452,12 +1452,6 @@ async function downloadPDF(q) {
   } catch (er) { if (er && er.code === 'declined') return; try { doc.save(fn); } catch (x) { toast('Could not save the PDF here — use Print', 'bad'); } }
 }
 
-/* The embedded build has no Settings/Wizard/boot (those live in the management app). Minimal stubs keep shared code paths valid. */
-function viewSettings() { return ''; }
-const useCap = async () => null;
-function afterSettingsRender() {}
-function onSettingsChange() {}
-function onWizardInput() {}
 
 /* ===== PrintOps bridge: connects the existing calculator to the management app =====
    The calculator code above is unchanged. This file only (1) receives catalogue/pricing from the host page,
