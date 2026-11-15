@@ -21,7 +21,7 @@
   DB.setSettings = async s => { s = clean(s); await rpc('settings', { data: { demo: !!s.demo, pricing: s.pricing, calc: s.calc, vat: s.vat, discount: s.discount } }); State.cfg.settings = s; };
   DB.audit = async () => { /* the database records every configuration change itself (config_audit) */ };
   explainError = function (er) { return (er && er.message) || 'Could not save'; };
-  settingsTabs = function () { return [['pricing', 'Pricing'], ['vat', 'VAT'], ['discounts', 'Discounts'], ['products', 'Products'], ['materials', 'Materials'], ['labour', 'Labour'], ['machines', 'Machines'], ['finishing', 'Finishing'], ['dtf', 'DTF'], ['paper', 'Paper'], ['large', 'Large format']]; };
+  settingsTabs = function () { return [['pricing', 'Pricing'], ['vat', 'VAT'], ['discounts', 'Discounts'], ['products', 'Products'], ['materials', 'Materials'], ['labour', 'Labour'], ['machines', 'Machines'], ['finishing', 'Finishing']]; };
   function init(p) {
     const repeated = !!State.embedded && !!State.loaded.settings;
     const previousTab = State.settingsTab;
