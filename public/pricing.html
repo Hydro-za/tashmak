@@ -2256,11 +2256,15 @@ async function boot() {
   explainError = function (er) { return (er && er.message) || 'Could not save'; };
   settingsTabs = function () { return [['pricing', 'Pricing'], ['vat', 'VAT'], ['discounts', 'Discounts'], ['products', 'Products'], ['materials', 'Materials'], ['labour', 'Labour'], ['machines', 'Machines'], ['finishing', 'Finishing'], ['dtf', 'DTF'], ['paper', 'Paper'], ['large', 'Large format']]; };
   function init(p) {
+    const repeated = !!State.embedded && !!State.loaded.settings;
+    const previousTab = State.settingsTab;
     State.mode = 'embedded'; State.me = { id: p.userId, name: p.userName, isOwner: true, canEdit: true, canData: true };
     State.cfg.settings = p.settings;
     ['products', 'materials', 'machines', 'labour', 'finishing', 'categories'].forEach(k => { State.cfg[k] = p[k] || {}; });
     State.loaded.settings = true; State.embedded = true; State.audit = []; document.body.classList.add('embedded');
-    State.view = 'settings'; State.settingsTab = 'products'; render(true);
+    State.view = 'settings'; State.settingsTab = repeated ? (previousTab || 'products') : 'products';
+    render(true);
+    post('initialized', { initId: p.__hostInitId || null });
   }
   if (window.ResizeObserver) new ResizeObserver(() => post('height', document.documentElement.scrollHeight)).observe(document.body);
   post('ready', true);
