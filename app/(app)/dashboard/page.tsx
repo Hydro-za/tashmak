@@ -9,10 +9,11 @@ export const dynamic = 'force-dynamic';
 
 export default async function Dashboard() {
   const me = await requirePerm('jobs.view_all'); const sb = me.sb;
-  const [{ data: jobs }, workloadResult, { count: acceptedWaiting }] = await Promise.all([
+  const [{ data: jobs }, workloadResult, { count: acceptedWaiting }, stockResult] = await Promise.all([
     sb.from('jobs').select('*, job_items(category_name,product_name)').is('archived_at', null).order('created_at', { ascending: false }).limit(1000),
     me.can('employees.view') ? sb.rpc('employee_workload') : Promise.resolve({ data: [] }),
-    sb.from('quotes').select('id', { count: 'exact', head: true }).eq('status', 'accepted').is('job_id', null).is('archived_at', null)
+    sb.from('quotes').select('id', { count: 'exact', head: true }).eq('status', 'accepted').is('job_id', null).is('archived_at', null),
+    me.isOwner ? sb.rpc('stock_snapshot') : Promise.resolve({ data: { items: [] } })
   ]);
   const t = todaySA();
   const workload = workloadResult.data || [];
@@ -25,6 +26,7 @@ export default async function Dashboard() {
   const readyForInvoice = all.filter((j: any) => j.status === 'ready_invoice');
   const attention = [...new Map([...dueToday, ...active.filter((j: any) => j.status === 'qc')].map(j => [j.id, j])).values()].sort(sortJobs);
   const showTeam = me.can('employees.view');
+  const lowStock = (stockResult.data?.items || []).filter((item: any) => Number(item.quantity || 0) <= Number(item.minimum_quantity || 0));
   const stat = (label: string, value: number, href: string, danger = false) => <Link href={href} className="stat" style={{ textDecoration: 'none', borderColor: danger && value ? 'var(--bad)' : undefined }}><div className="k">{label}</div><div className="v" style={{ color: danger && value ? 'var(--bad)' : undefined }}>{value}</div></Link>;
 
   return <div className="page-dashboard">
@@ -35,6 +37,8 @@ export default async function Dashboard() {
     </Top>
 
     {me.isOwner && !!acceptedWaiting && <div className="alert info"><Link href="/jobs/new"><b>{acceptedWaiting} accepted quote{acceptedWaiting > 1 ? 's' : ''}</b> waiting for a job to be started →</Link></div>}
+
+    {me.isOwner && lowStock.length > 0 && <div className="alert warn"><Link href="/stock"><b>{lowStock.length} material{lowStock.length === 1 ? " is" : "s are"} at or below minimum stock.</b> Review stock levels →</Link><div className="muted" style={{ marginTop: 5 }}>{lowStock.slice(0, 5).map((item: any) => String(item.name) + ": " + Number(item.quantity || 0).toLocaleString("en-ZA", { maximumFractionDigits: 3 }) + " " + item.unit).join(" · ")}{lowStock.length > 5 ? " · +" + (lowStock.length - 5) + " more" : ""}</div></div>}
 
     <div className="stats">
       {stat('Due today', dueToday.length, '/jobs?due=today')}
