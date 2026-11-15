@@ -36,7 +36,7 @@ export default async function Dashboard() {
       <Link href="/jobs" className="btn">ALL JOBS</Link>
     </Top>
 
-    {me.isOwner && !!acceptedWaiting && <div className="alert info"><Link href="/jobs/new"><b>{acceptedWaiting} accepted quote{acceptedWaiting > 1 ? 's' : ''}</b> waiting for a job to be started →</Link></div>}
+    {me.isOwner && !!acceptedWaiting && <div className="alert info"><Link href="/quotes?status=accepted"><b>{acceptedWaiting} accepted quote{acceptedWaiting > 1 ? 's' : ''}</b> waiting for a job to be started →</Link></div>}
 
     {me.isOwner && lowStock.length > 0 && <div className="alert warn"><Link href="/stock"><b>{lowStock.length} material{lowStock.length === 1 ? " is" : "s are"} at or below minimum stock.</b> Review stock levels →</Link><div className="muted" style={{ marginTop: 5 }}>{lowStock.slice(0, 5).map((item: any) => String(item.name) + ": " + Number(item.quantity || 0).toLocaleString("en-ZA", { maximumFractionDigits: 3 }) + " " + item.unit).join(" · ")}{lowStock.length > 5 ? " · +" + (lowStock.length - 5) + " more" : ""}</div></div>}
 
