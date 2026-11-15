@@ -258,9 +258,10 @@ export async function saveQuoteAction(input: { customerId: string; requestId: st
 
 
 /* ---------- stock management ---------- */
-export async function createStockItem(materialId: string, unit: string, minimum: number, supplier?: string, notes?: string): Promise<R> {
+export async function createStockItem(materialId: string, unit: string, minimum: number, supplier?: string, notes?: string, initialQuantity = 0): Promise<R> {
   if (!materialId || !unit.trim()) return { ok: false, error: 'Choose a catalogue material and stock unit.' };
-  const r = await rpc('stock_create_item', { p_material_id: materialId, p_unit: unit.trim(), p_minimum: minimum, p_supplier: supplier || null, p_notes: notes || null });
+  if (!Number.isFinite(initialQuantity) || initialQuantity < 0 || !Number.isFinite(minimum) || minimum < 0) return { ok: false, error: 'Enter valid non-negative stock quantities.' };
+  const r = await rpc('stock_create_item', { p_material_id: materialId, p_unit: unit.trim(), p_minimum: minimum, p_supplier: supplier || null, p_notes: notes || null, p_initial_quantity: initialQuantity });
   revalidatePath('/stock'); return r;
 }
 export async function receiveStock(itemId: string, quantity: number, supplier?: string, note?: string): Promise<R> {
