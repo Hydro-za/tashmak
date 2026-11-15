@@ -14,7 +14,7 @@ const SCHEMA = {
     { k: 'cost', l: 'Cost (R)', t: 'money', crit: 1 },
     { k: 'sheetW', l: 'Sheet width (mm)', t: 'n', opt: 1, min: 0, help: 'Only for per-sheet materials — used for imposition' }, { k: 'sheetH', l: 'Sheet height (mm)', t: 'n', opt: 1, min: 0 },
     { k: 'rollWidth', l: 'Roll width (mm)', t: 'n', opt: 1, min: 0, crit: 1, help: 'Required for per-metre materials' },
-    { k: 'wastagePct', l: 'Material wastage %', t: 'pct', crit: 1 }, { k: 'stock', l: 'Available stock (same unit)', t: 'n', opt: 1, min: 0 }, { k: 'minStock', l: 'Low-stock level', t: 'n', opt: 1, min: 0 },
+    { k: 'wastagePct', l: 'Material wastage %', t: 'pct', crit: 1 },
     { k: 'tags', l: 'Used by calculators', t: 'tags' }, { k: 'notes', l: 'Notes', t: 'area' }, { k: 'active', l: 'Status', t: 'check', cl: 'Active (available for quoting)' }],
   machines: [
     { k: 'name', l: 'Machine name', t: 'text', req: 1 }, { k: 'costPerHour', l: 'Running cost per hour (R)', t: 'money', crit: 1 }, { k: 'maintenancePerHour', l: 'Maintenance per hour (R)', t: 'money', crit: 1 }, { k: 'depreciationPerHour', l: 'Depreciation per hour (R)', t: 'money', crit: 1 },
@@ -175,7 +175,7 @@ document.addEventListener('change', async ev => {
 
 /* ---------- catalogues ---------- */
 const COLS = {
-  materials: [['Name', m => e(m.name)], ['Cost', m => money(m.cost) + ' / ' + ({ sheet: 'sheet', sqm: 'm²', metre: 'm', kg: 'kg', unit: 'unit' }[m.costBasis] || '')], ['Size', m => m.costBasis === 'sheet' ? `${m.sheetW || '–'}×${m.sheetH || '–'} mm` : m.costBasis === 'metre' ? `${m.rollWidth || '–'} mm roll` : ''], ['Waste', m => pctf(m.wastagePct)]],
+  materials: [['Name', m => e(m.name)], ['Cost', m => money(m.cost) + ' / ' + ({ sheet: 'sheet', sqm: 'm²', metre: 'm', kg: 'kg', unit: 'unit' }[m.costBasis] || '')], ['Size', m => m.costBasis === 'sheet' ? `${m.sheetW || '–'}×${m.sheetH || '–'} mm` : m.costBasis === 'metre' ? `${m.rollWidth || '–'} mm roll` : ''], ['Waste', m => pctf(m.wastagePct)], ['Stock', m => { const s = State.cfg.stockByMaterial && State.cfg.stockByMaterial[m.id]; return s ? `${Number(s.quantity || 0).toLocaleString('en-ZA',{maximumFractionDigits:3})} ${s.unit} · min ${Number(s.minimum_quantity || 0).toLocaleString('en-ZA',{maximumFractionDigits:3})}` : 'Not tracked'; }]],
   machines: [['Name', m => e(m.name)], ['Per hour', m => money(PQ.num(m.costPerHour) + PQ.num(m.maintenancePerHour) + PQ.num(m.depreciationPerHour))], ['Per print', m => money(m.costPerPrint)], ['Per m²', m => money(m.costPerSqm)], ['Setup', m => money(m.setupCost)]],
   labour: [['Name', l => e(l.name)], ['Hourly', l => money(l.hourly)], ['Min charge', l => money(l.minCharge)], ['Markup', l => pctf(l.markupPct)]],
   categories: [['Name', c => e(c.name)], ['Markup', c => PQ.has(c.markupPct) ? pctf(c.markupPct) : 'global default'], ['Min line price', c => PQ.num(c.minPrice) ? money(c.minPrice) : '—']],
