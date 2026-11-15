@@ -108,14 +108,14 @@ const diffHTML = rows => rows.map(r => `<div class="diff"><span>${e(r.l)}</span>
 /* ---------- settings shell ---------- */
 function settingsTabs() {
   const t = [['products', 'Products']]; const view = can('viewCosts') || can('editPricing');
-  if (view) t.unshift(['business', 'Business'], ['pricing', 'Pricing'], ['vat', 'VAT'], ['discounts', 'Discounts'], ['quotes', 'Quotes']), t.push(['materials', 'Materials'], ['labour', 'Labour'], ['machines', 'Machines'], ['finishing', 'Finishing'], ['dtf', 'DTF'], ['paper', 'Paper'], ['large', 'Large format']);
+  if (view) t.unshift(['business', 'Business'], ['pricing', 'Pricing'], ['vat', 'VAT'], ['discounts', 'Discounts'], ['quotes', 'Quotes']), t.push(['materials', 'Materials'], ['labour', 'Labour'], ['machines', 'Machines'], ['finishing', 'Finishing']);
   if (can('manageUsers')) t.push(['users', 'Users & roles']); if (can('viewAudit')) t.push(['audit', 'Audit log']); if (can('importExport')) t.push(['data', 'Import / export']);
   return t;
 }
 function viewSettings() {
   const tabs = settingsTabs(); if (!tabs.some(t => t[0] === State.settingsTab)) State.settingsTab = tabs[0][0];
   const tab = State.settingsTab; let body = '';
-  try { body = SETTINGS_SCHEMA[tab] ? settingsFormTab(tab) : ['materials', 'labour', 'machines', 'finishing'].includes(tab) ? catalogCard(tab) : tab === 'products' ? productsTab() : ['dtf', 'paper', 'large'].includes(tab) ? profileTab(tab) : tab === 'users' ? usersTab() : tab === 'audit' ? auditTab() : tab === 'data' ? dataTab() : ''; }
+  try { body = SETTINGS_SCHEMA[tab] ? settingsFormTab(tab) : ['materials', 'labour', 'machines', 'finishing'].includes(tab) ? catalogCard(tab) : tab === 'products' ? productsTab() : tab === 'users' ? usersTab() : tab === 'audit' ? auditTab() : tab === 'data' ? dataTab() : ''; }
   catch (er) { console.error(er); body = `<div class="alert bad">${e(er.message)}</div>`; }
   return `<div class="top"><h1>Settings</h1></div><div class="tabs">${tabs.map(t => `<button class="${t[0] === tab ? 'on' : ''}" data-act="stab" data-t="${t[0]}">${t[1]}</button>`).join('')}</div>${body}`;
 }
