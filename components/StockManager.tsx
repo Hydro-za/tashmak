@@ -12,7 +12,7 @@ type LinkedProduct={id:string;name:string;data:any};
 const number=(value:number)=>Number(value||0).toLocaleString('en-ZA',{maximumFractionDigits:3});
 const movementLabel=(type:string)=>type.replaceAll('_',' ').replace(/\\b\\w/g,c=>c.toUpperCase());
 
-export default function StockManager({items:initial,movements,materials,products=[]}:{items:Item[];movements:Movement[];materials:Material[];products?:LinkedProduct[]}){
+export default function StockManager({items:initial,movements,products=[]}:{items:Item[];movements:Movement[];materials:Material[];products?:LinkedProduct[]}){
  const router=useRouter();const items=initial||[];
  const [mode,setMode]=useState<'new'|'receive'|'adjust'|'use'|null>(null);
  const [selected,setSelected]=useState('');const [materialName,setMaterialName]=useState('');
