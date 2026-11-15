@@ -115,7 +115,7 @@ function settingsTabs() {
 function viewSettings() {
   const tabs = settingsTabs(); if (!tabs.some(t => t[0] === State.settingsTab)) State.settingsTab = tabs[0][0];
   const tab = State.settingsTab; let body = '';
-  try { body = SETTINGS_SCHEMA[tab] ? settingsFormTab(tab) : ['materials', 'labour', 'machines', 'finishing'].includes(tab) ? catalogCard(tab) : tab === 'products' ? productsTab() : tab === 'users' ? usersTab() : tab === 'audit' ? auditTab() : tab === 'data' ? dataTab() : ''; }
+  try { body = SETTINGS_SCHEMA[tab] ? settingsFormTab(tab) : ['materials', 'labour', 'machines', 'finishing'].includes(tab) ? catalogCard(tab) : tab === 'products' ? productsTab() : ['dtf', 'paper', 'large'].includes(tab) ? profileTab(tab) : tab === 'users' ? usersTab() : tab === 'audit' ? auditTab() : tab === 'data' ? dataTab() : ''; }
   catch (er) { console.error(er); body = `<div class="alert bad">${e(er.message)}</div>`; }
   return `<div class="top"><h1>Settings</h1></div><div class="tabs">${tabs.map(t => `<button class="${t[0] === tab ? 'on' : ''}" data-act="stab" data-t="${t[0]}">${t[1]}</button>`).join('')}</div>${body}`;
 }
