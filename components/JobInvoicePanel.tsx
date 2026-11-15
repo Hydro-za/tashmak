@@ -91,7 +91,7 @@ export default function JobInvoicePanel({ snapshot, completion, jobStatus }: { s
       <div className="job-invoice-head">
         <div>
           <h2>Accounting preparation</h2>
-          <p className="muted">Enter these saved quote details into Sage, then confirm the handoff and sent invoice to finish the job.</p>
+          <p className="muted">Enter these saved quote details in your accounting records, then confirm the handoff and sent invoice to finish the job.</p>
         </div>
         <button type="button" className="btn primary" onClick={() => setOpen(!open)}>
           {open ? 'Hide accounting details' : isJobDone ? 'View accounting details' : 'Ready for invoice'}
@@ -102,14 +102,14 @@ export default function JobInvoicePanel({ snapshot, completion, jobStatus }: { s
         <b>Job completed.</b> Handoff and invoice completion were confirmed on {new Date(completion.completed_at).toLocaleString('en-ZA', { timeZone: 'Africa/Johannesburg' })}.
       </div>}
       {!isJobDone && completion && isCurrentCompletion && <div className="alert info">
-        Sage details were recorded earlier. Confirm the handoff and that the invoice was sent to move this job into Completed.
+        Accounting details were recorded earlier. Confirm the handoff and that the invoice was sent to move this job into Completed.
       </div>}
       {completion && !isCurrentCompletion && <div className="alert warn">
-        The products or accounting figures changed since the previous confirmation. Update the Sage entry before completing the job.
+        The products or accounting figures changed since the previous confirmation. Update your accounting records before completing the job.
       </div>}
 
       {open && <>
-        <h3 style={{ margin: '14px 0 8px' }}>Products to enter in Sage ({products.length})</h3>
+        <h3 style={{ margin: '14px 0 8px' }}>Products for your accounting records ({products.length})</h3>
         {products.length ? <div className="tblwrap">
           <table className="tbl">
             <thead><tr><th>Product / description</th><th className="r">Quantity</th><th className="r">Unit price</th><th className="r">Line total</th></tr></thead>
@@ -127,7 +127,7 @@ export default function JobInvoicePanel({ snapshot, completion, jobStatus }: { s
         <h3 style={{ margin: '18px 0 8px' }}>Invoice details</h3>
         <div className="tblwrap">
           <table className="tbl">
-            <thead><tr><th>Accounting field</th><th>Enter in Sage</th></tr></thead>
+            <thead><tr><th>Accounting field</th><th>Record in accounting</th></tr></thead>
             <tbody>
               {entries.map(([label, value]) => <tr key={label}>
                 <td data-label="Accounting field">{label}</td><td data-label="Enter in Sage"><b>{value}</b></td>
@@ -140,7 +140,7 @@ export default function JobInvoicePanel({ snapshot, completion, jobStatus }: { s
           The saved quote calculations need review before this job can be completed.
         </div>}
         <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
-          These products and figures come from the saved quote. Tashmak records your confirmation; it does not enter data into Sage or send the invoice.
+          These products and figures come from the saved quote. Tashmak records your confirmation; it does not update your accounting records or send the invoice.
         </p>
         {!isJobDone && <div className="pillrow" style={{ marginTop: 12 }}>
           <button type="button" className="btn primary" disabled={!snapshot.items_valid || !products.length || snapshot.invoice_total == null} onClick={openConfirmation}>
@@ -164,7 +164,7 @@ export default function JobInvoicePanel({ snapshot, completion, jobStatus }: { s
               </label>
               <label className="chk" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, margin: '12px 0', padding: 12, border: '1px solid var(--line)', borderRadius: 12 }}>
                 <input type="checkbox" checked={invoiceSentConfirmed} onChange={e => { setInvoiceSentConfirmed(e.target.checked); setDialogError(''); }} />
-                <span><b>The invoice was entered in Sage and sent</b><br /><span className="muted">Tashmak records your confirmation but does not send it for you.</span></span>
+                <span><b>The invoice was recorded in your accounting system and sent</b><br /><span className="muted">Tashmak records your confirmation but does not send it for you.</span></span>
               </label>
               {dialogError && <div className="alert bad" role="alert" style={{ marginTop: 10 }}>{dialogError}</div>}
             </div>
