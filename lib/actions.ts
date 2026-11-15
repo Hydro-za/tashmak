@@ -279,3 +279,32 @@ export async function useStock(itemId: string, quantity: number, note: string): 
   const r = await rpc('stock_use', { p_item: itemId, p_quantity: quantity, p_note: note.trim() });
   revalidatePath('/stock'); return r;
 }
+
+
+/** Remove only the explicitly seeded demo inventory and its audit movements. */
+export async function deleteDemoStock(): Promise<R> {
+  try {
+    const { sb } = await requireOwner();
+    const { data: demoMaterials, error: materialError } = await sb
+      .from('materials').select('id,data').eq('data->>demo', 'true');
+    if (materialError) return fail(materialError);
+    const demoMaterialIds = (demoMaterials || []).map((m: any) => m.id);
+    if (!demoMaterialIds.length) return ok({ deleted: 0 }, true);
+
+    const { data: demoItems, error: itemError } = await sb
+      .from('stock_items').select('id')
+      .in('material_id', demoMaterialIds)
+      .like('notes', 'DEMO TEST STOCK%');
+    if (itemError) return fail(itemError);
+    const ids = (demoItems || []).map((item: any) => item.id);
+    if (!ids.length) return ok({ deleted: 0 }, true);
+
+    const { error: movementError } = await sb.from('stock_movements').delete().in('stock_item_id', ids);
+    if (movementError) return fail(movementError);
+    const { error: deleteError } = await sb.from('stock_items').delete().in('id', ids);
+    if (deleteError) return fail(deleteError);
+
+    revalidatePath('/stock');
+    return ok({ deleted: ids.length });
+  } catch (e) { return fail(e); }
+}
