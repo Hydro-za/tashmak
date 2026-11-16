@@ -6,7 +6,8 @@ import { sortJobs, staffNames } from '@/lib/jobs';
 export const dynamic = 'force-dynamic';
 type SearchParams = { q?: string; status?: string; due?: string; archived?: string };
 function readiness(job: any) {
-  if (['ready_invoice', 'collected', 'delivered'].includes(job.status)) return 'Ready for invoice';
+  if (job.status === 'ready_invoice') return 'Invoice';
+  if (['collected', 'delivered'].includes(job.status)) return 'Invoice preparation';
   if (job.status === 'ready_delivery') return 'Ready for delivery';
   if (job.status === 'ready_collection') return 'Ready for collection';
   return null;
@@ -28,7 +29,7 @@ export default async function Jobs({ searchParams: searchParamsPromise }: { sear
  const status=['active','completed','ready_handoff',...Object.keys(JOB_STATUS)].includes(searchParams.status||'')?searchParams.status||'active':'active';
  const due=['today','overdue'].includes(searchParams.due||'')?searchParams.due:null;
  const activeCount=all.filter((j:any)=>!isCompletedJob(j)&&j.status!=='cancelled').length;const completedCount=all.filter((j:any)=>isCompletedJob(j)).length;const cancelledCount=all.filter((j:any)=>j.status==='cancelled').length;
- const statusMatches=(j:any)=>status==='active'?!isCompletedJob(j)&&j.status!=='cancelled':status==='completed'?isCompletedJob(j):status==='ready_handoff'?['ready_collection','ready_delivery'].includes(j.status):status==='ready_invoice'?['collected','delivered','ready_invoice'].includes(j.status):j.status===status;
+ const statusMatches=(j:any)=>status==='active'?!isCompletedJob(j)&&j.status!=='cancelled':status==='completed'?isCompletedJob(j):status==='ready_handoff'?['ready_collection','ready_delivery'].includes(j.status):status==='ready_invoice'?j.status==='ready_invoice':j.status===status;
  const dueMatches=(j:any)=>due==='today'?!isCompletedJob(j)&&j.status!=='cancelled'&&j.due_date===todaySA():due==='overdue'?overdueDays(j.due_date,j.status)>0:true;
  const rows=all.filter((j:any)=>(archived||(statusMatches(j)&&dueMatches(j)))&&(!term||[j.number,j.title,j.customer_name,...(itemMap[j.id]||[]).map((i:any)=>i.product_name)].join(' ').toLowerCase().includes(term)))
  .sort(status==='completed'?(a:any,b:any)=>String(b.completed_at||b.updated_at).localeCompare(String(a.completed_at||a.updated_at)):sortJobs);
