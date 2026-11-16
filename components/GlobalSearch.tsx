@@ -21,9 +21,14 @@ export default function GlobalSearch({ jobBase = '/jobs' }: { jobBase?: string }
     if (term.length < 2) { reqId.current++; setRes(null); setBusy(false); return; }
     const id = ++reqId.current; setBusy(true);
     const t = setTimeout(async () => {
-      const { data, error } = await createClient().rpc('global_search', { p_q: term });
-      if (id !== reqId.current) return;
-      setBusy(false); setRes(error ? { error: true } : data);
+      try {
+        const { data, error } = await createClient().rpc('global_search', { p_q: term });
+        if (id !== reqId.current) return;
+        setBusy(false); setRes(error ? { error: true } : data);
+      } catch {
+        if (id !== reqId.current) return;
+        setBusy(false); setRes({ error: true });
+      }
     }, 250);
     return () => clearTimeout(t);
   }, [q]);
