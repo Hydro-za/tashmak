@@ -32,12 +32,12 @@ export default async function InvoicesPage({ searchParams: searchParamsPromise }
     (!params.status || row.status === params.status) &&
     (!term || [row.invoice_number, row.job_number, row.customer_name, row.job_description, row.quote_number].join(' ').toLowerCase().includes(term))
   );
-  const rowsWithPayments = rows.map(row => { const paid = (row.job_invoice_payments || []).reduce((sum: number, payment: any) => sum + Number(payment.amount || 0), 0); return { ...row, paid_total: paid, balance: Math.max(0, Number(row.verified_total || 0) - paid), payment_status: Number(row.verified_total || 0) - paid <= 0.01 ? 'Paid' : paid > 0 ? 'Part paid' : 'Unpaid' }; });
+  const rowsWithPayments = rows.map(row => { const paid = (row.job_invoice_payments || []).reduce((sum: number, payment: any) => sum + Number(payment.amount || 0), 0); const balance = Math.max(0, Number(row.verified_total || 0) - paid); return { ...row, paid_total: paid, balance: row.status === 'invoice_sent' ? balance : null, payment_status: row.status !== 'invoice_sent' ? 'Not sent' : balance <= 0.01 ? 'Paid' : paid > 0 ? 'Part paid' : 'Unpaid' }; });
   const filters = [['all', 'All'], ['needs_review', 'Needs review'], ['ready_for_invoice', 'Ready to send'], ['invoice_sent', 'Invoice sent']];
   const chip = (key: string, label: string) => <Link key={key} className={((params.status || 'all') === key ? 'on' : '')} href={{ pathname: '/invoices', query: { ...(key !== 'all' ? { status: key } : {}), ...(params.q ? { q: params.q } : {}) } }}>{label}</Link>;
 
   return <div className="page-invoices">
-    <Top title="Invoices" sub="Track invoice numbers, verified totals and sending status. Invoices are prepared and sent manually outside Tashmak." />
+    <Top title="Invoices" sub="Track invoices, payments and outstanding balances. Invoices are prepared and sent manually outside Tashmak." />
     <form className="card" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
       <input name="q" defaultValue={params.q || ''} placeholder="Invoice number, job or customer" style={{ flex: 1, minWidth: 200 }} />
       {params.status && <input type="hidden" name="status" value={params.status} />}
