@@ -73,7 +73,7 @@ export default function JobInvoicePanel({ snapshot, completion, invoice: initial
       const result = await saveJobInvoice(snapshot.job_id, invoiceNumber.trim(), verified);
       if (!result.ok) { toast(result.error || 'Could not save invoice details', 'bad'); return; }
       const ready = !!snapshot.items_valid && !quoteHasErrors && totalMatches;
-      setInvoice({ id: result.data, invoice_number: invoiceNumber.trim(), verified_total: verified, status: ready ? 'ready_for_invoice' : 'needs_review', review_reason: ready ? null : !snapshot.items_valid ? 'Saved quote calculations need review before an invoice can be prepared.' : 'Verified invoice total does not match the saved quote total.', source_snapshot: snapshot });
+      setInvoice({ id: result.data, invoice_number: invoiceNumber.trim(), verified_total: verified, status: ready ? 'ready_for_invoice' : 'needs_review', review_reason: ready ? null : (!snapshot.items_valid || quoteHasErrors) ? 'Saved quote calculations need review before an invoice can be prepared.' : 'Verified invoice total does not match the saved quote total.', source_snapshot: snapshot });
       toast(ready ? 'Invoice details saved' : 'Saved — review required');
       router.refresh();
     } catch {
