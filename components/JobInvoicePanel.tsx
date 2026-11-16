@@ -133,7 +133,7 @@ export default function JobInvoicePanel({ snapshot, completion, invoice: initial
       <div className="job-invoice-head">
         <div>
           <h2>Invoice tracking</h2>
-          <p className="muted">Check the quote figures, record your invoice number, then mark it sent after sending it outside Tashmak.</p>
+          <p className="muted">Check the quote figures, record the invoice number, mark it sent, then track customer payments.</p>
         </div>
         <button type="button" className="btn" onClick={() => setOpen(!open)}>{open ? 'Hide details' : 'View accounting details'}</button>
       </div>
