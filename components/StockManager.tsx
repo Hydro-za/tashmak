@@ -3,17 +3,19 @@ import {useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {createStockMaterial,receiveStock,adjustStock,useStock,deleteDemoStock} from '@/lib/actions';
 import ActionButton from '@/components/ActionButton';
+import PurchaseOrders from '@/components/PurchaseOrders';
 import {toast} from '@/components/ToastHost';
 
 type Item={id:string;material_id:string|null;name:string;unit:string;quantity:number;minimum_quantity:number;supplier?:string|null;notes?:string|null};
 type Material={id:string;name:string;data:any};
 type Movement={id:number;item_name:string;movement_type:string;quantity_change:number;quantity_after:number;note?:string|null;supplier?:string|null;performed_at:string;performed_by_name:string};
 type LinkedProduct={id:string;name:string;data:any};
+type PurchaseOrder={id:string;number:string;supplier:string;status:string;expected_date:string|null;notes:string|null;total:number;created_at:string;items:any[]};
 const number=(value:number)=>Number(value||0).toLocaleString('en-ZA',{maximumFractionDigits:3});
 const movementLabel=(type:string)=>type.replaceAll('_',' ').replace(/\\b\\w/g,c=>c.toUpperCase());
 
 export default function StockManager({items:initial,movements,products=[]}:{items:Item[];movements:Movement[];materials:Material[];products?:LinkedProduct[]}){
- const router=useRouter();const items=initial||[];
+ const router=useRouter();const items=initial||[];const [view,setView]=useState<'inventory'|'purchase-orders'>(initialView);
  const [mode,setMode]=useState<'new'|'receive'|'adjust'|'use'|null>(null);
  const [selected,setSelected]=useState('');const [materialName,setMaterialName]=useState('');
  const [unit,setUnit]=useState('sheets');const [minimum,setMinimum]=useState('0');
@@ -28,6 +30,8 @@ export default function StockManager({items:initial,movements,products=[]}:{item
  const invalid=busy|| (mode==='new'?(!materialName.trim()||!unit.trim()||quantity===''||!Number.isFinite(Number(quantity))||Number(quantity)<0||minimum===''||!Number.isFinite(Number(minimum))||Number(minimum)<0):(!selected||!quantity||!Number.isFinite(Number(quantity))||Number(quantity)<0||((mode==='receive'||mode==='use')&&Number(quantity)<=0)||((mode==='adjust'||mode==='use')&&!note.trim())));
  const heading=mode==='new'?'Add raw material':mode==='receive'?'Receive stock':mode==='use'?'Record material usage':'Adjust stock quantity';
  return <div className="stock-page">
+  <div className="stock-tabs" role="tablist" aria-label="Stock sections"><button type="button" role="tab" aria-selected={view==='inventory'} className={view==='inventory'?'on':''} onClick={()=>setView('inventory')}>Inventory</button><button type="button" role="tab" aria-selected={view==='purchase-orders'} className={view==='purchase-orders'?'on':''} onClick={()=>setView('purchase-orders')}>Purchase orders <span>{orders.filter(o=>['draft','ordered','part_received'].includes(o.status)).length}</span></button></div>
+  {view==='purchase-orders'?<PurchaseOrders orders={orders} stock={items}/>:<>
   <section className="stock-overview" aria-label="Stock overview">
    <div className="stock-stat"><span className="stock-stat-icon">▦</span><div><span className="stock-stat-label">Tracked materials</span><strong>{items.length}</strong><small>Raw material types</small></div></div>
    <div className="stock-stat"><span className="stock-stat-icon stock-warn">!</span><div><span className="stock-stat-label">Low stock</span><strong>{low.length}</strong><small>At or below minimum</small></div></div>
@@ -57,5 +61,6 @@ export default function StockManager({items:initial,movements,products=[]}:{item
    <div className="stock-panel-head stock-history-head"><div><span className="stock-eyebrow">AUDIT TRAIL</span><h2>Recent stock history</h2><p className="muted">A record of every stock adjustment, receipt and usage.</p></div><span className="stock-history-count">{movements.length} {movements.length===1?'movement':'movements'}</span></div>
    {movements.length===0?<div className="stock-history-empty"><span className="stock-empty-icon">↗</span><b>No stock history yet</b><p className="muted">Receipts, usage and adjustments will appear here automatically after your first stock change.</p></div>:<div className="stock-table-wrap"><table className="tbl stock-table"><thead><tr><th>Date</th><th>Material</th><th>Movement</th><th>Change</th><th>Balance after</th><th>Recorded by</th></tr></thead><tbody>{movements.map(m=><tr key={m.id}><td>{new Date(m.performed_at).toLocaleString('en-ZA',{dateStyle:'medium',timeStyle:'short'})}</td><td>{m.item_name}</td><td>{movementLabel(m.movement_type)}</td><td><strong className={m.quantity_change<0?'stock-change-negative':'stock-change-positive'}>{m.quantity_change>0?'+':''}{number(m.quantity_change)}</strong></td><td>{number(m.quantity_after)}</td><td>{m.performed_by_name}</td></tr>)}</tbody></table></div>}
   </section>
+  </>}
  </div>;
 }
