@@ -8,7 +8,7 @@ export default function WorkspaceError({ error, reset }: { error: Error & { dige
   }, [error]);
 
   return (
-    <main className="main" style={{ display: 'grid', placeItems: 'start center', paddingTop: 48 }}>
+    <div className="error-workspace" style={{ display: 'grid', placeItems: 'start center', paddingTop: 48 }}>
       <section className="card" role="alert" style={{ width: '100%', maxWidth: 520, textAlign: 'center', padding: 28 }}>
         <h1 style={{ marginBottom: 10 }}>This page couldn’t load</h1>
         <p className="muted">Your saved information has not been changed by this error. Try loading the page again. If it keeps happening, contact an owner.</p>
@@ -18,6 +18,6 @@ export default function WorkspaceError({ error, reset }: { error: Error & { dige
         </div>
         {error.digest && <p className="muted" style={{ fontSize: 11, marginTop: 14 }}>Reference: {error.digest}</p>}
       </section>
-    </main>
+    </div>
   );
 }
