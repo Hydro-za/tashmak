@@ -28,16 +28,19 @@ export default async function JobPage({ params: paramsPromise }: { params: Promi
   const s = job.status; const final = ['job_done', 'cancelled'].includes(s); const reopenable = ['completed', 'ready_collection', 'ready_delivery', 'collected', 'delivered', 'ready_invoice', 'job_done', 'cancelled'].includes(s);
   const title = job.title || items.map((i: any) => i.product_name).slice(0, 2).join(', ') || job.number;
   const invoiceEligible = me.isOwner && ['collected', 'delivered', 'ready_invoice', 'job_done'].includes(s);
-  let invoiceSnapshot: any = null; let accountingCompletion: any = null;
+  let invoiceSnapshot: any = null; let accountingCompletion: any = null; let latestInvoice: any = null;
   if (invoiceEligible) {
-    const [snapshotResult, completionResult] = await Promise.all([
+    const [snapshotResult, completionResult, invoiceResult] = await Promise.all([
       sb.rpc('invoice_job_snapshot', { p_job_id: job.id }),
-      sb.from('job_accounting_completions').select('completed_at,completed_by,source_snapshot').eq('job_id', job.id).maybeSingle()
+      sb.from('job_accounting_completions').select('completed_at,completed_by,source_snapshot').eq('job_id', job.id).maybeSingle(),
+      sb.from('job_invoices').select('*').eq('job_id', job.id).order('version', { ascending: false }).limit(1).maybeSingle()
     ]);
     if (snapshotResult.error) throw new Error('Could not load the accounting figures for this job.');
     if (completionResult.error) throw new Error('Could not load the accounting completion status. Please refresh and try again.');
+    if (invoiceResult.error) throw new Error('Could not load the invoice record. Please refresh and try again.');
     invoiceSnapshot = snapshotResult.data;
     accountingCompletion = completionResult.data;
+    latestInvoice = invoiceResult.data;
   }
   const hasQc = items.some((i: any) => i.requires_qc) || job.qc_status !== 'not_checked' || s === 'qc';
   const A = (label: string, action: string, cls = 'btn', extra: any = {}) => <ActionButton key={action + label} className={cls} label={label} action={jobAction} args={[job.id, action]} {...extra} />;
@@ -64,7 +67,7 @@ export default async function JobPage({ params: paramsPromise }: { params: Promi
         {me.isOwner && ['ready_invoice', 'cancelled', 'job_done'].includes(s) && <ActionButton className="btn ghost sm" label={job.archived_at ? 'Restore' : 'Archive'} action={archiveRecord} args={['job', job.id, !job.archived_at]} confirmText={job.archived_at ? undefined : 'Archive this job? It stays under archived records.'} />}
       </span>
     </div>}
-    {invoiceEligible && <JobInvoicePanel snapshot={invoiceSnapshot} completion={accountingCompletion} jobStatus={s} />}
+    {invoiceEligible && <JobInvoicePanel snapshot={invoiceSnapshot} completion={accountingCompletion} invoice={latestInvoice} jobStatus={s} />}
     <div className="split"><div>
       <div className="card"><h2>Work order</h2>
         <div className="grid g3" style={{ marginBottom: 12 }}>
