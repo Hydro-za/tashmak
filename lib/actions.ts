@@ -10,7 +10,7 @@ import { requestPasswordReset as requestSharedPasswordReset, completePasswordRes
 
 type R = { ok: boolean; error?: string; noop?: boolean; data?: any };
 const ok = (data?: any, noop?: boolean): R => ({ ok: true, data, noop });
-const fail = (e: any): R => ({ ok: false, error: friendlyError(e) });
+const fail = (e: any): R => { console.error('Tashmak action failed:', e); return { ok: false, error: friendlyError(e) }; };
 async function rpc(fn: string, args: any): Promise<R> {
   try {
     const sb = await createClient();
