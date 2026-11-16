@@ -51,7 +51,8 @@ export default function JobInvoicePanel({ snapshot, completion, invoice: initial
   const total = Number(snapshot.invoice_total);
   const verified = Number(verifiedTotal);
   const totalMatches = verifiedTotal.trim() !== '' && Number.isFinite(verified) && Math.abs(verified - total) <= 0.01;
-  const canSave = !busy && !!invoiceNumber.trim() && invoiceNumber.trim().length <= 80 && verifiedTotal.trim() !== '' && Number.isFinite(verified) && verified >= 0 && !isJobDone && invoice?.status !== 'invoice_sent';
+  const quoteHasErrors = Array.isArray(snapshot.quote_totals?.errors) && snapshot.quote_totals.errors.length > 0;
+  const canSave = !busy && !!invoiceNumber.trim() && invoiceNumber.trim().length <= 80 && verifiedTotal.trim() !== '' && Number.isFinite(verified) && verified >= 0 && !isJobDone && (invoice?.status !== 'invoice_sent' || !isCurrentInvoice) && (invoice?.status !== 'invoice_sent' || invoiceNumber.trim() !== invoice.invoice_number);
   const canMarkSent = !busy && !!invoice?.id && invoice.status === 'ready_for_invoice' && isCurrentInvoice;
   const entries: [string, string][] = [
     ['Customer', snapshot.customer_name || '—'],
@@ -71,7 +72,7 @@ export default function JobInvoicePanel({ snapshot, completion, invoice: initial
     try {
       const result = await saveJobInvoice(snapshot.job_id, invoiceNumber.trim(), verified);
       if (!result.ok) { toast(result.error || 'Could not save invoice details', 'bad'); return; }
-      const ready = !!snapshot.items_valid && totalMatches;
+      const ready = !!snapshot.items_valid && !quoteHasErrors && totalMatches;
       setInvoice({ id: result.data, invoice_number: invoiceNumber.trim(), verified_total: verified, status: ready ? 'ready_for_invoice' : 'needs_review', review_reason: ready ? null : !snapshot.items_valid ? 'Saved quote calculations need review before an invoice can be prepared.' : 'Verified invoice total does not match the saved quote total.', source_snapshot: snapshot });
       toast(ready ? 'Invoice details saved' : 'Saved — review required');
       router.refresh();
@@ -146,7 +147,7 @@ export default function JobInvoicePanel({ snapshot, completion, invoice: initial
         {!snapshot.items_valid && <div className="alert warn" style={{ marginTop: 12 }}>The saved quote calculations need review before this invoice can be marked ready.</div>}
         <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>Tashmak stores the invoice number, verified total and sending status. It does not create or send the invoice in your accounting system.</p>
 
-        {!isJobDone && invoice?.status !== 'invoice_sent' && <>
+        {!isJobDone && (invoice?.status !== 'invoice_sent' || !isCurrentInvoice) && <>
           <div className="grid g2" style={{ marginTop: 14 }}>
             <div className="field"><label htmlFor="job-invoice-number">Invoice number</label><input id="job-invoice-number" value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} maxLength={80} placeholder="Enter the manual invoice number" /></div>
             <div className="field"><label htmlFor="job-invoice-total">Verified invoice total (R)</label><input id="job-invoice-total" type="number" min="0" step="0.01" value={verifiedTotal} onChange={e => setVerifiedTotal(e.target.value)} placeholder={Number.isFinite(total) ? total.toFixed(2) : '0.00'} /></div>
@@ -158,7 +159,8 @@ export default function JobInvoicePanel({ snapshot, completion, invoice: initial
           <button type="button" className="btn primary" disabled={!canMarkSent} onClick={markSent}>{busy ? 'Saving…' : 'Mark invoice as sent'}</button>
           <span className="muted">Only use this after the invoice has actually been sent to the customer.</span>
         </div>}
-        {invoice?.status === 'invoice_sent' && !isJobDone && <>
+        {invoice?.status === 'invoice_sent' && !isCurrentInvoice && <div className="alert warn">The quote figures changed after this invoice was sent. If an updated invoice is required, record it using a new invoice number.</div>}
+        {invoice?.status === 'invoice_sent' && !isJobDone && isCurrentInvoice && <>
           <label className="chk" style={{ marginTop: 14 }}><input type="checkbox" checked={handoffConfirmed} onChange={e => setHandoffConfirmed(e.target.checked)} /> The job has been collected or delivered to the customer.</label>
           <div className="pillrow" style={{ marginTop: 10 }}><button type="button" className="btn primary" disabled={busy || !handoffConfirmed || !isCurrentInvoice} onClick={finishJob}>{busy ? 'Completing…' : 'Complete job'}</button></div>
         </>}
