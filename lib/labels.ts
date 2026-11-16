@@ -40,6 +40,17 @@ const ERR: Record<string, string> = {
   quote_not_accepted: 'The quote must be accepted first.', note_required: 'A note is required.', reason_required: 'A reason is required.', confirm_required: 'Confirmation is required because production has already started.', handoff_confirmation_required: 'Confirm the job has been handed over before completing it.', invoice_confirmation_required: 'Confirm the invoice has been recorded and sent before completing the job.', completion_confirmation_required: 'Confirm the handoff and that the invoice has been recorded and sent before completing the job.',
   username_taken: 'That username is already in use.', invalid_username: 'Username must be 3–32 characters: letters, numbers, dot, dash or underscore.', password_too_short: 'Password must be at least 8 characters.',
   customer_required: 'Choose a customer.', quote_needs_items: 'Add at least one item.', invalid_quantities: 'Those quantities are not valid.', completed_exceeds_ordered: 'Completed quantity cannot exceed the ordered quantity.',
+  invoice_number_required: 'Enter a valid invoice number (up to 80 characters).',
+  invoice_total_missing: 'The saved quote does not have an invoice total. Review the quote first.',
+  verified_total_required: 'Enter the verified invoice total.',
+  invoice_source_missing: 'This job is missing its linked accepted quote. Check the job before preparing an invoice.',
+  invoice_not_found: 'The invoice record could not be found. Refresh and try again.',
+  invoice_already_sent: 'This invoice has already been marked as sent.',
+  invoice_not_ready: 'This invoice still needs review before it can be marked as sent.',
+  cancellation_reason_required: 'Enter a reason of at least 3 characters.',
+  material_not_found: 'This material no longer exists. Refresh the Products & Pricing page.',
+  invalid_material_unit: 'Choose a supported stock unit.',
+  invalid_stock_unit: 'Choose a supported stock unit.',
   job_archived: 'This job is archived.', job_not_found: 'This job could not be found. Reload and try again.', job_not_ready_for_accounting: 'This job is no longer ready for accounting. Refresh and check its status.', accounting_figures_need_review: 'The saved quote figures need review before the accounting entry can be completed.', last_owner: 'At least one active owner is required.', one_designer_only: 'Only one designer can be assigned.', invalid_employee_for_stage: 'That employee cannot be assigned to this stage.'
 };
 export function friendlyError(e: any): string {
