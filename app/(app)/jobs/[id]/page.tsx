@@ -27,7 +27,7 @@ export default async function JobPage({ params: paramsPromise }: { params: Promi
   const ids = (stage: string) => assignments.filter((a: any) => a.stage === stage).map((a: any) => a.user_id);
   const s = job.status; const final = ['job_done', 'cancelled'].includes(s); const reopenable = ['completed', 'ready_collection', 'ready_delivery', 'collected', 'delivered', 'ready_invoice', 'job_done', 'cancelled'].includes(s);
   const title = job.title || items.map((i: any) => i.product_name).slice(0, 2).join(', ') || job.number;
-  const invoiceEligible = me.isOwner && ['collected', 'delivered', 'ready_invoice', 'job_done'].includes(s);
+  const invoiceEligible = me.isOwner && ['ready_invoice', 'job_done'].includes(s);
   let invoiceSnapshot: any = null; let accountingCompletion: any = null; let latestInvoice: any = null;
   if (invoiceEligible) {
     const [snapshotResult, completionResult, invoiceResult] = await Promise.all([
@@ -57,7 +57,7 @@ export default async function JobPage({ params: paramsPromise }: { params: Promi
       {['completed', 'ready_collection', 'ready_delivery'].includes(s) && <>{A('READY FOR COLLECTION', 'ready_collection', s === 'ready_collection' ? 'btn primary' : 'btn')}{A('READY FOR DELIVERY', 'ready_delivery', s === 'ready_delivery' ? 'btn primary' : 'btn')}</>}
       {s === 'ready_collection' && A('COLLECTED', 'collected', 'btn primary', { askNote: 'Collected by / notes (optional)', successText: 'Marked collected' })}
       {s === 'ready_delivery' && A('DELIVERED', 'delivered', 'btn primary', { askNote: 'Delivery notes (optional)', successText: 'Marked delivered' })}
-      {['collected', 'delivered'].includes(s) && me.isOwner && <span className="badge b-converted">Ready for invoice</span>}
+      {['collected', 'delivered'].includes(s) && me.isOwner && A('MARK READY FOR INVOICE', 'ready_invoice', 'btn primary', { successText: 'Marked ready for invoice' })}
       {s === 'ready_invoice' && <span className="badge b-converted">Ready for invoice</span>}
       {s === 'cancelled' && <span className="muted">Cancelled{job.cancel_reason ? ': ' + job.cancel_reason : ''}</span>}
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
