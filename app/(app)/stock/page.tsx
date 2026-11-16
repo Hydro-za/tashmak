@@ -3,16 +3,18 @@ import {notFound} from 'next/navigation';
 import StockManager from '@/components/StockManager';
 import {Top} from '@/components/ui';
 export const dynamic='force-dynamic';
-export default async function StockPage(){
- const me=await requireMe();
+export default async function StockPage({searchParams}:{searchParams:Promise<{view?:string}>}){
+ const [{view},me]=await Promise.all([searchParams,requireMe()]);
  if(!me.isOwner)notFound();
- const [{data,error},{data:materials,error:materialsError},{data:products,error:productsError}]=await Promise.all([
+ const [{data,error},{data:materials,error:materialsError},{data:products,error:productsError},{data:orders,error:ordersError}]=await Promise.all([
   me.sb.rpc('stock_snapshot'),
   me.sb.from('materials').select('id,name,data').eq('active',true).order('name'),
-  me.sb.from('products').select('id,name,data').order('name')
+  me.sb.from('products').select('id,name,data').order('name'),
+  me.sb.rpc('purchase_order_snapshot')
  ]);
  if(error)throw new Error('Could not load stock: '+error.message);
  if(materialsError)throw new Error('Could not load materials: '+materialsError.message);
  if(productsError)throw new Error('Could not load product links: '+productsError.message);
- return <><Top title="Stock management" sub="Track raw materials, incoming stock and stock movements."/><StockManager items={data?.items||[]} movements={data?.movements||[]} materials={materials||[]} products={products||[]}/></>;
+ if(ordersError)throw new Error('Could not load purchase orders: '+ordersError.message);
+ return <><Top title="Stock management" sub="Track raw materials, incoming stock and stock movements."/><StockManager items={data?.items||[]} movements={data?.movements||[]} materials={materials||[]} products={products||[]} orders={orders||[]} initialView={view==='purchase-orders'?'purchase-orders':'inventory'}/></>;
 }
