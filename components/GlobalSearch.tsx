@@ -39,7 +39,7 @@ export default function GlobalSearch({ jobBase = '/jobs' }: { jobBase?: string }
 
   return (
     <div className="search" ref={box} onKeyDown={e => { if (e.key === 'Escape') { setOpen(false); input.current?.blur(); } }}>
-      <input ref={input} type="search" placeholder="Search job, quote, customer, product…" value={q} aria-label="Search" aria-expanded={show} autoComplete="off"
+      <input ref={input} type="search" placeholder="Search jobs, quotes, customers or employees…" value={q} aria-label="Search" aria-expanded={show} autoComplete="off"
         onChange={e => { setQ(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)} />
       {show && (
         <div className="results" role="listbox" onMouseDown={e => e.preventDefault()}>
