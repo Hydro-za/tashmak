@@ -18,7 +18,7 @@ export default async function InvoicesPage({ searchParams: searchParamsPromise }
   const params = await searchParamsPromise;
   const { sb } = await requireOwner();
   const { data, error } = await sb.from('job_invoices')
-    .select('id,job_id,version,invoice_number,status,customer_name,job_number,job_description,quote_number,invoice_total,verified_total,review_reason,prepared_at,sent_at,verified_total,job_invoice_payments(id,amount,method,reference,received_at)')
+    .select('id,job_id,version,invoice_number,status,customer_name,job_number,job_description,quote_number,invoice_total,verified_total,review_reason,prepared_at,sent_at,job_invoice_payments(id,amount,method,reference,received_at)')
     .order('prepared_at', { ascending: false }).limit(500);
   if (error) throw new Error('Could not load invoice records: ' + error.message);
 
@@ -53,6 +53,7 @@ export default async function InvoicesPage({ searchParams: searchParamsPromise }
           <td data-label="Status"><span className={'badge ' + (tones[row.status] || '')}>{labels[row.status] || row.status}</span>{row.review_reason && <div className="muted" style={{ maxWidth: 240 }}>{row.review_reason}</div>}</td>
           <td className="r" data-label="Invoice total">{money(row.invoice_total)}</td>
           <td className="r" data-label="Verified total">{money(row.verified_total)}</td>
+          <td data-label="Payment"><b>{row.payment_status}</b><div className="muted">Paid {money(row.paid_total)} · Balance {money(row.balance)}</div></td>
           <td data-label="Prepared / sent">{fmtDateTime(row.prepared_at)}{row.sent_at ? <div className="muted">Sent {fmtDateTime(row.sent_at)}</div> : null}</td>
         </tr>)}</tbody>
       </table></div></div>
@@ -62,6 +63,8 @@ export default async function InvoicesPage({ searchParams: searchParamsPromise }
         <div className="invoice-mobile-values">
           <div><small>Invoice total</small><b>{money(row.invoice_total)}</b></div>
           <div><small>Verified total</small><b>{money(row.verified_total)}</b></div>
+          <div><small>Payment · {row.payment_status}</small><b>{money(row.paid_total)}</b></div>
+          <div><small>Outstanding</small><b>{money(row.balance)}</b></div>
         </div>
         <div className="muted">Prepared {fmtDateTime(row.prepared_at)}{row.sent_at ? ' · Sent ' + fmtDateTime(row.sent_at) : ''}</div>
         {row.review_reason && <div className="muted">{row.review_reason}</div>}
