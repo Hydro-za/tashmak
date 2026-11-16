@@ -21,7 +21,8 @@ export default async function Reports({ searchParams: searchParamsPromise }: { s
   const overdue = all.filter((j: any) => overdueDays(j.due_date, j.status) > 0);
   const latestInvoices = new Map<string, any>();
   for (const invoice of invoiceResult.data || []) if (!latestInvoices.has(invoice.job_id)) latestInvoices.set(invoice.job_id, invoice);
-  const sentInvoices = [...latestInvoices.values()].filter((invoice: any) => invoice.status === 'invoice_sent' && invoice.sent_at && invoice.sent_at.slice(0, 10) >= from && invoice.sent_at.slice(0, 10) <= to);
+  const sentDateSA = (value: string) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Johannesburg', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(value));
+  const sentInvoices = [...latestInvoices.values()].filter((invoice: any) => invoice.status === 'invoice_sent' && invoice.sent_at && sentDateSA(invoice.sent_at) >= from && sentDateSA(invoice.sent_at) <= to);
   const invoicedTotal = sentInvoices.reduce((sum: number, invoice: any) => sum + Number(invoice.verified_total || 0), 0);
   const recordedCosts = sentInvoices.reduce((sum: number, invoice: any) => sum + Number(invoice.materials_cost || 0) + Number(invoice.labour_cost || 0), 0);
   const estimatedGrossProfit = sentInvoices.reduce((sum: number, invoice: any) => sum + Number(invoice.sales_amount || 0) - Number(invoice.materials_cost || 0) - Number(invoice.labour_cost || 0), 0);
