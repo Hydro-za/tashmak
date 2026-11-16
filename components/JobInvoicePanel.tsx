@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { completeJobAccountingEntry, markJobInvoiceSent, saveJobInvoice } from '@/lib/actions';
+import { completeJobAccountingEntry, markJobInvoiceSent, saveJobInvoice, recordJobInvoicePayment } from '@/lib/actions';
 import { toast } from './ToastHost';
 
 const money = (value: number | string | null | undefined) =>
@@ -29,6 +29,10 @@ export default function JobInvoicePanel({ snapshot, completion, invoice: initial
   const [verifiedTotal, setVerifiedTotal] = useState(initialInvoice?.verified_total == null ? '' : String(initialInvoice.verified_total));
   const [handoffConfirmed, setHandoffConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'cash'|'eft'|'card'|'other'>('eft');
+  const [paymentReference, setPaymentReference] = useState('');
+  const [paymentNote, setPaymentNote] = useState('');
 
   useEffect(() => {
     setInvoice(initialInvoice || null);
@@ -48,6 +52,10 @@ export default function JobInvoicePanel({ snapshot, completion, invoice: initial
   const isCurrentInvoice = !!invoice && snapshotFields.every((field) =>
     JSON.stringify(invoice.source_snapshot?.[field] ?? null) === JSON.stringify(snapshot[field] ?? null)
   );
+  const payments = Array.isArray(invoice?.job_invoice_payments) ? invoice.job_invoice_payments : [];
+  const paidTotal = payments.reduce((sum: number, payment: any) => sum + Number(payment.amount || 0), 0);
+  const balance = invoice ? Math.max(0, Number(invoice.verified_total || 0) - paidTotal) : 0;
+  const paymentStatus = balance <= 0.01 ? 'Paid' : paidTotal > 0 ? 'Partially paid' : 'Unpaid';
   const total = Number(snapshot.invoice_total);
   const verified = Number(verifiedTotal);
   const totalMatches = verifiedTotal.trim() !== '' && Number.isFinite(verified) && Math.abs(verified - total) <= 0.01;
@@ -95,6 +103,18 @@ export default function JobInvoicePanel({ snapshot, completion, invoice: initial
     } finally { setBusy(false); }
   }
 
+  async function recordPayment() {
+    const amount = Number(paymentAmount);
+    if (!invoice?.id || invoice.status !== 'invoice_sent' || !Number.isFinite(amount) || amount <= 0 || amount > balance + 0.01 || busy) return;
+    setBusy(true);
+    try {
+      const result = await recordJobInvoicePayment(invoice.id, snapshot.job_id, amount, paymentMethod, paymentReference.trim(), paymentNote.trim());
+      if (!result.ok) { toast(result.error || 'Could not record payment', 'bad'); return; }
+      toast('Payment recorded'); setPaymentAmount(''); setPaymentReference(''); setPaymentNote(''); router.refresh();
+    } catch { toast('Could not reach the server. No payment was confirmed.', 'bad'); }
+    finally { setBusy(false); }
+  }
+
   async function finishJob() {
     if (busy || !handoffConfirmed || invoice?.status !== 'invoice_sent' || !isCurrentInvoice || isJobDone) return;
     setBusy(true);
@@ -122,6 +142,7 @@ export default function JobInvoicePanel({ snapshot, completion, invoice: initial
         <b>{statusLabel[invoice.status] || invoice.status}</b>
         {' · '}Invoice {invoice.invoice_number}
         {invoice.status === 'invoice_sent' && invoice.sent_at ? ' · Sent ' + new Date(invoice.sent_at).toLocaleString('en-ZA', { timeZone: 'Africa/Johannesburg' }) : ''}
+        {invoice.status === 'invoice_sent' ? ' · ' + paymentStatus + ' · Balance ' + money(balance) : ''}
         {!isCurrentInvoice && invoice.status !== 'invoice_sent' ? ' · Quote figures changed — prepare a new version.' : ''}
         {invoice.review_reason && <div>{invoice.review_reason}</div>}
       </div>}
@@ -159,6 +180,26 @@ export default function JobInvoicePanel({ snapshot, completion, invoice: initial
           <button type="button" className="btn primary" disabled={!canMarkSent} onClick={markSent}>{busy ? 'Saving…' : 'Mark invoice as sent'}</button>
           <span className="muted">Only use this after the invoice has actually been sent to the customer.</span>
         </div>}
+        {invoice?.status === 'invoice_sent' && <section className="card" style={{ marginTop: 16, padding: 14 }}>
+          <h3 style={{ marginTop: 0 }}>Payment tracking</h3>
+          <div className="stats" style={{ marginBottom: 12 }}>
+            <div className="stat"><div className="k">Paid</div><div className="v">{money(paidTotal)}</div></div>
+            <div className="stat"><div className="k">Outstanding</div><div className="v">{money(balance)}</div></div>
+          </div>
+          <p className="muted" style={{ fontSize: 12 }}>{paymentStatus}. Record each payment received; the outstanding balance updates automatically.</p>
+          {payments.length > 0 && <div className="tblwrap"><table className="tbl"><thead><tr><th>Date</th><th>Method</th><th>Reference</th><th className="r">Amount</th></tr></thead><tbody>{payments.map((payment:any)=><tr key={payment.id}><td>{new Date(payment.received_at).toLocaleDateString('en-ZA',{timeZone:'Africa/Johannesburg'})}</td><td>{String(payment.method).toUpperCase()}</td><td>{payment.reference||'—'}</td><td className="r"><b>{money(payment.amount)}</b></td></tr>)}</tbody></table></div>}
+          {balance > 0.01 && <div style={{ marginTop: 14 }}>
+            <div className="grid g2">
+              <div className="field"><label htmlFor="invoice-payment-amount">Amount received (R)</label><input id="invoice-payment-amount" type="number" min="0.01" max={balance} step="0.01" value={paymentAmount} onChange={e=>setPaymentAmount(e.target.value)} placeholder={balance.toFixed(2)}/></div>
+              <div className="field"><label htmlFor="invoice-payment-method">Payment method</label><select id="invoice-payment-method" value={paymentMethod} onChange={e=>setPaymentMethod(e.target.value as any)}><option value="eft">EFT</option><option value="cash">Cash</option><option value="card">Card</option><option value="other">Other</option></select></div>
+            </div>
+            <div className="grid g2" style={{ marginTop: 8 }}>
+              <div className="field"><label htmlFor="invoice-payment-reference">Reference (optional)</label><input id="invoice-payment-reference" value={paymentReference} onChange={e=>setPaymentReference(e.target.value)} maxLength={120} placeholder="Bank reference or receipt number"/></div>
+              <div className="field"><label htmlFor="invoice-payment-note">Note (optional)</label><input id="invoice-payment-note" value={paymentNote} onChange={e=>setPaymentNote(e.target.value)} maxLength={300} placeholder="Short payment note"/></div>
+            </div>
+            <div className="pillrow" style={{ marginTop: 10 }}><button type="button" className="btn primary" disabled={busy || !paymentAmount || !Number.isFinite(Number(paymentAmount)) || Number(paymentAmount)<=0 || Number(paymentAmount)>balance+0.01} onClick={recordPayment}>{busy?'Saving…':'Record payment'}</button></div>
+          </div>}
+        </section>}
         {invoice?.status === 'invoice_sent' && !isCurrentInvoice && <div className="alert warn">The quote figures changed after this invoice was sent. If an updated invoice is required, record it using a new invoice number.</div>}
         {invoice?.status === 'invoice_sent' && !isJobDone && isCurrentInvoice && <>
           <label className="chk" style={{ marginTop: 14 }}><input type="checkbox" checked={handoffConfirmed} onChange={e => setHandoffConfirmed(e.target.checked)} /> The job has been collected or delivered to the customer.</label>
