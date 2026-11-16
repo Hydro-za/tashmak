@@ -33,7 +33,7 @@ export default async function JobPage({ params: paramsPromise }: { params: Promi
     const [snapshotResult, completionResult, invoiceResult] = await Promise.all([
       sb.rpc('invoice_job_snapshot', { p_job_id: job.id }),
       sb.from('job_accounting_completions').select('completed_at,completed_by,source_snapshot').eq('job_id', job.id).maybeSingle(),
-      sb.from('job_invoices').select('*').eq('job_id', job.id).order('version', { ascending: false }).limit(1).maybeSingle()
+      sb.from('job_invoices').select('*, job_invoice_payments(id,amount,method,reference,note,received_at)').eq('job_id', job.id).order('version', { ascending: false }).limit(1).maybeSingle()
     ]);
     if (snapshotResult.error) throw new Error('Could not load the accounting figures for this job.');
     if (completionResult.error) throw new Error('Could not load the accounting completion status. Please refresh and try again.');
