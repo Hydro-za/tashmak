@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { QUOTE_STATUS } from '@/lib/labels';
 
 type Hit = { href: string; label: string };
 /** Search box. The dropdown closes on outside click/tap, Escape, selection and any page change, and ignores out-of-date responses. */
@@ -35,7 +36,7 @@ export default function GlobalSearch({ jobBase = '/jobs' }: { jobBase?: string }
 
   const groups: { title: string; hits: Hit[] }[] = res && !res.error ? [
     { title: 'Jobs', hits: (res.jobs || []).map((r: any) => ({ href: `${jobBase}/${r.id}`, label: `${r.number}${r.title ? ' — ' + r.title : ''} · ${r.customer}` })) },
-    { title: 'Quotes', hits: (res.quotes || []).map((r: any) => ({ href: '/quotes/' + r.id, label: `${r.number} — ${r.customer} (${r.status})` })) },
+    { title: 'Quotes', hits: (res.quotes || []).map((r: any) => ({ href: '/quotes/' + r.id, label: `${r.number} — ${r.customer} (${QUOTE_STATUS[r.status]?.label || r.status})` })) },
     { title: 'Customers', hits: (res.customers || []).map((r: any) => ({ href: '/customers/' + r.id, label: r.name + (r.company ? ' — ' + r.company : '') })) },
     { title: 'Employees', hits: (res.employees || []).map((r: any) => ({ href: '/employees/' + r.id, label: r.name })) }
   ].filter(g => g.hits.length) : [];
