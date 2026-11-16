@@ -61,7 +61,7 @@ export function friendlyError(e: any): string {
   if (/violates check constraint/i.test(msg)) return 'One of the values is not allowed.';
   if (/permission denied|row-level security/i.test(msg)) return 'You do not have permission to do that.';
   if (/fetch failed|network/i.test(msg)) return 'Could not reach the server. Check your connection and try again.';
-  return 'Could not complete that: ' + msg.slice(0, 160);
+  return 'Could not complete that action. Refresh and try again. If the problem continues, contact an owner.';
 }
 
 /* ---- concise status labels shared by jobs, staff queues and reports ---- */
