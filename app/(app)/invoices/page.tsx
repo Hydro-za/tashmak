@@ -44,7 +44,7 @@ export default async function InvoicesPage({ searchParams: searchParamsPromise }
     </form>
     <div className="chips">{filters.map(([key, label]) => chip(key, label))}</div>
     {!rows.length ? <Empty text={data?.length ? 'No invoices match these filters.' : 'No invoices have been prepared yet. Open a job marked Ready for invoice to record its invoice number and verified total.'} /> :
-      <div className="card"><div className="tblwrap"><table className="tbl">
+      <div className="card invoice-list-card"><div className="invoice-desktop-list"><div className="tblwrap"><table className="tbl">
         <thead><tr><th>Invoice</th><th>Job / customer</th><th>Status</th><th className="r">Invoice total</th><th className="r">Verified total</th><th>Prepared / sent</th></tr></thead>
         <tbody>{rows.map(row => <tr key={row.id}>
           <td data-label="Invoice"><b>{row.invoice_number}</b><div className="muted">Version {row.version}</div></td>
@@ -54,6 +54,16 @@ export default async function InvoicesPage({ searchParams: searchParamsPromise }
           <td className="r" data-label="Verified total">{money(row.verified_total)}</td>
           <td data-label="Prepared / sent">{fmtDateTime(row.prepared_at)}{row.sent_at ? <div className="muted">Sent {fmtDateTime(row.sent_at)}</div> : null}</td>
         </tr>)}</tbody>
-      </table></div></div>}
+      </table></div></div>
+      <div className="invoice-mobile-list">{rows.map(row => <Link key={row.id} href={'/jobs/' + row.job_id} className="invoice-mobile-card">
+        <div className="invoice-mobile-head"><b>{row.invoice_number}</b><span className={'badge ' + (tones[row.status] || '')}>{labels[row.status] || row.status}</span></div>
+        <div className="muted">{row.job_number} · {row.customer_name}</div>
+        <div className="invoice-mobile-values">
+          <div><small>Invoice total</small><b>{money(row.invoice_total)}</b></div>
+          <div><small>Verified total</small><b>{money(row.verified_total)}</b></div>
+        </div>
+        <div className="muted">Prepared {fmtDateTime(row.prepared_at)}{row.sent_at ? ' · Sent ' + fmtDateTime(row.sent_at) : ''}</div>
+        {row.review_reason && <div className="muted">{row.review_reason}</div>}
+      </Link>)}</div></div>}
   </div>;
 }
