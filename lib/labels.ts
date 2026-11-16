@@ -47,6 +47,8 @@ const ERR: Record<string, string> = {
   invoice_not_found: 'The invoice record could not be found. Refresh and try again.',
   invoice_already_sent: 'This invoice has already been marked as sent.',
   invoice_not_ready: 'This invoice still needs review before it can be marked as sent.',
+  invoice_record_not_sent: 'Record the invoice number and mark the latest invoice as sent before completing this job.',
+  invoice_source_changed: 'The quote figures changed after this invoice was prepared. Save a new invoice version before marking it as sent.',
   cancellation_reason_required: 'Enter a reason of at least 3 characters.',
   material_not_found: 'This material no longer exists. Refresh the Products & Pricing page.',
   invalid_material_unit: 'Choose a supported stock unit.',
