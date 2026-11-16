@@ -1,2 +1,59 @@
-import { redirect } from 'next/navigation';
-export default function InvoicesPage(){ redirect('/jobs?status=ready_invoice'); }
+import Link from 'next/link';
+import { requireOwner } from '@/lib/session';
+import { Top, Empty } from '@/components/ui';
+import { money, fmtDateTime } from '@/lib/labels';
+
+export const dynamic = 'force-dynamic';
+
+const labels: Record<string, string> = {
+  needs_review: 'Needs review', ready_for_invoice: 'Ready to send',
+  invoice_sent: 'Invoice sent', cancelled: 'Cancelled', superseded: 'Replaced'
+};
+const tones: Record<string, string> = {
+  needs_review: 'b-rejected', ready_for_invoice: 'b-converted',
+  invoice_sent: 'b-accepted', cancelled: 'b-rejected', superseded: ''
+};
+
+export default async function InvoicesPage({ searchParams: searchParamsPromise }: { searchParams: Promise<{ status?: string; q?: string }> }) {
+  const params = await searchParamsPromise;
+  const { sb } = await requireOwner();
+  const { data, error } = await sb.from('job_invoices')
+    .select('id,job_id,version,invoice_number,status,customer_name,job_number,job_description,quote_number,invoice_total,verified_total,review_reason,prepared_at,sent_at')
+    .order('prepared_at', { ascending: false }).limit(500);
+  if (error) throw new Error('Could not load invoice records: ' + error.message);
+
+  const latest = new Map<string, any>();
+  for (const row of data || []) {
+    const previous = latest.get(row.job_id);
+    if (!previous || Number(row.version) > Number(previous.version)) latest.set(row.job_id, row);
+  }
+  const term = (params.q || '').trim().toLowerCase();
+  const rows = [...latest.values()].filter(row =>
+    (!params.status || row.status === params.status) &&
+    (!term || [row.invoice_number, row.job_number, row.customer_name, row.job_description, row.quote_number].join(' ').toLowerCase().includes(term))
+  );
+  const filters = [['all', 'All'], ['needs_review', 'Needs review'], ['ready_for_invoice', 'Ready to send'], ['invoice_sent', 'Invoice sent']];
+  const chip = (key: string, label: string) => <Link key={key} className={((params.status || 'all') === key ? 'on' : '')} href={{ pathname: '/invoices', query: { ...(key !== 'all' ? { status: key } : {}), ...(params.q ? { q: params.q } : {}) } }}>{label}</Link>;
+
+  return <div className="page-invoices">
+    <Top title="Invoices" sub="Track invoice numbers, verified totals and sending status. Invoices are prepared and sent manually outside Tashmak." />
+    <form className="card" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <input name="q" defaultValue={params.q || ''} placeholder="Invoice number, job or customer" style={{ flex: 1, minWidth: 200 }} />
+      {params.status && <input type="hidden" name="status" value={params.status} />}
+      <button className="btn">Search</button>
+    </form>
+    <div className="chips">{filters.map(([key, label]) => chip(key, label))}</div>
+    {!rows.length ? <Empty text={data?.length ? 'No invoices match these filters.' : 'No invoices have been prepared yet. Open a job marked Ready for invoice to record its invoice number and verified total.'} /> :
+      <div className="card"><div className="tblwrap"><table className="tbl">
+        <thead><tr><th>Invoice</th><th>Job / customer</th><th>Status</th><th className="r">Invoice total</th><th className="r">Verified total</th><th>Prepared / sent</th></tr></thead>
+        <tbody>{rows.map(row => <tr key={row.id}>
+          <td data-label="Invoice"><b>{row.invoice_number}</b><div className="muted">Version {row.version}</div></td>
+          <td data-label="Job / customer"><Link href={'/jobs/' + row.job_id}><b>{row.job_number}</b></Link><div className="muted">{row.customer_name}</div></td>
+          <td data-label="Status"><span className={'badge ' + (tones[row.status] || '')}>{labels[row.status] || row.status}</span>{row.review_reason && <div className="muted" style={{ maxWidth: 240 }}>{row.review_reason}</div>}</td>
+          <td className="r" data-label="Invoice total">{money(row.invoice_total)}</td>
+          <td className="r" data-label="Verified total">{money(row.verified_total)}</td>
+          <td data-label="Prepared / sent">{fmtDateTime(row.prepared_at)}{row.sent_at ? <div className="muted">Sent {fmtDateTime(row.sent_at)}</div> : null}</td>
+        </tr>)}</tbody>
+      </table></div></div>}
+  </div>;
+}
