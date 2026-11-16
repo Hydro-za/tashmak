@@ -194,7 +194,7 @@ export async function createPurchaseOrder(input: { supplier: string; expectedDat
   if (!input.supplier.trim()) return { ok: false, error: 'Enter a supplier name.' };
   if (!input.items.length || input.items.some(i => !i.stockItemId || !(i.quantity > 0) || i.unitCost < 0 || !Number.isFinite(i.quantity) || !Number.isFinite(i.unitCost))) return { ok: false, error: 'Add valid material quantities and costs.' };
   const r = await rpc('purchase_order_create', { p_supplier: input.supplier.trim(), p_expected_date: input.expectedDate || null, p_notes: input.notes || null, p_items: input.items.map(i => ({ stock_item_id: i.stockItemId, quantity: i.quantity, unit_cost: i.unitCost })) });
-  revalidatePath('/purchase-orders'); return r;
+  revalidatePath('/stock'); revalidatePath('/purchase-orders'); return r;
 }
 export async function setPurchaseOrderStatus(id: string, status: 'ordered' | 'cancelled'): Promise<R> {
   const r = await rpc('purchase_order_set_status', { p_order: id, p_status: status });
