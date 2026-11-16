@@ -23,7 +23,7 @@ export default async function Dashboard() {
   const production = active.filter((j: any) => ['queued', 'design', 'design_review', 'in_production', 'rework', 'qc'].includes(j.status));
   const awaitingQc = active.filter((j: any) => j.status === 'qc');
   const readyForHandoff = all.filter((j: any) => ['ready_collection', 'ready_delivery'].includes(j.status));
-  const readyForInvoice = all.filter((j: any) => j.status === 'ready_invoice');
+  const readyForInvoice = all.filter((j: any) => ['collected', 'delivered', 'ready_invoice'].includes(j.status));
   const attention = [...new Map([...dueToday, ...active.filter((j: any) => j.status === 'qc')].map(j => [j.id, j])).values()].sort(sortJobs);
   const showTeam = me.can('employees.view');
   const lowStock = (stockResult.data?.items || []).filter((item: any) => Number(item.quantity || 0) <= Number(item.minimum_quantity || 0));
