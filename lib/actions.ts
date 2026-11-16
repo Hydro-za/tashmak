@@ -204,7 +204,7 @@ export async function createPurchaseOrder(input: { supplier: string; expectedDat
 }
 export async function setPurchaseOrderStatus(id: string, status: 'ordered' | 'cancelled'): Promise<R> {
   const r = await rpc('purchase_order_set_status', { p_order: id, p_status: status });
-  revalidatePath('/purchase-orders'); return r;
+  revalidatePath('/stock'); revalidatePath('/purchase-orders'); return r;
 }
 export async function receivePurchaseOrder(id: string, lines: { itemId: string; quantity: number }[]): Promise<R> {
   if (!lines.length || lines.some(x => !x.itemId || !(x.quantity > 0) || !Number.isFinite(x.quantity))) return { ok: false, error: 'Enter valid received quantities.' };
