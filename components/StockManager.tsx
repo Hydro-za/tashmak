@@ -14,7 +14,7 @@ type PurchaseOrder={id:string;number:string;supplier:string;status:string;expect
 const number=(value:number)=>Number(value||0).toLocaleString('en-ZA',{maximumFractionDigits:3});
 const movementLabel=(type:string)=>type.replaceAll('_',' ').replace(/\\b\\w/g,c=>c.toUpperCase());
 
-export default function StockManager({items:initial,movements,products=[]}:{items:Item[];movements:Movement[];materials:Material[];products?:LinkedProduct[]}){
+export default function StockManager({items:initial,movements,products=[],orders=[],initialView='inventory'}:{items:Item[];movements:Movement[];materials:Material[];products?:LinkedProduct[];orders?:PurchaseOrder[];initialView?:'inventory'|'purchase-orders'}){
  const router=useRouter();const items=initial||[];const [view,setView]=useState<'inventory'|'purchase-orders'>(initialView);
  const [mode,setMode]=useState<'new'|'receive'|'adjust'|'use'|null>(null);
  const [selected,setSelected]=useState('');const [materialName,setMaterialName]=useState('');
