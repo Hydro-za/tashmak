@@ -1956,8 +1956,19 @@ Object.assign(ACT, {
   'ent-del': async el => {
     const k = el.dataset.k, x = State.cfg[k][el.dataset.id], used = affectedProducts(k, x.id);
     if (used.length && k !== 'products') { openModal({ title: 'Cannot delete', body: `<p><b>${e(x.name)}</b> is used by ${used.length} product${used.length > 1 ? 's' : ''}. Deleting it would break their pricing.</p>${affectedHTML(used)}<p>You can <b>disable</b> it instead so it can no longer be chosen.</p>`, footer: `<button class="btn" data-act="modal-close">Close</button><button class="btn primary" data-act="ent-toggle-close" data-k="${k}" data-id="${e(x.id)}">Disable instead</button>` }); return; }
-    if (!await confirmDialog({ title: `Delete ${KIND_LABEL[k].toLowerCase()}?`, body: `<p>Delete <b>${e(x.name)}</b> permanently? Saved quotes keep their prices.</p>`, okLabel: 'Delete', danger: true })) return;
-    if (await safe(() => DB.del(k, x.id), 'Deleted')) { await DB.audit(`Deleted ${KIND_LABEL[k].toLowerCase()} "${x.name}"`, k); render(true); }
+    const isMaterial = k === 'materials';
+    if (!await confirmDialog({
+      title: isMaterial ? 'Remove material?' : `Delete ${KIND_LABEL[k].toLowerCase()}?`,
+      body: isMaterial
+        ? `<p>Remove <b>${e(x.name)}</b> from active materials? Its stock record and movement history will be preserved. You can re-enable it later.</p>`
+        : `<p>Delete <b>${e(x.name)}</b> permanently? Saved quotes keep their prices.</p>`,
+      okLabel: isMaterial ? 'Remove material' : 'Delete',
+      danger: !isMaterial
+    })) return;
+    if (await safe(() => DB.del(k, x.id), isMaterial ? 'Material removed' : 'Deleted')) {
+      await DB.audit(`${isMaterial ? 'Disabled' : 'Deleted'} ${KIND_LABEL[k].toLowerCase()} "${x.name}"`, k);
+      render(true);
+    }
   },
   'ent-toggle-close': async el => { closeModal(true); await ACT['ent-toggle'](el); }
 });
