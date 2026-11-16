@@ -18,7 +18,7 @@ function navFor(isOwner: boolean, perms: string[]): Item[] {
   if (can('jobs.view_all')) items.push({ href: '/dashboard', label: 'Dashboard', icon: 'dashboard' }, { href: '/jobs', label: 'Jobs', icon: 'jobs' });
   if (isOwner) items.push({ href: '/quotes', label: 'Quotes', icon: 'quotes' }, { href: '/invoices', label: 'Invoices', icon: 'invoices' });
   if (can('customers.view', 'customers.manage')) items.push({ href: '/customers', label: 'Customers', icon: 'customers' });
-  if (isOwner) items.push({ href: '/stock', label: 'Stock', icon: 'stock' }, { href: '/purchase-orders', label: 'Purchase Orders', icon: 'purchase-orders' });
+  if (isOwner) items.push({ href: '/stock', label: 'Stock', icon: 'stock' });
   if (isOwner) items.push({ href: '/products', label: 'Products & Pricing', icon: 'products' });
   if (can('employees.view', 'employees.manage', 'roles.manage')) items.push({ href: '/employees', label: 'Employees', icon: 'employees' });
 
@@ -53,7 +53,7 @@ export default function Shell({ name, roleName, isOwner, perms, unread, children
   const canSearch = isOwner || perms.some(p => ['jobs.view_all', 'customers.view', 'employees.view'].includes(p));
   const navGroups = [
     { title: 'Work', links: rest.filter(i => ['/customers', '/my-jobs', '/completed', '/notifications'].includes(i.href)) },
-    { title: 'Manage', links: rest.filter(i => ['/invoices', '/products', '/stock', '/purchase-orders', '/employees', '/reports', '/settings'].includes(i.href)) },
+    { title: 'Manage', links: rest.filter(i => ['/invoices', '/products', '/stock', '/employees', '/reports', '/settings'].includes(i.href)) },
     { title: 'Account', links: rest.filter(i => ['/profile'].includes(i.href)) }
   ].filter(group => group.links.length);
   return (
