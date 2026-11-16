@@ -7,15 +7,14 @@ import PurchaseOrders from '@/components/PurchaseOrders';
 import {toast} from '@/components/ToastHost';
 
 type Item={id:string;material_id:string|null;name:string;unit:string;quantity:number;minimum_quantity:number;supplier?:string|null;notes?:string|null};
-type Material={id:string;name:string;data:any};
 type Movement={id:number;item_name:string;movement_type:string;quantity_change:number;quantity_after:number;note?:string|null;supplier?:string|null;performed_at:string;performed_by_name:string};
 type LinkedProduct={id:string;name:string;data:any};
 type PurchaseOrder={id:string;number:string;supplier:string;status:string;expected_date:string|null;notes:string|null;total:number;created_at:string;items:any[]};
 const number=(value:number)=>Number(value||0).toLocaleString('en-ZA',{maximumFractionDigits:3});
 const movementLabel=(type:string)=>type.replaceAll('_',' ').replace(/\\b\\w/g,c=>c.toUpperCase());
 
-export default function StockManager({items:initial,movements,products=[],orders=[],initialView='inventory'}:{items:Item[];movements:Movement[];materials:Material[];products?:LinkedProduct[];orders?:PurchaseOrder[];initialView?:'inventory'|'purchase-orders'}){
- const router=useRouter();const items=initial||[];const [view,setView]=useState<'inventory'|'purchase-orders'>(initialView);
+export default function StockManager({items:initial,movements,products=[],orders=[],initialView='inventory'}:{items:Item[];movements:Movement[];products?:LinkedProduct[];orders?:PurchaseOrder[];initialView?:'inventory'|'purchase-orders'}){
+ const router=useRouter();const items=initial||[];const view=initialView;
  const [mode,setMode]=useState<'new'|'receive'|'adjust'|'use'|null>(null);
  const [selected,setSelected]=useState('');const [materialName,setMaterialName]=useState('');
  const [unit,setUnit]=useState('sheets');const [minimum,setMinimum]=useState('0');
@@ -30,7 +29,7 @@ export default function StockManager({items:initial,movements,products=[],orders
  const invalid=busy|| (mode==='new'?(!materialName.trim()||!unit.trim()||quantity===''||!Number.isFinite(Number(quantity))||Number(quantity)<0||minimum===''||!Number.isFinite(Number(minimum))||Number(minimum)<0):(!selected||!quantity||!Number.isFinite(Number(quantity))||Number(quantity)<0||((mode==='receive'||mode==='use')&&Number(quantity)<=0)||((mode==='adjust'||mode==='use')&&!note.trim())));
  const heading=mode==='new'?'Add raw material':mode==='receive'?'Receive stock':mode==='use'?'Record material usage':'Adjust stock quantity';
  return <div className="stock-page">
-  <div className="stock-tabs" role="tablist" aria-label="Stock sections"><button type="button" role="tab" aria-selected={view==='inventory'} className={view==='inventory'?'on':''} onClick={()=>setView('inventory')}>Inventory</button><button type="button" role="tab" aria-selected={view==='purchase-orders'} className={view==='purchase-orders'?'on':''} onClick={()=>setView('purchase-orders')}>Purchase orders <span>{orders.filter(o=>['draft','ordered','part_received'].includes(o.status)).length}</span></button></div>
+  <div className="stock-tabs" role="tablist" aria-label="Stock sections"><button type="button" role="tab" aria-selected={view==='inventory'} className={view==='inventory'?'on':''} onClick={()=>router.push('/stock')}>Inventory</button><button type="button" role="tab" aria-selected={view==='purchase-orders'} className={view==='purchase-orders'?'on':''} onClick={()=>router.push('/stock?view=purchase-orders')}>Purchase orders</button></div>
   {view==='purchase-orders'?<PurchaseOrders orders={orders} stock={items}/>:<>
   <section className="stock-overview" aria-label="Stock overview">
    <div className="stock-stat"><span className="stock-stat-icon">▦</span><div><span className="stock-stat-label">Tracked materials</span><strong>{items.length}</strong><small>Raw material types</small></div></div>
