@@ -30,7 +30,7 @@ export default function PricingFrame({ init }: { init: any }) {
         }
         else if (p.op === 'settings') ({ error } = await sb.from('pricing_settings').update({ data: p.data }).eq('id', 1));
       } catch (e: any) { error = e; }
-      const msg = error ? (/row-level security|permission/i.test(error.message || '') ? 'You do not have permission to change pricing.' : /duplicate key/i.test(error.message || '') ? 'Another record already has that name.' : 'Not saved. Refresh and try again.')) : undefined;
+      const msg = error ? (/row-level security|permission/i.test(error.message || '') ? 'You do not have permission to change pricing.' : /duplicate key/i.test(error.message || '') ? 'Another record already has that name.' : 'Not saved. Refresh and try again.') : undefined;
       reply('ack', { rid: p.rid, ok: !error, error: msg });
     }} />;
 }
