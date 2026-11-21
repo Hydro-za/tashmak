@@ -87,7 +87,7 @@ export async function assignJob(jobId: string, stage: string, userIds: string[])
     if (job && employees?.length) {
       const { data: recoveryRows } = await createAdminClient().from('employee_recovery').select('user_id,email').in('user_id',employees.map((e:any)=>e.id));
       const recoveryByUser = new Map<string,string>((recoveryRows || []).map((r:any)=>[r.user_id,r.email] as [string,string]));
-      await sendJobAssignedEmails(employees.filter((e:any)=>recoveryByUser.has(e.id)).map((e:any)=>({email:recoveryByUser.get(e.id),name:e.full_name,employeeId:e.username})),{jobNumber:job.number,jobTitle:job.title||'Production job',customerName:job.customer_name||customer?.name||'Customer',description:job.instructions||'Please review the job details in Tashmak System.',assignedBy:'Tashmak System',jobUrl:(process.env.NEXT_PUBLIC_APP_URL||'https://tashmak-system.vercel.app')+'/jobs/'+jobId});
+      await sendJobAssignedEmails(employees.filter((e:any)=>recoveryByUser.has(e.id)).map((e:any)=>({email:recoveryByUser.get(e.id),name:e.full_name,employeeId:e.username})),{jobNumber:job.number,jobTitle:job.title||'Production job',customerName:job.customer_name||customer?.name||'Customer',description:job.instructions||'Please review the job details in Tashmak System.',assignedBy:'Tashmak System',jobUrl:(process.env.NEXT_PUBLIC_APP_URL||'https://tashmak-system.vercel.app')+'/my-jobs/'+jobId});
     }
   }
   revalidatePath('/jobs/' + jobId); return r;
