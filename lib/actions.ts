@@ -1,7 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { requireOwner } from '@/lib/session';
+import { requireOwner, requirePerm } from '@/lib/session';
 import { friendlyError } from '@/lib/labels';
 import { buildSpec } from '@/lib/spec';
 import { sendJobAssignedEmails, sendJobCompletedEmails } from '@/lib/email';
@@ -196,17 +196,20 @@ export async function recordJobInvoicePayment(invoiceId: string, jobId: string, 
 }
 
 /* ---------- supplier purchase orders ---------- */
-export async function createPurchaseOrder(input: { supplier: string; expectedDate: string; notes: string; items: { stockItemId: string; quantity: number; unitCost: number }[] }): Promise<R> {
+export async function createPurchaseOrder(input: {
+  await requirePerm('stock.manage'); supplier: string; expectedDate: string; notes: string; items: { stockItemId: string; quantity: number; unitCost: number }[] }): Promise<R> {
   if (!input.supplier.trim()) return { ok: false, error: 'Enter a supplier name.' };
   if (!input.items.length || input.items.some(i => !i.stockItemId || !(i.quantity > 0) || i.unitCost < 0 || !Number.isFinite(i.quantity) || !Number.isFinite(i.unitCost))) return { ok: false, error: 'Add valid material quantities and costs.' };
   const r = await rpc('purchase_order_create', { p_supplier: input.supplier.trim(), p_expected_date: input.expectedDate || null, p_notes: input.notes || null, p_items: input.items.map(i => ({ stock_item_id: i.stockItemId, quantity: i.quantity, unit_cost: i.unitCost })) });
   revalidatePath('/stock'); revalidatePath('/purchase-orders'); return r;
 }
 export async function setPurchaseOrderStatus(id: string, status: 'ordered' | 'cancelled'): Promise<R> {
+  await requirePerm('stock.manage');
   const r = await rpc('purchase_order_set_status', { p_order: id, p_status: status });
   revalidatePath('/stock'); revalidatePath('/purchase-orders'); return r;
 }
-export async function receivePurchaseOrder(id: string, lines: { itemId: string; quantity: number }[]): Promise<R> {
+export async function receivePurchaseOrder(id: string, lines: {
+  await requirePerm('stock.manage'); itemId: string; quantity: number }[]): Promise<R> {
   if (!lines.length || lines.some(x => !x.itemId || !(x.quantity > 0) || !Number.isFinite(x.quantity))) return { ok: false, error: 'Enter valid received quantities.' };
   const r = await rpc('purchase_order_receive', { p_order: id, p_lines: lines.map(x => ({ item_id: x.itemId, quantity: x.quantity })) });
   revalidatePath('/purchase-orders'); revalidatePath('/stock'); revalidatePath('/dashboard'); return r;
@@ -282,6 +285,7 @@ export async function saveQuoteAction(input: { customerId: string; requestId: st
 
 /* ---------- stock management ---------- */
 export async function createStockMaterial(name: string, unit: string, minimum: number, supplier?: string, notes?: string, initialQuantity = 0): Promise<R> {
+  await requirePerm('stock.manage');
   if (!name.trim()) return { ok: false, error: 'Enter a material name.' };
   if (!['sheets','m²','m','kg','units'].includes(unit)) return { ok: false, error: 'Choose a valid stock unit.' };
   if (!Number.isFinite(initialQuantity) || initialQuantity < 0 || !Number.isFinite(minimum) || minimum < 0) return { ok: false, error: 'Enter valid non-negative stock quantities.' };
@@ -289,17 +293,20 @@ export async function createStockMaterial(name: string, unit: string, minimum: n
   revalidatePath('/stock'); revalidatePath('/products'); return r;
 }
 export async function receiveStock(itemId: string, quantity: number, supplier?: string, note?: string): Promise<R> {
+  await requirePerm('stock.manage');
   if (!(quantity > 0)) return { ok: false, error: 'Enter a quantity greater than zero.' };
   const r = await rpc('stock_receive', { p_item: itemId, p_quantity: quantity, p_supplier: supplier || null, p_note: note || null });
   revalidatePath('/stock'); return r;
 }
 export async function adjustStock(itemId: string, quantity: number, note: string): Promise<R> {
+  await requirePerm('stock.manage');
   if (quantity < 0 || !note.trim()) return { ok: false, error: 'Enter a valid quantity and an adjustment reason.' };
   const r = await rpc('stock_adjust', { p_item: itemId, p_new_quantity: quantity, p_note: note.trim() });
   revalidatePath('/stock'); return r;
 }
 
 export async function useStock(itemId: string, quantity: number, note: string): Promise<R> {
+  await requirePerm('stock.manage');
   if (!(quantity > 0) || !note.trim()) return { ok: false, error: 'Enter a quantity and reason for use.' };
   const r = await rpc('stock_use', { p_item: itemId, p_quantity: quantity, p_note: note.trim() });
   revalidatePath('/stock'); return r;
