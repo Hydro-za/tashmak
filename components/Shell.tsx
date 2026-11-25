@@ -44,11 +44,17 @@ export default function Shell({ name, roleName, isOwner, perms, unread, children
     return () => window.removeEventListener('keydown', closeOnEscape);
   }, [menuOpen]);
   async function signOut() { await createClient().auth.signOut(); window.location.href = '/login'; }
+  // Put the most-used staff destinations directly in the phone bar.
+  // Anything else remains in the More panel, without changing permission checks.
+  const staffPaths = perms.includes('jobs.view_all')
+    ? ['/dashboard', '/jobs', '/stock', '/notifications', '/customers']
+    : ['/my-jobs', '/completed', '/stock', '/notifications', '/customers'];
   const primary = isOwner
     ? ['/dashboard', '/jobs', '/quotes', '/products', '/stock'].map(href => items.find(item => item.href === href)).filter((item): item is Item => !!item)
-    : items.filter(item => ['/my-jobs', '/dashboard', '/jobs', '/stock'].includes(item.href)).slice(0, 5);
+    : staffPaths.map(href => items.find(item => item.href === href)).filter((item): item is Item => !!item).slice(0, 4);
   const primaryHrefs = new Set(primary.map(item => item.href));
   const rest = items.filter(item => !primaryHrefs.has(item.href));
+  const moreActive = menuOpen || rest.some(item => on(item.href));
   const viewAll = isOwner || perms.includes('jobs.view_all');
   const canSearch = isOwner || perms.some(p => ['jobs.view_all', 'customers.view', 'employees.view'].includes(p));
   const navGroups = [
@@ -65,14 +71,14 @@ export default function Shell({ name, roleName, isOwner, perms, unread, children
       </aside>
       <main className="main">
         <div className="hdr glass-surface">
-          <button type="button" className="mobile-nav-toggle" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-expanded={menuOpen} aria-controls="mobile-navigation" onClick={() => setMenuOpen(open => !open)}><NavIcon name="menu" /></button>
           <span className="mobilemark"><LogoMark size={32} /></span>{canSearch ? <GlobalSearch jobBase={viewAll ? '/jobs' : '/my-jobs'} /> : <b style={{ flex: 1 }}>{name}</b>}
           <span className="mobiletheme"><ThemeToggle /></span>
           <NotificationBell initialUnread={unread} jobBase={viewAll ? '/jobs' : '/my-jobs'} canQuotes={isOwner} /></div>
         {children}
       </main>
       <nav className="bottom glass-surface" aria-label="Primary navigation">
-        {primary.map(i => <Link key={i.href} href={i.href} className={on(i.href) ? 'on' : ''} aria-current={on(i.href) ? 'page' : undefined}><NavIcon name={i.icon} /><span>{i.label === 'Products & Pricing' ? 'Products' : i.label.split(' ')[0]}</span></Link>)}
+        {primary.map(i => <Link key={i.href} href={i.href} className={on(i.href) ? 'on' : ''} aria-current={on(i.href) ? 'page' : undefined}><NavIcon name={i.icon} /><span>{i.label === 'Products & Pricing' ? 'Products' : i.label}</span></Link>)}
+        {!!rest.length && <button type="button" className={moreActive ? 'on' : ''} aria-label="More navigation options" aria-expanded={menuOpen} aria-controls="mobile-navigation" onClick={() => setMenuOpen(open => !open)}><NavIcon name="more" /><span>More</span></button>}
       </nav>
       {menuOpen && <nav id="mobile-navigation" className="mobile-nav-panel" aria-label="Workspace navigation">
         {navGroups.map(group => <section className="mobile-nav-group" key={group.title}>
