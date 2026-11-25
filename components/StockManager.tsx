@@ -13,7 +13,7 @@ type PurchaseOrder={id:string;number:string;supplier:string;status:string;expect
 const number=(value:number)=>Number(value||0).toLocaleString('en-ZA',{maximumFractionDigits:3});
 const movementLabel=(type:string)=>type.replaceAll('_',' ').replace(/\\b\\w/g,c=>c.toUpperCase());
 
-export default function StockManager({items:initial,movements,products=[],orders=[],initialView='inventory',isOwner=false}:{items:Item[];movements:Movement[];products?:LinkedProduct[];orders?:PurchaseOrder[];initialView?:'inventory'|'purchase-orders';isOwner?:boolean}){
+export default function StockManager({items:initial,movements,products=[],orders=[],initialView='inventory',isOwner=false,purchaseOrdersEnabled=true}:{items:Item[];movements:Movement[];products?:LinkedProduct[];orders?:PurchaseOrder[];initialView?:'inventory'|'purchase-orders';isOwner?:boolean;purchaseOrdersEnabled?:boolean}){
  const router=useRouter();const items=initial||[];const view=initialView;
  const [mode,setMode]=useState<'new'|'receive'|'adjust'|'use'|null>(null);
  const [selected,setSelected]=useState('');const [materialName,setMaterialName]=useState('');
@@ -29,7 +29,7 @@ export default function StockManager({items:initial,movements,products=[],orders
  const invalid=busy|| (mode==='new'?(!materialName.trim()||!unit.trim()||quantity===''||!Number.isFinite(Number(quantity))||Number(quantity)<0||minimum===''||!Number.isFinite(Number(minimum))||Number(minimum)<0):(!selected||!quantity||!Number.isFinite(Number(quantity))||Number(quantity)<0||((mode==='receive'||mode==='use')&&Number(quantity)<=0)||((mode==='adjust'||mode==='use')&&!note.trim())));
  const heading=mode==='new'?'Add raw material':mode==='receive'?'Receive stock':mode==='use'?'Record material usage':'Adjust stock quantity';
  return <div className="stock-page">
-  <div className="stock-tabs" role="tablist" aria-label="Stock sections"><button type="button" role="tab" aria-selected={view==='inventory'} className={view==='inventory'?'on':''} onClick={()=>router.push('/stock')}>Inventory</button><button type="button" role="tab" aria-selected={view==='purchase-orders'} className={view==='purchase-orders'?'on':''} onClick={()=>router.push('/stock?view=purchase-orders')}>Purchase orders</button></div>
+  <div className="stock-tabs" role="tablist" aria-label="Stock sections"><button type="button" role="tab" aria-selected={view==='inventory'} className={view==='inventory'?'on':''} onClick={()=>router.push('/stock')}>Inventory</button>{purchaseOrdersEnabled&&<button type="button" role="tab" aria-selected={view==='purchase-orders'} className={view==='purchase-orders'?'on':''} onClick={()=>router.push('/stock?view=purchase-orders')}>Purchase orders</button>}</div>
   {view==='purchase-orders'?<PurchaseOrders orders={orders} stock={items}/>:<>
   <section className="stock-overview" aria-label="Stock overview">
    <div className="stock-stat"><span className="stock-stat-icon">▦</span><div><span className="stock-stat-label">Tracked materials</span><strong>{items.length}</strong><small>Raw material types</small></div></div>
