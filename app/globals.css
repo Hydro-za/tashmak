@@ -1143,3 +1143,7 @@ input[type=checkbox]{accent-color:var(--accent)}
  .bottom button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 }
 @media(max-width:420px){.page-heading .actions{gap:7px}.page-staff-work .jobcard{padding:14px}}
+
+
+/* Grid and split containers own their spacing; nested cards should not add a second bottom margin. */
+.grid>.card,.split>.card{margin-bottom:0}
