@@ -1,4 +1,4 @@
--- Add a granular Stock permission and repair the material-sync function without rewriting applied migrations.
+-- Extend the canonical role permission list with Stock access.
 create or replace function public.valid_permissions()
 returns text[] language sql immutable set search_path = '' as $$
   select array[
@@ -15,16 +15,14 @@ alter table public.role_permissions
   add constraint role_permissions_permission_check
   check (permission = any(public.valid_permissions()));
 
--- Keep catalogue visibility read-only for stock managers, so stock can show linked products.
 drop policy if exists products_stock_read on public.products;
 create policy products_stock_read on public.products
   for select to authenticated using ((select public.has_perm('stock.manage')));
 
--- Update the existing SECURITY DEFINER stock and purchase-order RPC guards.
+-- Update every overload of the existing stock RPCs, plus purchase-order RPCs.
 do $migration$
 declare
-  fn_name text;
-  fn_oid oid;
+  fn record;
   definition text;
   changed text;
   names text[] := array[
@@ -34,18 +32,15 @@ declare
     'purchase_order_set_status','purchase_order_receive'
   ];
 begin
-  foreach fn_name in array names loop
-    select p.oid into fn_oid
+  for fn in
+    select p.oid, p.proname
     from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-    where n.nspname='public' and p.proname=fn_name
-    order by p.oid desc limit 1;
-    if fn_oid is null then
-      raise exception 'Expected stock function public.% was not found', fn_name;
-    end if;
-    definition := pg_get_functiondef(fn_oid);
+    where n.nspname='public' and p.proname=any(names)
+  loop
+    definition := pg_get_functiondef(fn.oid);
     changed := replace(definition, 'not public.is_owner()', 'not (public.is_owner() or public.has_perm(''stock.manage''))');
     if changed = definition then
-      raise exception 'Could not safely update permission guard in public.%', fn_name;
+      raise exception 'Could not safely update permission guard in public.%', fn.proname;
     end if;
     execute changed;
   end loop;
@@ -60,9 +55,7 @@ create or replace function public.stock_ensure_material(
   p_notes text default null,
   p_active boolean default true
 ) returns jsonb
-language plpgsql
-security definer
-set search_path = ''
+language plpgsql security definer set search_path = ''
 as $function$
 declare
   me uuid := auth.uid();
