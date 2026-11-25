@@ -17,7 +17,7 @@ declare
 begin
   if me is null or not public.is_owner() then raise exception 'forbidden' using errcode='42501'; end if;
   if p_material_id is null or length(trim(p_material_id)) not between 1 and 80 then raise exception 'invalid_material_id'; end if;
-  if length(trim(coalesce(p_name,'')) not between 1 and 120 then raise exception 'invalid_material_name'; end if;
+  if length(trim(coalesce(p_name,''))) not between 1 and 120 then raise exception 'invalid_material_name'; end if;
   if stock_unit not in ('sheets','m²','m','kg','units') then raise exception 'invalid_stock_unit'; end if;
   if not exists(select 1 from public.materials where id=p_material_id) then raise exception 'material_not_found'; end if;
   insert into public.stock_items(material_id,name,unit,quantity,minimum_quantity,supplier,notes,active,created_by,updated_by)
