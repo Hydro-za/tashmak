@@ -13,5 +13,5 @@ export default async function StockPage({searchParams}:{searchParams:Promise<{vi
  if(secondary.error)throw new Error(purchaseView?'Could not load purchase orders: '+secondary.error.message:'Could not load product links: '+secondary.error.message);
  const products=purchaseView?[]:(secondary.data||[]);
  const orders=purchaseView?(secondary.data||[]):[];
- return <><Top title="Stock management" sub="Manage raw materials, purchase orders and stock movements in one place."/><StockManager items={stock?.items||[]} movements={stock?.movements||[]} products={products} orders={orders} initialView={purchaseView?'purchase-orders':'inventory'}/></>;
+ return <><Top title="Stock management" sub="Manage raw materials, purchase orders and stock movements in one place."/><StockManager items={stock?.items||[]} movements={stock?.movements||[]} products={products} orders={orders} initialView={purchaseView?'purchase-orders':'inventory'} isOwner={me.isOwner}/></>;
 }
