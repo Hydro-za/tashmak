@@ -2,7 +2,7 @@ import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
-export type Perm = 'jobs.view_all' | 'jobs.manage' | 'jobs.work_design' | 'jobs.work_production' | 'customers.view' | 'customers.manage' | 'employees.view' | 'employees.manage' | 'roles.manage' | 'qc.perform' | 'salary.view' | 'salary.manage' | 'labour.manage' | 'settings.manage' | 'notifications.manage' | 'reports.view';
+export type Perm = 'stock.manage' | 'jobs.view_all' | 'jobs.manage' | 'jobs.work_design' | 'jobs.work_production' | 'customers.view' | 'customers.manage' | 'employees.view' | 'employees.manage' | 'roles.manage' | 'qc.perform' | 'salary.view' | 'salary.manage' | 'labour.manage' | 'settings.manage' | 'notifications.manage' | 'reports.view';
 
 /** One auth + profile + permission lookup per request (layout and page share it). */
 export const getMe = cache(async () => {
