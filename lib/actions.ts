@@ -230,10 +230,11 @@ function validateSetting(key: string, v: any): string | null {
   if (key === 'jobs') { if (!PRIOS.includes(v.defaultPriority)) return 'Invalid default priority.'; if (!intIn(v.defaultDueDays, 0, 365)) return 'Default due days must be 0–365.'; }
   if (key === 'workflow') { if (typeof v.designApprovalDefault !== 'boolean' || !Array.isArray(v.qcCategories) || v.qcCategories.some((c: any) => typeof c !== 'string')) return 'Invalid workflow settings.'; }
   if (key === 'notifications' && typeof v.inApp !== 'boolean') return 'Invalid notification settings.';
+  if (key === 'stock' && typeof v.purchaseOrdersEnabled !== 'boolean') return 'Invalid stock settings.';
   return null;
 }
 export async function saveSystemSetting(key: string, value: any): Promise<R> {
-  if (!['business', 'quotes', 'jobs', 'workflow', 'notifications'].includes(key)) return { ok: false, error: 'Unknown setting.' };
+  if (!['business', 'quotes', 'jobs', 'workflow', 'notifications', 'stock'].includes(key)) return { ok: false, error: 'Unknown setting.' };
   const bad = validateSetting(key, value); if (bad) return { ok: false, error: bad };
   try {
     const sb = await createClient(); const { data: { user } } = await sb.auth.getUser();
