@@ -1,11 +1,11 @@
-import {requireMe} from '@/lib/session';
+import {requirePerm} from '@/lib/session';
 import {notFound} from 'next/navigation';
 import StockManager from '@/components/StockManager';
 import {Top} from '@/components/ui';
 export const dynamic='force-dynamic';
 export default async function StockPage({searchParams}:{searchParams:Promise<{view?:string}>}){
  const [{view},me]=await Promise.all([searchParams,requireMe()]);
- if(!me.isOwner)notFound();
+ if(!me.can('stock.manage'))notFound();
  const purchaseView=view==='purchase-orders';
  const [{data:stock,error},secondary]=await Promise.all([
   me.sb.rpc('stock_snapshot'),
